@@ -1,3 +1,3 @@
-defmodule AshEventSource.Info do
-  use Spark.InfoGenerator, extension: AshEventSource, sections: [:event_source]
+defmodule AshEvents.Info do
+  use Spark.InfoGenerator, extension: AshEvents, sections: [:events]
 end

@@ -1,11 +1,11 @@
-defmodule AshEventSource.Transformers.RewriteActions do
+defmodule AshEvents.Transformers.RewriteActions do
   @moduledoc "Rewrite each create, update and destroy action into event sourced actions"
   use Spark.Dsl.Transformer
 
   def after?(_), do: true
 
   def transform(dsl) do
-    event_resource = AshEventSource.Info.event_source_event_resource!(dsl)
+    event_resource = AshEvents.Info.events_event_resource!(dsl)
 
     dsl
     |> Ash.Resource.Info.actions()
@@ -33,7 +33,7 @@ defmodule AshEventSource.Transformers.RewriteActions do
       arguments =
         action.arguments
         |> Enum.concat(arguments)
-        |> Enum.uniq_by(&(&1.name))
+        |> Enum.uniq_by(& &1.name)
 
       action = %Ash.Resource.Actions.Action{
         name: action.name,
@@ -41,7 +41,7 @@ defmodule AshEventSource.Transformers.RewriteActions do
         returns: :atom,
         constraints: [one_of: [:success, :failure]],
         arguments: arguments,
-        run: {AshEventSource.PersistEvent, [event_resource: event_resource, action: new_name]},
+        run: {AshEvents.PersistEvent, [event_resource: event_resource, action: new_name]},
         transaction?: true
       }
 

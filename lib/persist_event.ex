@@ -14,9 +14,10 @@ defmodule AshEvents.PersistEvent do
               action: opts[:action],
               processed: true
             },
-            actor: Ash.context_to_opts(context)
+            actor: Ash.Context.to_opts(context),
+            domain: input.domain
           )
-          |> input.api.create!()
+          |> Ash.create!()
 
           {:ok, :success}
 
@@ -31,13 +32,14 @@ defmodule AshEvents.PersistEvent do
                 action: opts[:action],
                 processed: true
               },
-              actor: Ash.context_to_opts(context)
+              actor: Ash.Context.to_opts(context),
+              domain: input.domain
             )
-            |> input.api.create!()
+            |> Ash.create!()
 
           event.resource
-          |> Ash.Changeset.for_create(event.action, event.input)
-          |> input.api.create!()
+          |> Ash.Changeset.for_create(event.action, event.input, domain: input.domain)
+          |> Ash.create!()
 
           {:ok, :success}
       end

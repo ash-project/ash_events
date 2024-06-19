@@ -12,7 +12,7 @@ defmodule AshEvents.PersistEvent do
               input: input.params,
               resource: input.resource,
               action: opts[:action],
-              processed: true
+              processed: false
             },
             actor: Ash.Context.to_opts(context),
             domain: input.domain
@@ -30,7 +30,7 @@ defmodule AshEvents.PersistEvent do
                 input: input.params,
                 resource: input.resource,
                 action: opts[:action],
-                processed: false
+                processed: true
               },
               actor: Ash.Context.to_opts(context),
               domain: input.domain

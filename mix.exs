@@ -21,6 +21,7 @@ defmodule AshEvents.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash, path: "../ash"}
     ]
   end

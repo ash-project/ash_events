@@ -35,8 +35,6 @@ defmodule AshEventsTest do
 
     [event] = Ash.read!(EventResource)
 
-    # ETS apparently doesn't support auto-generating integer ids
-    # assert event.id == 1
     assert event.name == "accounts_user_created"
     assert event.version == "1.0"
 
@@ -121,6 +119,8 @@ defmodule AshEventsTest do
 
     assert event1.name == "accounts_user_created"
     assert event2.name == "accounts_user_updated"
+
+    assert event2.id == event1.id + 1
   end
 
   test "event replay works as expected" do

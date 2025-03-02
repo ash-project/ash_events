@@ -14,28 +14,33 @@ defmodule AshEvents.Commands.Resource do
     ]
   end
 
-  # @command_argument %Spark.Dsl.Entity{
-  #   name: :argument,
-  #   describe: """
-  #   Declares an argument on the command action.
-  #   """,
-  #   examples: [
-  #     "argument :password_confirmation, :string"
-  #   ],
-  #   target: Ash.Resource.Actions.Argument,
-  #   args: [:name, :type],
-  #   transform: {Ash.Type, :set_type_transformation, []},
-  #   schema: Ash.Resource.Actions.Argument.schema()
-  # }
-
   @command %Spark.Dsl.Entity{
     name: :command,
     describe: """
-    Declares a command without any side-effects, besides updating the system's internal state.
+    Declares a command action, which will generate an event when executed.
 
-    Since there are no side-effects to consider when executing this command, the event
-    will be automatically created and dispatched for you, triggering the event handlers
-    defined on your event resource to run and perform any updates to your projections/resources.
+    Commands accept two arguments: `data`, which is the values that will be stored in the event,
+    and acted upon by the event handlers, and `metadata`, which is additional information that
+    can be stored with the event.
+    The lifecycle of a command is as follows:
+
+    1. The command is executed.
+    2. The `before_dispatch` function is called, if defined. This function will receive the
+       arguments passed to the command, and should return same arguments, possibly modified.
+    3. The event is created and dispatched.
+    4. The `after_dispatch` function is called, if defined. This function will receive the
+       event that was created and dispatched, and its return value will also be the return
+       value of the command.
+
+    A command opens a transaction, and will rollback if an error occurs at any point.
+
+    For commands with side-effects, or if you need to perform any additional
+    logic before or after the command is executed, you can define `before_dispatch`
+    and `after_dispatch` functions/modules.
+
+    The actions on your read models should be entirely free of side-effects in order
+    to enable replaying of events, so commands should be the only place where side-effects
+    occur (or are scheduled) when using AshEvents.
     """,
     examples: [
       """
@@ -44,12 +49,8 @@ defmodule AshEvents.Commands.Resource do
         event_version "1.0"
         constraints instance_of: User
 
-        argument :given_name, :string, allow_nil?: false
-        argument :family_name, :string, allow_nil?: false
-        argument :email, :string, allow_nil?: false
-
-        run fn input, opts, ctx ->
-          {:ok, %User{}}
+        after_dispatch fn created_event, opts ->
+          Accounts.get_user_by_id(created_event.entity_id, opts)
         end
       end
       """

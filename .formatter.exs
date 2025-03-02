@@ -4,6 +4,7 @@
   import_deps: [:ash, :ash_postgres],
   plugins: [Spark.Formatter],
   locals_without_parens: [
+    event_resource: 1,
     event_name: 1,
     event_version: 1,
     belongs_to_actor: 2,

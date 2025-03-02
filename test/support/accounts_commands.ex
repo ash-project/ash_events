@@ -15,7 +15,7 @@ defmodule AshEvents.Test.Accounts.Commands do
   end
 
   commands do
-    event_resource(AshEvents.Test.Events.EventResource)
+    event_resource AshEvents.Test.Events.EventResource
 
     command :create_user, :struct do
       constraints instance_of: AshEvents.Test.Accounts.User

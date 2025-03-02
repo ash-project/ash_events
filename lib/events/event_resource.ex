@@ -6,7 +6,7 @@ defmodule AshEvents.EventResource do
 
     actions do
       create :create do
-      accept [:name, :version, :entity_id, ]
+      accept [:name, :version, :entity_id, :data, :metadata]
       end
     end
 
@@ -44,6 +44,7 @@ defmodule AshEvents.EventResource do
       end
     end
   """
+
   defmodule EventHandlerEntry do
     defstruct [:module, :event_name_prefix]
   end

@@ -134,13 +134,13 @@ defmodule AshEvents.EventResource do
         """,
         default: :uuid
       ]
-      #entity_id_allow_nil?: [
+      # entity_id_allow_nil?: [
       #  type: :boolean,
       #  doc: """
       #  If set to true, the event's entity_id can be nilable. Default is false.
       #  """,
       #  default: true
-      #]
+      # ]
     ],
     entities: [@belongs_to_actor],
     examples: [
@@ -151,8 +151,7 @@ defmodule AshEvents.EventResource do
         entity_id_allow_nil? false (default is true)
       end
       """
-    ],
-    sections: [@event_handlers]
+    ]
   }
 
   use Spark.Dsl.Extension,
@@ -161,10 +160,12 @@ defmodule AshEvents.EventResource do
       AshEvents.EventResource.Transformers.AddAttributes,
       AshEvents.EventResource.Transformers.ValidateBelongsToActor
     ],
-    sections: [@event_resource]
+    sections: [@event_resource, @event_handlers]
 end
 
 defmodule AshEvents.EventResource.Info do
   @moduledoc "Introspection helpers for `AshEvents.EventResource`"
-  use Spark.InfoGenerator, extension: AshEvents.EventResource, sections: [:event_resource]
+  use Spark.InfoGenerator,
+    extension: AshEvents.EventResource,
+    sections: [:event_resource, :event_handlers]
 end

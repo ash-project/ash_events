@@ -2,9 +2,12 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
   @moduledoc false
   use Spark.Dsl.Transformer
 
+  # @primary_key_type Application.compile_env(:ash_events, :event_resource_primary_key_type) ||
+  #                    :integer
+
   def before?(AshEvents.EventResource.Transformers.AddActions), do: true
   # def before?(AshEvents.EventResource), do: true
-  def before?(_), do: false
+  def before?(_), do: true
 
   def transform(dsl) do
     {:ok, projection_primary_id_type} =

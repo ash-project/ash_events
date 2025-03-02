@@ -3,10 +3,9 @@ defmodule AshEvents.Commands.Resource do
     defstruct [
       :name,
       :description,
+      :transaction?,
       :event_name,
       :event_version,
-      :metadata_arg_name,
-      :entity_id_arg_name,
       :returns,
       :constrains,
       :before_dispatch,
@@ -74,37 +73,9 @@ defmodule AshEvents.Commands.Resource do
         type: :string,
         doc: "The version of the event to generate"
       ],
-      entity_id_arg_name: [
-        type: :atom,
-        doc: """
-        The name of the argument that will receive the id of the entity that the command
-        is acting on, which will be stored in the event's `entity_id` field.
-
-        Defaults to `:entity_id`, change it to something else if you have an action
-        that expects this field as an attribute or argument.
-        """,
-        default: :entity_id
-      ],
-      metadata_arg_name: [
-        type: :atom,
-        doc: """
-        The name of the argument that will be used to pass metadata that will be
-        stored with the event.
-        Defaults to `:metadata`, change it to something else if you have an action
-        that expects this field as an attribute or argument.
-        """,
-        default: :metadata
-      ],
       returns: [
         type: Ash.OptionsHelpers.ash_type(),
         doc: "The type of the data returned by the command."
-      ],
-      transaction?: [
-        type: :boolean,
-        doc: """
-        Whether or not the command should be executed in a transaction. Defaults to `true`.
-        """,
-        default: true
       ],
       constraints: [
         type: :keyword_list,

@@ -2,6 +2,8 @@ defmodule AshEvents.EventResource.Transformers.AddActions do
   @moduledoc false
   use Spark.Dsl.Transformer
 
+  @add_destroy? Application.compile_env(:ash_events, :add_event_resource_destroy?) || false
+
   @event_arguments [
     %Ash.Resource.Actions.Argument{
       name: :name,
@@ -45,20 +47,29 @@ defmodule AshEvents.EventResource.Transformers.AddActions do
   def transform(dsl) do
     {:ok, extra_create_accepts} = AshEvents.EventResource.Info.event_resource_create_accept(dsl)
 
-    handlers = AshEvents.EventResource.Info.event_resource_event_handlers(dsl)
+    handlers = AshEvents.EventResource.Info.event_handlers(dsl)
 
     dsl
     |> Ash.Resource.Builder.add_action(:create, :create,
       accept: Enum.uniq([:name, :version, :data, :metadata, :entity_id] ++ extra_create_accepts)
     )
     |> Ash.Resource.Builder.add_action(:action, :create_and_dispatch,
+      transaction?: true,
       arguments: @event_arguments,
       returns: :map,
-      run: {AshEvents.EventResource.CreateAndDispatchEvent, [handlers: handlers]}
+      run: {AshEvents.EventResource.Actions.CreateAndDispatch, [handlers: handlers]}
     )
     |> Ash.Resource.Builder.add_action(:action, :replay,
-      arguments: [@event_arguments],
-      run: {AshEvents.EventResource.CreateAndDispatchEvent, [handlers: handlers]}
+      arguments: [],
+      run: {AshEvents.EventResource.Actions.Replay, [handlers: handlers]}
     )
+    |> then(fn result ->
+      if @add_destroy? do
+        result
+        |> Ash.Resource.Builder.add_action(:destroy, :destroy, primary?: true)
+      else
+        result
+      end
+    end)
   end
 end

@@ -13,13 +13,15 @@ defmodule AshEvents.Commands.Resource.RunCommand do
   end
 
   defp build_event(arguments, input_resource, command) do
+    resource = input_resource |> to_string() |> String.trim("Elixir.")
+
     arguments
     |> Map.merge(%{
       name: command.event_name,
       version: command.event_version
     })
-    |> put_in([:metadata, :resource], input_resource)
-    |> put_in([:metadata, :command], command.name)
+    |> put_in([:metadata, :command_resource], resource)
+    |> put_in([:metadata, :command_name], command.name)
   end
 
   defp do_before_dispatch(arguments, before_dispatch, opts) do

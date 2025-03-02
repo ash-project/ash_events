@@ -1,4 +1,4 @@
-defmodule AshEvents.Events.Actions.Replay do
+defmodule AshEvents.EventResource.Actions.Replay do
   require Ash.Query
 
   def run(input, module_opts, ctx) do
@@ -7,10 +7,14 @@ defmodule AshEvents.Events.Actions.Replay do
     handlers = module_opts[:handlers]
 
     process_event_func = fn event, opts ->
-      Enum.reduce_while(handlers, :ok, fn handler, :ok ->
-        case handler.process_event(event, opts) do
-          {:ok, _} -> {:cont, :ok}
-          {:error, error} -> {:halt, {:error, error}}
+      Enum.reduce_while(handlers, :ok, fn %{module: handler, event_name_prefix: prefix}, :ok ->
+        if String.starts_with?(event.name, prefix) do
+          case handler.process_event(event, opts) do
+            :ok -> {:cont, :ok}
+            {:error, error} -> {:halt, {:error, error}}
+          end
+        else
+          {:cont, :ok}
         end
       end)
     end

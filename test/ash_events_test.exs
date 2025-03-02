@@ -1,153 +1,162 @@
 defmodule AshEventsTest do
-  use ExUnit.Case
+  use AshEvents.RepoCase, async: false
 
-  # require Ash.Query
+  alias AshEvents.Test.Accounts
+  alias AshEvents.Test.Events
+  alias AshEvents.Test.Accounts.User
+  alias AshEvents.Test.Accounts.Commands
+  alias AshEvents.Test.Events.EventResource
 
-  # defmodule Domain do
-  #   use Ash.Domain
+  import Ash.Test
 
-  #   resources do
-  #     allow_unregistered?(true)
-  #   end
-  # end
+  setup do
+    Ash.bulk_destroy!(EventResource, :destroy, %{})
+    Ash.bulk_destroy!(User, :destroy, %{})
+    :ok
+  end
 
-  # defmodule Event do
-  #   use Ash.Resource,
-  #     domain: Domain,
-  #     data_layer: Ash.DataLayer.Ets
+  test "executing commands creates event & dispatches to event-handlers" do
+    user =
+      Commands.create_user!(%{
+        data: %{
+          email: "user@example.com",
+          given_name: "John",
+          family_name: "Doe"
+        },
+        metadata: %{
+          source: "Manual registration"
+        }
+      })
 
-  #   actions do
-  #     default_accept :*
-  #     defaults([:read, :create, :update, :destroy])
+    assert user.id
+    assert user.email == "user@example.com"
+    assert user.given_name == "John"
+    assert user.family_name == "Doe"
 
-  #     update :process do
-  #       change(set_attribute(:processed, true))
-  #     end
-  #   end
+    [event] = Ash.read!(EventResource)
 
-  #   ets do
-  #     private?(true)
-  #   end
+    # ETS apparently doesn't support auto-generating integer ids
+    # assert event.id == 1
+    assert event.name == "accounts_user_created"
+    assert event.version == "1.0"
 
-  #   attributes do
-  #     uuid_primary_key(:id)
-  #     attribute(:input, :map, allow_nil?: false, public?: true)
-  #     attribute(:resource, :atom, allow_nil?: false, public?: true)
-  #     attribute(:action, :atom, allow_nil?: false, public?: true)
-  #     attribute(:processed, :boolean, allow_nil?: false, default: false, public?: true)
+    assert event.data == %{
+             "email" => "user@example.com",
+             "given_name" => "John",
+             "family_name" => "Doe"
+           }
 
-  #     attribute :timestamp, :utc_datetime_usec do
-  #       public? true
-  #       default(&DateTime.utc_now/0)
-  #       allow_nil?(false)
-  #       writable?(false)
-  #     end
-  #   end
-  # end
+    assert(
+      event.metadata == %{
+        "some_value" => "something",
+        "command_resource" => "AshEvents.Test.Accounts.Commands",
+        "command_name" => "create_user",
+        "source" => "Manual registration"
+      }
+    )
+  end
 
-  # defmodule Profile do
-  #   use Ash.Resource,
-  #     domain: Domain,
-  #     data_layer: Ash.DataLayer.Ets,
-  #     extensions: [AshEvents]
+  test "error from event-handlers causes rollback" do
+    result =
+      Commands.create_user(%{
+        data: %{
+          email: "user@example.com",
+          given_name: "John"
+        },
+        metadata: %{
+          source: "Manual registration"
+        }
+      })
 
-  #   events do
-  #     event_resource(Event)
-  #   end
+    assert_has_error(result, fn
+      %Ash.Error.Changes.Required{field: :family_name} -> true
+    end)
+  end
 
-  #   actions do
-  #     default_accept :*
-  #     defaults([:create, :read, :update, :destroy])
-  #   end
+  test "error in command's before_dispatch causes rollback" do
+    {:error, %{errors: [%{error: "Ooops"}]}} =
+      Commands.create_user_before_fail(%{
+        data: %{
+          email: "user@example.com",
+          given_name: "John"
+        },
+        metadata: %{
+          source: "Manual registration"
+        }
+      })
+  end
 
-  #   ets do
-  #     private?(true)
-  #   end
+  test "updates on entities work as expected" do
+    user =
+      Commands.create_user!(%{
+        data: %{
+          email: "user@example.com",
+          given_name: "John",
+          family_name: "Doe"
+        },
+        metadata: %{
+          source: "Manual registration"
+        }
+      })
 
-  #   attributes do
-  #     uuid_primary_key(:id)
-  #     attribute(:bio, :string, public?: true)
-  #   end
+    assert user.id
+    assert user.email == "user@example.com"
+    assert user.given_name == "John"
+    assert user.family_name == "Doe"
 
-  #   relationships do
-  #     belongs_to :user, AshEventsTest.User do
-  #       public? true
-  #       allow_nil?(false)
-  #       attribute_writable?(true)
-  #     end
-  #   end
+    updated_user =
+      Commands.update_user!(%{
+        entity_id: user.id,
+        data: %{
+          given_name: "Jane"
+        }
+      })
 
-  #   code_interface do
-  #     define(:create)
-  #   end
-  # end
+    assert updated_user.id == user.id
 
-  # defmodule User do
-  #   use Ash.Resource,
-  #     domain: Domain,
-  #     data_layer: Ash.DataLayer.Ets,
-  #     extensions: [AshEvents]
+    [event1, event2] =
+      EventResource
+      |> Ash.Query.sort([{:occurred_at, :asc}])
+      |> Ash.read!()
 
-  #   events do
-  #     event_resource(Event)
-  #   end
+    assert event1.name == "accounts_user_created"
+    assert event2.name == "accounts_user_updated"
+  end
 
-  #   ets do
-  #     private?(true)
-  #   end
+  test "event replay works as expected" do
+    user =
+      Commands.create_user!(%{
+        data: %{
+          email: "user@example.com",
+          given_name: "John",
+          family_name: "Doe"
+        },
+        metadata: %{
+          source: "Manual registration"
+        }
+      })
 
-  #   attributes do
-  #     uuid_primary_key(:id)
-  #     attribute(:username, :string, allow_nil?: false, public?: true)
-  #   end
+    assert user.id
+    assert user.email == "user@example.com"
+    assert user.given_name == "John"
+    assert user.family_name == "Doe"
 
-  #   actions do
-  #     default_accept :*
-  #     defaults([:read, :update, :destroy])
+    updated_user =
+      Commands.update_user!(%{
+        entity_id: user.id,
+        data: %{
+          given_name: "Jane"
+        }
+      })
 
-  #     create :create do
-  #       primary?(true)
+    Ash.bulk_destroy!(User, :destroy, %{})
 
-  #       change(
-  #         after_action(fn _changeset, result, _context ->
-  #           Profile.create!(%{user_id: result.id, bio: "Initial Bio!"})
+    {:error, %Ash.Error.Query.NotFound{}} = Accounts.get_user_by_id(user.id)
 
-  #           {:ok, result}
-  #         end)
-  #       )
-  #     end
-  #   end
+    :ok = Events.replay_events()
 
-  #   code_interface do
-  #     define(:create)
-  #   end
+    user = Accounts.get_user_by_id!(user.id)
 
-  #   relationships do
-  #     has_one(:profile, Profile, public?: true)
-  #   end
-  # end
-
-  # test "test" do
-  #   assert [] = Ash.read!(Event)
-  #   User.create!(%{username: "fred"})
-  #   assert [_, _] = Ash.read!(Event)
-  #   assert [_] = Ash.read!(User)
-  #   assert [_] = Ash.read!(Profile)
-  # end
-
-  # defp process() do
-  #   Event
-  #   |> Ash.Query.sort(timestamp: :asc, id: :desc)
-  #   |> Ash.Query.filter(processed == false)
-  #   |> Api.read!()
-  #   |> Enum.each(fn event ->
-  #     event.resource
-  #     |> Ash.Changeset.for_create(event.action, event.input)
-  #     |> Api.create!()
-
-  #     event
-  #     |> Ash.Changeset.for_update(:process)
-  #     |> Api.update!()
-  #   end)
-  # end
+    assert user.id == updated_user.id
+  end
 end

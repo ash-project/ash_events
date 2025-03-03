@@ -43,6 +43,11 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
           {AshEvents.Commands.Resource.RunCommand,
            [event_resource: event_resource, command: command]}
       )
+      |> then(fn dsl ->
+        if command.code_interface?,
+          do: Ash.Resource.Builder.add_interface(dsl, command.name),
+          else: dsl
+      end)
     end)
   end
 end

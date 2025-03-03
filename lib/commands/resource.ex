@@ -1,4 +1,4 @@
-defmodule AshEvents.Commands.Resource do
+defmodule AshEvents.CommandResource do
   defmodule Command do
     defstruct [
       :name,
@@ -10,6 +10,7 @@ defmodule AshEvents.Commands.Resource do
       :constrains,
       :before_dispatch,
       :after_dispatch,
+      :code_interface?,
       arguments: []
     ]
   end
@@ -84,6 +85,13 @@ defmodule AshEvents.Commands.Resource do
         Constraints for the return type. See `Ash.Type` for more.
         """
       ],
+      code_interface?: [
+        type: :boolean,
+        default: true,
+        doc: """
+        Whether to generate a code interface for this command. Defaults to true.
+        """
+      ],
       before_dispatch: [
         type:
           {:or,
@@ -148,6 +156,6 @@ end
 
 defmodule AshEvents.Commands.Resource.Info do
   use Spark.InfoGenerator,
-    extension: AshEvents.Commands.Resource,
+    extension: AshEvents.CommandResource,
     sections: [:commands]
 end

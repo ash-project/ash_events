@@ -3,7 +3,7 @@ defmodule AshEvents.Test.Accounts.Commands do
 
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
-    extensions: [AshEvents.Commands.Resource],
+    extensions: [AshEvents.CommandResource],
     data_layer: AshPostgres.DataLayer
 
   # Even though a command resource will never persist any data to
@@ -81,13 +81,5 @@ defmodule AshEvents.Test.Accounts.Commands do
         {:ok, put_in(event_args, [:metadata, :some_value], "something")}
       end
     end
-  end
-
-  code_interface do
-    define :create_user
-    define :create_user_before_fail
-    define :create_user_after_fail
-    define :update_user
-    define :destroy_user
   end
 end

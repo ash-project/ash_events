@@ -14,6 +14,11 @@ defmodule AshEvents.Test.Accounts.User do
 
     create_command :create, "1.0" do
       accept [:id, :email, :given_name, :family_name]
+
+      on_success fn user, ctx ->
+        IO.inspect("User created: #{user.email}")
+        {:ok, user}
+      end
     end
   end
 

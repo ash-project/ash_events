@@ -9,7 +9,5 @@ defmodule AshEvents.Test.Accounts do
       define :update_user, action: :update
       define :destroy_user, action: :destroy
     end
-
-    # resource(AshEvents.Test.Accounts.Commands)
   end
 end

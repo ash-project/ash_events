@@ -1,28 +1,35 @@
 defmodule AshEvents.EventResource.Actions.Replay do
   require Ash.Query
 
-  def run(input, module_opts, ctx) do
+  def run(input, run_opts, ctx) do
     opts = Ash.Context.to_opts(ctx)
 
-    handlers = module_opts[:handlers]
-
-    process_event_func = fn event, opts ->
-      Enum.reduce_while(handlers, :ok, fn %{module: handler, event_name_prefix: prefix}, :ok ->
-        if String.starts_with?(event.name, prefix) do
-          case handler.process_event(event, opts) do
-            :ok -> {:cont, :ok}
-            {:error, error} -> {:halt, {:error, error}}
-          end
-        else
-          {:cont, :ok}
-        end
-      end)
-    end
+    overrides = run_opts[:overrides]
 
     input.resource
     |> Ash.stream!(opts)
     |> Stream.map(fn event ->
-      process_event_func.(event, opts)
+      input = Map.put(event.data, :id, event.entity_id)
+
+      override =
+        Enum.find(overrides, fn
+          %{event_resource: resource, event_action: action, version_prefix: prefix} ->
+            event.ash_events_resource == resource and
+              event.ash_events_action == action and
+              String.starts_with?(event.version, prefix)
+        end)
+
+      if override do
+        Enum.each(override.route_to, fn route_to ->
+          route_to.resource
+          |> Ash.Changeset.for_create(route_to.action, input, opts)
+          |> Ash.create!()
+        end)
+      else
+        event.ash_events_resource
+        |> Ash.Changeset.for_create(event.ash_events_action, input, opts)
+        |> Ash.create!()
+      end
     end)
     |> Stream.take_while(fn
       :ok -> true

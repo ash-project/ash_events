@@ -13,8 +13,10 @@ defmodule AshEvents.Test.Events.EventResource do
     belongs_to_actor :user, AshEvents.Test.Accounts.User
   end
 
-  event_handlers do
-    event_handler AshEvents.Test.Accounts.EventHandler, event_name_prefix: "accounts_"
+  replay_overrides do
+    replay_override AshEvents.Test.Accounts.User, :create_ash_events_impl, "1." do
+      route_to AshEvents.Test.Accounts.User, :create_v1
+    end
   end
 
   actions do

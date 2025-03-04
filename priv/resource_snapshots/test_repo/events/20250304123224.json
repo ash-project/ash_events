@@ -17,16 +17,6 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "name",
-      "type": "text"
-    },
-    {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
       "source": "entity_id",
       "type": "uuid"
     },
@@ -69,6 +59,26 @@
       "size": null,
       "source": "occurred_at",
       "type": "utc_datetime_usec"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "ash_events_resource",
+      "type": "text"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "ash_events_action",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -76,7 +86,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "67CCF7C2FFE1F4B7941BDE7403D92B4D4C0CDA51566494BDCC6138E677F88EE8",
+  "hash": "BF3A0BCB6777A61029E64BF32EE9A73AAF044FF8B4C366526ABE53077E718F9A",
   "identities": [],
   "multitenancy": {
     "attribute": null,

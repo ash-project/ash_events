@@ -20,7 +20,6 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
       generated?: true,
       allow_nil?: false
     )
-    |> Ash.Resource.Builder.add_attribute(:name, :string, allow_nil?: false)
     |> Ash.Resource.Builder.add_attribute(:entity_id, projection_primary_id_type,
       allow_nil?: false
     )
@@ -45,5 +44,7 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
       allow_nil?: false,
       default: &DateTime.utc_now/0
     )
+    |> Ash.Resource.Builder.add_attribute(:ash_events_resource, :atom, allow_nil?: false)
+    |> Ash.Resource.Builder.add_attribute(:ash_events_action, :atom, allow_nil?: false)
   end
 end

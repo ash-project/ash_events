@@ -1,4 +1,4 @@
-defmodule AshEvents.TestRepo.Migrations.AddDbSetup do
+defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
   @moduledoc """
   Updates resources based on their most recent snapshots.
 
@@ -28,7 +28,6 @@ defmodule AshEvents.TestRepo.Migrations.AddDbSetup do
 
     create table(:events, primary_key: false) do
       add(:id, :bigserial, null: false, primary_key: true)
-      add(:name, :text, null: false)
       add(:entity_id, :uuid, null: false)
       add(:version, :text, null: false, default: "1.0")
       add(:metadata, :map, null: false, default: %{})
@@ -38,6 +37,9 @@ defmodule AshEvents.TestRepo.Migrations.AddDbSetup do
         null: false,
         default: fragment("(now() AT TIME ZONE 'utc')")
       )
+
+      add(:ash_events_resource, :text, null: false)
+      add(:ash_events_action, :text, null: false)
     end
   end
 

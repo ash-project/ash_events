@@ -3,8 +3,8 @@ defmodule AshEvents.Test.Events do
   use Ash.Domain
 
   resources do
-    resource(AshEvents.Test.Events.EventResource) do
-      define(:replay_events, action: :replay)
+    resource AshEvents.Test.Events.EventResource do
+      define :replay_events, action: :replay
     end
   end
 end

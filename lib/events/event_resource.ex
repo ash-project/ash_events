@@ -13,11 +13,6 @@ defmodule AshEvents.EventResource do
     attributes do
       integer_primary_key :id
 
-      attribute :name, :string do
-        public? true
-        allow_nil? false
-      end
-
       attribute :version, :string do
         public? true
         allow_nil? false
@@ -45,48 +40,71 @@ defmodule AshEvents.EventResource do
     end
   """
 
-  defmodule EventHandlerEntry do
-    defstruct [:module, :event_name_prefix]
+  defmodule ReplayOverride do
+    defstruct [:event_resource, :event_action, :version_prefix, :route_to]
   end
 
-  @event_handler %Spark.Dsl.Entity{
-    name: :event_handler,
+  defmodule RouteTo do
+    defstruct [:resource, :action]
+  end
+
+  @route_to %Spark.Dsl.Entity{
+    name: :route_to,
     describe: """
-    A module implementing the AshEvents.EventHandler-behaviour, which will be used to process
-    events as they are created, and during an event log replay.
+    Routes the event to a different action.
+    """,
+    target: RouteTo,
+    schema: [
+      resource: [
+        type: :atom,
+        required: true
+      ],
+      action: [
+        type: :atom,
+        required: true
+      ]
+    ],
+    args: [:resource, :action]
+  }
+
+  @replay_override %Spark.Dsl.Entity{
+    name: :replay_override,
+    describe: """
+    Overrides the default event replay behavior for a specific resource action.
     """,
     examples: [
       """
-      event_handler MyApp.SomeDomain.EventHandler do
-        prefix "user_"
+      replay_override MyApp.Accounts.User, :create_ash_events_impl, "1." do
+        route_to MyApp.Account.User, :create_v1
       end
       """
     ],
-    target: AshEvents.EventResource.EventHandlerEntry,
+    target: ReplayOverride,
     schema: [
-      module: [
-        type: {:behaviour, AshEvents.EventHandler},
+      event_resource: [
+        type: :atom,
         required: true
       ],
-      event_name_prefix: [
+      event_action: [
+        type: :atom,
+        required: true
+      ],
+      version_prefix: [
         type: :string,
         doc: """
-        If a prefix is set, the event handler will only receive events whose name matches the
-        prefix. Without a prefix, the event handler will receive all events.
-
-        Example: prefix `accounts_´ will match event `accounts_user_created`,
-        but not `blog_comment_added`.
+        A prefix to match the event's version on. If set, the event will only be routed here
+        if the prefix matches the beginning of the version string.
         """,
-        required: false,
-        default: ""
+        required: true
       ]
     ],
-    args: [:module]
+    args: [:event_resource, :event_action, :version_prefix],
+    entities: [route_to: [@route_to]]
   }
 
-  @event_handlers %Spark.Dsl.Section{
-    name: :event_handlers,
-    entities: [@event_handler]
+  @replay_overrides %Spark.Dsl.Section{
+    name: :replay_overrides,
+    entities: [@replay_override]
   }
 
   @belongs_to_actor %Spark.Dsl.Entity{
@@ -161,12 +179,12 @@ defmodule AshEvents.EventResource do
       AshEvents.EventResource.Transformers.AddAttributes,
       AshEvents.EventResource.Transformers.ValidateBelongsToActor
     ],
-    sections: [@event_resource, @event_handlers]
+    sections: [@event_resource, @replay_overrides]
 end
 
 defmodule AshEvents.EventResource.Info do
   @moduledoc "Introspection helpers for `AshEvents.EventResource`"
   use Spark.InfoGenerator,
     extension: AshEvents.EventResource,
-    sections: [:event_resource, :event_handlers]
+    sections: [:event_resource, :replay_overrides]
 end

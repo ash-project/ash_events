@@ -20,10 +20,29 @@ defmodule AshEvents.Test.Accounts.User do
         {:ok, user}
       end
     end
+
+    update_command :update, "1.0" do
+      accept [:given_name, :family_name]
+      allow_nil_input [:given_name, :family_name]
+
+      on_success fn user, ctx ->
+        IO.inspect("User updated: #{user.email}")
+        {:ok, user}
+      end
+    end
+
+    destroy_command :destroy, "1.0" do
+      primary? true
+
+      on_success fn user, ctx ->
+        IO.inspect("User destroyed: #{user.email}")
+        {:ok, user}
+      end
+    end
   end
 
   actions do
-    defaults [:read, :destroy]
+    defaults [:read]
 
     read :get_by_id do
       get? true
@@ -34,10 +53,6 @@ defmodule AshEvents.Test.Accounts.User do
 
     create :create_v1 do
       accept [:id, :email, :given_name, :family_name]
-    end
-
-    update :update do
-      accept [:given_name, :family_name]
     end
   end
 

@@ -5,7 +5,7 @@ defmodule AshEvents.PersistEvent do
 
     [primary_key] = Ash.Resource.Info.primary_key(input.resource)
 
-    {metadata, params} = Map.split(input.params, [:event_metadata])
+    {extras, params} = Map.split(input.params, [:event_metadata, :record])
 
     {record, primary_key} =
       case action.type do
@@ -13,7 +13,22 @@ defmodule AshEvents.PersistEvent do
           record =
             input.resource
             |> Ash.Changeset.for_create(run_opts[:action], params, opts)
-            |> Ash.create!()
+            |> Ash.create!(opts)
+
+          {record, Map.get(record, primary_key)}
+
+        :update ->
+          record =
+            extras[:record]
+            |> Ash.Changeset.for_update(run_opts[:action], params, opts)
+            |> Ash.update!(opts)
+
+          {record, Map.get(record, primary_key)}
+
+        :destroy ->
+          record =
+            extras[:record]
+            |> Ash.destroy!(opts ++ [return_destroyed?: true, action: run_opts[:action]])
 
           {record, Map.get(record, primary_key)}
       end
@@ -23,10 +38,11 @@ defmodule AshEvents.PersistEvent do
       :create,
       %{
         data: params,
-        entity_id: primary_key,
+        record_id: primary_key,
         ash_events_resource: input.resource,
         ash_events_action: run_opts[:action],
-        metadata: metadata[:event_metadata]
+        ash_events_action_type: action.type,
+        metadata: extras[:event_metadata] || %{}
       },
       opts
     )

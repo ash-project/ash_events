@@ -28,7 +28,7 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
     create table(:events, primary_key: false) do
       add(:id, :bigserial, null: false, primary_key: true)
-      add(:entity_id, :uuid, null: false)
+      add(:record_id, :uuid, null: false)
       add(:version, :text, null: false, default: "1.0")
       add(:metadata, :map, null: false, default: %{})
       add(:data, :map, null: false, default: %{})
@@ -40,6 +40,7 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
       add(:ash_events_resource, :text, null: false)
       add(:ash_events_action, :text, null: false)
+      add(:ash_events_action_type, :text, null: false)
     end
   end
 

@@ -17,7 +17,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "entity_id",
+      "source": "record_id",
       "type": "uuid"
     },
     {
@@ -79,6 +79,16 @@
       "size": null,
       "source": "ash_events_action",
       "type": "text"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "ash_events_action_type",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -86,7 +96,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "BF3A0BCB6777A61029E64BF32EE9A73AAF044FF8B4C366526ABE53077E718F9A",
+  "hash": "6C5AD3EC45E4F8E17EDED4C585EE9944A49294C01EB95AE777334723FD00FD20",
   "identities": [],
   "multitenancy": {
     "attribute": null,

@@ -10,8 +10,8 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
   def before?(_), do: true
 
   def transform(dsl) do
-    {:ok, projection_primary_id_type} =
-      AshEvents.EventResource.Info.event_resource_entity_id_type(dsl)
+    {:ok, record_primary_id_type} =
+      AshEvents.EventResource.Info.event_resource_record_id_type(dsl)
 
     dsl
     |> Ash.Resource.Builder.add_attribute(:id, :integer,
@@ -20,9 +20,7 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
       generated?: true,
       allow_nil?: false
     )
-    |> Ash.Resource.Builder.add_attribute(:entity_id, projection_primary_id_type,
-      allow_nil?: false
-    )
+    |> Ash.Resource.Builder.add_attribute(:record_id, record_primary_id_type, allow_nil?: false)
     |> Ash.Resource.Builder.add_attribute(:version, :string, allow_nil?: false, default: "1.0")
     |> Ash.Resource.Builder.add_attribute(:metadata, :map,
       allow_nil?: false,
@@ -46,5 +44,9 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
     )
     |> Ash.Resource.Builder.add_attribute(:ash_events_resource, :atom, allow_nil?: false)
     |> Ash.Resource.Builder.add_attribute(:ash_events_action, :atom, allow_nil?: false)
+    |> Ash.Resource.Builder.add_attribute(:ash_events_action_type, :atom,
+      allow_nil?: false,
+      constraints: [one_of: [:create, :update, :destroy]]
+    )
   end
 end

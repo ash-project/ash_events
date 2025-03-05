@@ -6,7 +6,11 @@ defmodule AshEvents.EventResource do
 
     actions do
       create :create do
-      accept [:name, :version, :entity_id, :data, :metadata]
+        accept [:name, :version, :record_id, :data, :metadata]
+      end
+
+      action :replay do
+        argument :last_event_id, :integer, allow_nil?: true
       end
     end
 
@@ -23,9 +27,9 @@ defmodule AshEvents.EventResource do
         allow_nil? false
       end
 
-      attribute :entity_id, <entity_id_attribute_type> (default :uuid) do
+      attribute :record_id, <record_id_attribute_type> (default :uuid) do
         public? true
-        allow_nil? <entity_id_allow_nil?>
+        allow_nil? <record_id_allow_nil?>
       end
 
       attribute :data, :map do
@@ -35,6 +39,16 @@ defmodule AshEvents.EventResource do
 
       attribute :metadata, :map do
         public? true
+        allow_nil? false
+      end
+
+      attribute :ash_events_resource, :atom do
+        public? false
+        allow_nil? false
+      end
+
+      attribute :ash_events_action, :atom do
+        public? false
         allow_nil? false
       end
     end
@@ -145,18 +159,18 @@ defmodule AshEvents.EventResource do
         """,
         default: []
       ],
-      entity_id_type: [
+      record_id_type: [
         type: :any,
         doc: """
         The type of the primary key used by the system's projections/resources, which will be the
-        type of the `entity_id`-field on the events. Defaults to :uuid.
+        type of the `record_id`-field on the events. Defaults to :uuid.
         """,
         default: :uuid
       ]
-      # entity_id_allow_nil?: [
+      # record_id_allow_nil?: [
       #  type: :boolean,
       #  doc: """
-      #  If set to true, the event's entity_id can be nilable. Default is false.
+      #  If set to true, the event's record_id can be nilable. Default is false.
       #  """,
       #  default: true
       # ]
@@ -166,8 +180,8 @@ defmodule AshEvents.EventResource do
       """
       event_resource do
         create_accept [:some_custom_attribute]
-        entity_id_type :integer (default is :uuid)
-        entity_id_allow_nil? false (default is true)
+        record_id_type :integer (default is :uuid)
+        record_id_allow_nil? false (default is true)
       end
       """
     ]

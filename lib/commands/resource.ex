@@ -1,20 +1,4 @@
 defmodule AshEvents.CommandResource do
-  defmodule Command do
-    defstruct [
-      :name,
-      :description,
-      :transaction?,
-      :event_name,
-      :event_version,
-      :returns,
-      :constrains,
-      :before_dispatch,
-      :on_success,
-      :code_interface?,
-      arguments: []
-    ]
-  end
-
   defmodule CreateCommand do
     defstruct [
       :name,
@@ -42,6 +26,67 @@ defmodule AshEvents.CommandResource do
       metadata: [],
       transaction?: true,
       type: :create,
+      on_success: nil
+    ]
+  end
+
+  defmodule UpdateCommand do
+    defstruct [
+      :name,
+      :primary?,
+      :description,
+      :error_handler,
+      accept: nil,
+      require_attributes: [],
+      allow_nil_input: [],
+      skip_unknown_inputs: [],
+      manual: nil,
+      manual?: false,
+      require_atomic?: Application.compile_env(:ash, :require_atomic_by_default?, true),
+      atomic_upgrade?: true,
+      atomic_upgrade_with: nil,
+      action_select: nil,
+      notifiers: [],
+      atomics: [],
+      delay_global_validations?: false,
+      skip_global_validations?: false,
+      arguments: [],
+      changes: [],
+      reject: [],
+      metadata: [],
+      transaction?: true,
+      touches_resources: [],
+      type: :update,
+      on_success: nil
+    ]
+  end
+
+  defmodule DestroyCommand do
+    defstruct [
+      :name,
+      :primary?,
+      :soft?,
+      :description,
+      :error_handler,
+      manual: nil,
+      require_atomic?: Application.compile_env(:ash, :require_atomic_by_default?, true),
+      skip_unknown_inputs: [],
+      atomic_upgrade?: true,
+      atomic_upgrade_with: nil,
+      action_select: nil,
+      arguments: [],
+      touches_resources: [],
+      delay_global_validations?: false,
+      skip_global_validations?: false,
+      notifiers: [],
+      accept: nil,
+      require_attributes: [],
+      allow_nil_input: [],
+      changes: [],
+      reject: [],
+      transaction?: true,
+      metadata: [],
+      type: :destroy,
       on_success: nil
     ]
   end
@@ -82,6 +127,66 @@ defmodule AshEvents.CommandResource do
     args: [:name, {:optional, :version}]
   }
 
+  @update_command %Spark.Dsl.Entity{
+    name: :update_command,
+    describe: """
+    Declares a command update action, which will generate an event when executed.
+    """,
+    target: UpdateCommand,
+    schema:
+      Ash.Resource.Actions.Update.opt_schema() ++
+        [
+          version: [
+            type: :string,
+            doc: """
+            The version of the resulting event. If you have breaking changes in your
+            input params, increment this.
+            """
+          ],
+          on_success: [
+            type:
+              {:or,
+               [
+                 {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
+                  {Ash.Resource.Action.ImplementationFunction, 2}},
+                 {:spark, Reactor}
+               ]},
+            default: nil
+          ]
+        ],
+    args: [:name, {:optional, :version}]
+  }
+
+  @destroy_command %Spark.Dsl.Entity{
+    name: :destroy_command,
+    describe: """
+    Declares a command destroy action, which will generate an event when executed.
+    """,
+    target: DestroyCommand,
+    schema:
+      Ash.Resource.Actions.Update.opt_schema() ++
+        [
+          version: [
+            type: :string,
+            doc: """
+            The version of the resulting event. If you have breaking changes in your
+            input params, increment this.
+            """
+          ],
+          on_success: [
+            type:
+              {:or,
+               [
+                 {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
+                  {Ash.Resource.Action.ImplementationFunction, 2}},
+                 {:spark, Reactor}
+               ]},
+            default: nil
+          ]
+        ],
+    args: [:name, {:optional, :version}]
+  }
+
   @commands %Spark.Dsl.Section{
     name: :commands,
     describe: """
@@ -98,7 +203,7 @@ defmodule AshEvents.CommandResource do
         doc: "The event resource that creates and stores events."
       ]
     ],
-    entities: [@create_command]
+    entities: [@create_command, @update_command, @destroy_command]
   }
 
   use Spark.Dsl.Extension,

@@ -2,16 +2,13 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
   @moduledoc false
   use Spark.Dsl.Transformer
 
-  # @primary_key_type Application.compile_env(:ash_events, :event_resource_primary_key_type) ||
-  #                    :integer
-
-  def before?(AshEvents.EventResource.Transformers.AddActions), do: true
-  # def before?(AshEvents.EventResource), do: true
   def before?(_), do: true
 
   def transform(dsl) do
     {:ok, record_primary_id_type} =
       AshEvents.EventResource.Info.event_resource_record_id_type(dsl)
+
+    persist_actor_ids = AshEvents.EventResource.Info.event_resource(dsl)
 
     dsl
     |> Ash.Resource.Builder.add_attribute(:id, :integer,
@@ -48,5 +45,16 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
       allow_nil?: false,
       constraints: [one_of: [:create, :update, :destroy]]
     )
+    |> then(fn dsl ->
+      Enum.reduce(persist_actor_ids, dsl, fn persist_actor_id, dsl ->
+        Ash.Resource.Builder.add_attribute(
+          dsl,
+          persist_actor_id.name,
+          persist_actor_id.attribute_type,
+          public?: persist_actor_id.public?,
+          allow_nil?: persist_actor_id.allow_nil?
+        )
+      end)
+    end)
   end
 end

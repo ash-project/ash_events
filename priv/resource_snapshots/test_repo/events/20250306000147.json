@@ -89,6 +89,26 @@
       "size": null,
       "source": "ash_events_action_type",
       "type": "text"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "user_id",
+      "type": "uuid"
+    },
+    {
+      "allow_nil?": true,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "system_actor",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -96,7 +116,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "6C5AD3EC45E4F8E17EDED4C585EE9944A49294C01EB95AE777334723FD00FD20",
+  "hash": "07A14D12ED970FA1641C1D122D36FE932AF37C40E6F2EAFDF48176DD0DBFFAC4",
   "identities": [],
   "multitenancy": {
     "attribute": null,

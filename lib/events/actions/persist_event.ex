@@ -2,6 +2,10 @@ defmodule AshEvents.PersistEvent do
   def run(input, run_opts, context) do
     action = Ash.Resource.Info.action(input.resource, run_opts[:action])
     opts = Ash.Context.to_opts(context)
+    actor = opts[:actor]
+    event_resource = run_opts[:event_resource]
+
+    persist_actor_ids = AshEvents.EventResource.Info.event_resource(event_resource)
 
     [primary_key] = Ash.Resource.Info.primary_key(input.resource)
 
@@ -33,19 +37,27 @@ defmodule AshEvents.PersistEvent do
           {record, Map.get(record, primary_key)}
       end
 
+    event_params = %{
+      data: params,
+      record_id: primary_key,
+      ash_events_resource: input.resource,
+      ash_events_action: run_opts[:action],
+      ash_events_action_type: action.type,
+      metadata: extras[:event_metadata] || %{}
+    }
+
+    event_params =
+      Enum.reduce(persist_actor_ids, event_params, fn persist_actor_id, input ->
+        if is_struct(actor) and actor.__struct__ == persist_actor_id.destination do
+          primary_key = Map.get(actor, hd(Ash.Resource.Info.primary_key(actor.__struct__)))
+          Map.put(input, persist_actor_id.name, primary_key)
+        else
+          input
+        end
+      end)
+
     run_opts[:event_resource]
-    |> Ash.Changeset.for_create(
-      :create,
-      %{
-        data: params,
-        record_id: primary_key,
-        ash_events_resource: input.resource,
-        ash_events_action: run_opts[:action],
-        ash_events_action_type: action.type,
-        metadata: extras[:event_metadata] || %{}
-      },
-      opts
-    )
+    |> Ash.Changeset.for_create(:create, event_params, opts)
     |> Ash.create!()
 
     case run_opts[:on_success] do

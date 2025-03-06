@@ -121,29 +121,21 @@ defmodule AshEvents.EventResource do
     entities: [@replay_override]
   }
 
-  @belongs_to_actor %Spark.Dsl.Entity{
-    name: :belongs_to_actor,
+  @persist_actor_id %Spark.Dsl.Entity{
+    name: :persist_actor_id,
     describe: """
-    Creates a belongs_to relationship for the actor resource. When creating a new event,
-    if the actor on the action is set and matches the resource type, the event will be
-    related to the actor. If your actors are polymorphic or varying types, declare a
-    belongs_to_actor for each type.
-
-    A reference is also created with `on_delete: :nilify` and `on_update: :update`
-
-    If you need more complex relationships, set `define_attribute? false` and add
-    the relationship via a mixin.
-
-    If your actor is not a resource, add a mixin and with a change for all creates
-    that sets the actor's to one your attributes.
+    Store the actor's id in the event.
+    When creating a new event, if the actor on the action is set and matches the resource type,
+    it's id will be stored in the declared field. If your actors are polymorphic or varying
+    types, declare a persist_actor_id for each type.
     """,
     examples: [
-      "belongs_to_actor :user, MyApp.Accounts.User"
+      "persist_actor_id_id :user_id, MyApp.Accounts.User"
     ],
     no_depend_modules: [:destination],
-    target: AshEvents.EventResource.BelongsToActor,
+    target: AshEvents.EventResource.PersistActorId,
     args: [:name, :destination],
-    schema: AshEvents.EventResource.BelongsToActor.schema()
+    schema: AshEvents.EventResource.PersistActorId.schema()
   }
 
   @event_resource %Spark.Dsl.Section{
@@ -162,26 +154,19 @@ defmodule AshEvents.EventResource do
       record_id_type: [
         type: :any,
         doc: """
-        The type of the primary key used by the system's projections/resources, which will be the
-        type of the `record_id`-field on the events. Defaults to :uuid.
+        The type of the primary key used by the system, which will be the type of the
+        `record_id`-field on the events. Defaults to :uuid. Note that this means that
+        all your resources you want to create events for must have a primary key of
+        this type.
         """,
         default: :uuid
       ]
-      # record_id_allow_nil?: [
-      #  type: :boolean,
-      #  doc: """
-      #  If set to true, the event's record_id can be nilable. Default is false.
-      #  """,
-      #  default: true
-      # ]
     ],
-    entities: [@belongs_to_actor],
+    entities: [@persist_actor_id],
     examples: [
       """
       event_resource do
-        create_accept [:some_custom_attribute]
         record_id_type :integer (default is :uuid)
-        record_id_allow_nil? false (default is true)
       end
       """
     ]
@@ -191,7 +176,7 @@ defmodule AshEvents.EventResource do
     transformers: [
       AshEvents.EventResource.Transformers.AddActions,
       AshEvents.EventResource.Transformers.AddAttributes,
-      AshEvents.EventResource.Transformers.ValidateBelongsToActor
+      AshEvents.EventResource.Transformers.ValidatePersistActorId
     ],
     sections: [@event_resource, @replay_overrides]
 end

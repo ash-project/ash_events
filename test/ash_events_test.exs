@@ -4,11 +4,9 @@ defmodule AshEventsTest do
   alias AshEvents.Test.Accounts
   alias AshEvents.Test.Events
   alias AshEvents.Test.Accounts.User
-  alias AshEvents.Test.Accounts.Commands
   alias AshEvents.Test.Events.EventResource
 
   require Ash.Query
-  import Ash.Test
 
   setup do
     Ash.bulk_destroy!(EventResource, :destroy, %{})
@@ -27,11 +25,17 @@ defmodule AshEventsTest do
         event_metadata: %{omg: "lol"}
       })
 
+    opts = [actor: user]
+
     [event] = Ash.read!(EventResource)
 
-    user = User.update!(user, %{given_name: "Jane"})
+    _user =
+      User.update!(user, %{given_name: "Jane"},
+        actor: %AshEvents.Test.Events.SystemActor{name: "Some system worker"}
+      )
 
     [event1, event2] = Ash.read!(EventResource)
+
     Ash.bulk_destroy!(User, :destroy_ash_events_impl, %{})
 
     [] = Ash.read!(User)
@@ -42,7 +46,7 @@ defmodule AshEventsTest do
 
     assert user.given_name == "Jane"
 
-    res = User.destroy!(user)
+    res = User.destroy!(user, opts)
 
     [] = Ash.read!(User)
 
@@ -60,5 +64,7 @@ defmodule AshEventsTest do
     [user] = Ash.read!(User)
 
     assert user.given_name == "Jane"
+
+    IO.inspect(events)
   end
 end

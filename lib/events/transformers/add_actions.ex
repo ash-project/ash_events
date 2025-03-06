@@ -5,9 +5,13 @@ defmodule AshEvents.EventResource.Transformers.AddActions do
   @add_destroy? Application.compile_env(:ash_events, :add_event_resource_destroy?) || false
 
   def transform(dsl) do
-    {:ok, extra_create_accepts} = AshEvents.EventResource.Info.event_resource_create_accept(dsl)
+    # {:ok, extra_create_accepts} = AshEvents.EventResource.Info.event_resource_create_accept(dsl)
 
     replay_overrides = AshEvents.EventResource.Info.replay_overrides(dsl)
+
+    persist_actor_ids =
+      AshEvents.EventResource.Info.event_resource(dsl)
+      |> Enum.map(& &1.name)
 
     dsl
     |> Ash.Resource.Builder.add_action(:create, :create,
@@ -21,7 +25,7 @@ defmodule AshEvents.EventResource.Transformers.AddActions do
             :ash_events_resource,
             :ash_events_action,
             :ash_events_action_type
-          ] ++ extra_create_accepts
+          ] ++ persist_actor_ids
         )
     )
     |> Ash.Resource.Builder.add_action(:action, :replay,

@@ -1,12 +1,10 @@
-defmodule AshEvents.EventResource.BelongsToActor do
-  @moduledoc "Represents a belongs_to_actor relationship on a event resource"
+defmodule AshEvents.EventResource.PersistActorId do
+  @moduledoc "Adds a field (not relationship) on the event resource to persist the actor id"
 
   defstruct [
     :allow_nil?,
-    :domain,
     :attribute_type,
     :destination,
-    :define_attribute?,
     :public?,
     :name
   ]
@@ -16,29 +14,20 @@ defmodule AshEvents.EventResource.BelongsToActor do
           public?: boolean,
           attribute_type: term,
           destination: Ash.Resource.t(),
-          define_attribute?: boolean,
           name: atom
         }
 
   @schema [
     name: [
       type: :atom,
-      doc: "The name of the relationship to use for the actor (e.g. :user)",
+      doc: "The name of the field to use for the actor id (e.g. :user_id)",
       required: true
     ],
     allow_nil?: [
       type: :boolean,
       default: true,
       doc: """
-      Whether this relationship must always be present, e.g: must be included
-      on creation, and never removed (it may be modified). The generated
-      attribute will not allow nil values.
-      """
-    ],
-    domain: [
-      type: :atom,
-      doc: """
-      The Domain module to use when working with the related entity.
+      Whether this attribute can be nil. If false, the attribute will be required.
       """
     ],
     attribute_type: [

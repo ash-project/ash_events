@@ -41,6 +41,8 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
       add(:ash_events_resource, :text, null: false)
       add(:ash_events_action, :text, null: false)
       add(:ash_events_action_type, :text, null: false)
+      add(:user_id, :uuid)
+      add(:system_actor, :text)
     end
   end
 

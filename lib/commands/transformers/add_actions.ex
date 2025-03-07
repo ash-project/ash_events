@@ -10,7 +10,7 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
     description: "The metadata to store with the event."
   }
 
-  defp build_generic_action(action, dsl, event_resource, new_action_name, generic_name) do
+  defp build_generic_action(action, dsl, event_resource, new_action_name) do
     action_accept = Map.get(action, :accept) || []
 
     arguments =
@@ -43,7 +43,7 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
       |> Enum.uniq_by(& &1.name)
 
     %Ash.Resource.Actions.Action{
-      name: generic_name,
+      name: action.name,
       description: action.description,
       returns: :struct,
       constraints: [instance_of: dsl.persist.module],
@@ -74,7 +74,7 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
       action_impl_name = :"#{action.name}_ash_events_impl"
 
       generic_action =
-        build_generic_action(action, dsl, event_resource, action_impl_name, action.name)
+        build_generic_action(action, dsl, event_resource, action_impl_name)
 
       dsl
       |> Spark.Dsl.Transformer.add_entity([:actions], generic_action)
@@ -86,16 +86,14 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
     Enum.reduce(commands, {:ok, dsl}, fn action, {:ok, dsl} ->
       action_impl_data = build_action_impl_data(action)
       action_impl_name = :"#{action.name}_ash_events_impl"
-      generic_name = :"#{action.name}_ash_events_generic"
 
       generic_action =
-        build_generic_action(action, dsl, event_resource, action_impl_name, generic_name)
+        build_generic_action(action, dsl, event_resource, action_impl_name)
         |> Map.update(:arguments, [], &Enum.concat(&1, [record_arg]))
 
       dsl
       |> Spark.Dsl.Transformer.add_entity([:actions], generic_action)
       |> Ash.Resource.Builder.add_action(:update, action_impl_name, action_impl_data)
-      |> Ash.Resource.Builder.add_interface(action.name, action: generic_name, args: [:record])
     end)
   end
 
@@ -106,13 +104,12 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
       generic_name = :"#{action.name}_ash_events_generic"
 
       generic_action =
-        build_generic_action(action, dsl, event_resource, action_impl_name, generic_name)
+        build_generic_action(action, dsl, event_resource, action_impl_name)
         |> Map.update(:arguments, [], &Enum.concat(&1, [record_arg]))
 
       dsl
       |> Spark.Dsl.Transformer.add_entity([:actions], generic_action)
       |> Ash.Resource.Builder.add_action(:destroy, action_impl_name, action_impl_data)
-      |> Ash.Resource.Builder.add_interface(action.name, action: generic_name, args: [:record])
     end)
   end
 

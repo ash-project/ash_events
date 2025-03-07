@@ -15,8 +15,6 @@ defmodule AshEventsTest do
   end
 
   test "test wrapped actions & event replay" do
-    actions = Ash.Resource.Info.actions(User)
-
     user =
       Accounts.create_user!(%{
         email: "user@example.com",
@@ -27,14 +25,14 @@ defmodule AshEventsTest do
 
     opts = [actor: user]
 
-    [event] = Ash.read!(EventResource)
+    [_event] = Ash.read!(EventResource)
 
     _user =
-      User.update!(user, %{given_name: "Jane"},
+      Accounts.update_user!(user, %{given_name: "Jane"},
         actor: %AshEvents.Test.Events.SystemActor{name: "Some system worker"}
       )
 
-    [event1, event2] = Ash.read!(EventResource)
+    [_event1, _event2] = Ash.read!(EventResource)
 
     Ash.bulk_destroy!(User, :destroy_ash_events_impl, %{})
 
@@ -46,7 +44,7 @@ defmodule AshEventsTest do
 
     assert user.given_name == "Jane"
 
-    res = User.destroy!(user, opts)
+    Accounts.destroy_user!(user, opts)
 
     [] = Ash.read!(User)
 
@@ -65,6 +63,31 @@ defmodule AshEventsTest do
 
     assert user.given_name == "Jane"
 
-    IO.inspect(events)
+    new_user =
+      User
+      |> AshEvents.Changeset.for_create(
+        :create,
+        %{email: "lol", given_name: "asfas", family_name: "omg", event_metadata: %{omg: "lol"}},
+        opts
+      )
+      |> AshEvents.create!()
+
+    new_user =
+      new_user
+      |> AshEvents.Changeset.for_update(
+        :update,
+        %{given_name: "lol", family_name: "omg", event_metadata: %{omg: "lol"}},
+        opts
+      )
+      |> AshEvents.update!()
+
+    _destroyed =
+      new_user
+      |> AshEvents.Changeset.for_destroy(
+        :destroy,
+        %{},
+        opts
+      )
+      |> AshEvents.destroy!()
   end
 end

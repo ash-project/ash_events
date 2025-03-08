@@ -15,7 +15,8 @@ defmodule AshEvents.Test.Events.EventResource do
   end
 
   replay_overrides do
-    replay_override AshEvents.Test.Accounts.User, :create_ash_events_impl, "1." do
+    replay_override AshEvents.Test.Accounts.User, :create_ash_events_impl do
+      versions([1])
       route_to AshEvents.Test.Accounts.User, :create_v1
     end
   end

@@ -69,10 +69,10 @@ defmodule AshEvents.EventResource.Actions.Replay do
 
       override =
         Enum.find(overrides, fn
-          %{event_resource: resource, event_action: action, version_prefix: prefix} ->
+          %{event_resource: resource, event_action: action, versions: versions} ->
             event.ash_events_resource == resource and
               event.ash_events_action == action and
-              String.starts_with?(event.version, prefix)
+              event.version in versions
         end)
 
       if override do

@@ -18,7 +18,7 @@ defmodule AshEvents.EventResource.Transformers.AddAttributes do
       allow_nil?: false
     )
     |> Ash.Resource.Builder.add_attribute(:record_id, record_primary_id_type, allow_nil?: false)
-    |> Ash.Resource.Builder.add_attribute(:version, :string, allow_nil?: false, default: "1.0")
+    |> Ash.Resource.Builder.add_attribute(:version, :integer, allow_nil?: false, default: 1)
     |> Ash.Resource.Builder.add_attribute(:metadata, :map,
       allow_nil?: false,
       default: %{},

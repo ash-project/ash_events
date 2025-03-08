@@ -91,40 +91,98 @@ defmodule AshEvents.CommandResource do
     ]
   end
 
+  @on_command_success [
+    type:
+      {:or,
+       [
+         {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
+          {Ash.Resource.Action.ImplementationFunction, 3}},
+         {:spark, Reactor}
+       ]},
+    default: nil
+  ]
+
+  @action_change %Spark.Dsl.Entity{
+    name: :change,
+    describe: """
+    A change to be applied to the changeset.
+
+    See `Ash.Resource.Change` for more.
+    """,
+    examples: [
+      "change relate_actor(:reporter)",
+      "change {MyCustomChange, :foo}"
+    ],
+    no_depend_modules: [:change],
+    target: Ash.Resource.Change,
+    schema: Ash.Resource.Change.action_schema(),
+    args: [:change]
+  }
+
+  @action_argument %Spark.Dsl.Entity{
+    name: :argument,
+    describe: """
+    Declares an argument on the action
+    """,
+    examples: [
+      "argument :password_confirmation, :string"
+    ],
+    target: Ash.Resource.Actions.Argument,
+    args: [:name, :type],
+    transform: {Ash.Type, :set_type_transformation, []},
+    schema: Ash.Resource.Actions.Argument.schema()
+  }
+
+  @action_validate %Spark.Dsl.Entity{
+    name: :validate,
+    describe: """
+    Declares a validation to be applied to the changeset.
+
+    See `Ash.Resource.Validation.Builtins` or `Ash.Resource.Validation` for more.
+    """,
+    examples: [
+      "validate changing(:email)"
+    ],
+    target: Ash.Resource.Validation,
+    schema: Ash.Resource.Validation.action_schema(),
+    no_depend_modules: [:validation],
+    transform: {Ash.Resource.Validation, :transform, []},
+    args: [:validation]
+  }
+
   @create_command %Spark.Dsl.Entity{
     name: :create_command,
     describe: """
     Declares a command create action, which will generate an event when executed.
     """,
     target: CreateCommand,
+    imports: [
+      Ash.Resource.Change.Builtins,
+      Ash.Resource.Validation.Builtins,
+      Ash.Expr
+    ],
     schema:
       Ash.Resource.Actions.Create.opt_schema() ++
         [
-          event_name: [
-            type: :string,
-            doc: """
-            The name of the event to generate.
-            """
-          ],
           version: [
-            type: :string,
+            type: :integer,
             doc: """
             The version of the resulting event. If you have breaking changes in your
             input params, increment this.
             """
           ],
-          on_success: [
-            type:
-              {:or,
-               [
-                 {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
-                  {Ash.Resource.Action.ImplementationFunction, 2}},
-                 {:spark, Reactor}
-               ]},
-            default: nil
-          ]
+          on_success: @on_command_success
         ],
-    args: [:name, {:optional, :version}]
+    entities: [
+      changes: [
+        @action_change,
+        @action_validate
+      ],
+      arguments: [
+        @action_argument
+      ]
+    ],
+    args: [:name]
   }
 
   @update_command %Spark.Dsl.Entity{
@@ -132,29 +190,34 @@ defmodule AshEvents.CommandResource do
     describe: """
     Declares a command update action, which will generate an event when executed.
     """,
+    imports: [
+      Ash.Resource.Change.Builtins,
+      Ash.Resource.Validation.Builtins,
+      Ash.Expr
+    ],
     target: UpdateCommand,
     schema:
       Ash.Resource.Actions.Update.opt_schema() ++
         [
           version: [
-            type: :string,
+            type: :integer,
             doc: """
             The version of the resulting event. If you have breaking changes in your
             input params, increment this.
             """
           ],
-          on_success: [
-            type:
-              {:or,
-               [
-                 {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
-                  {Ash.Resource.Action.ImplementationFunction, 2}},
-                 {:spark, Reactor}
-               ]},
-            default: nil
-          ]
+          on_success: @on_command_success
         ],
-    args: [:name, {:optional, :version}]
+    entities: [
+      changes: [
+        @action_change,
+        @action_validate
+      ],
+      arguments: [
+        @action_argument
+      ]
+    ],
+    args: [:name]
   }
 
   @destroy_command %Spark.Dsl.Entity{
@@ -162,29 +225,34 @@ defmodule AshEvents.CommandResource do
     describe: """
     Declares a command destroy action, which will generate an event when executed.
     """,
+    imports: [
+      Ash.Resource.Change.Builtins,
+      Ash.Resource.Validation.Builtins,
+      Ash.Expr
+    ],
     target: DestroyCommand,
     schema:
       Ash.Resource.Actions.Update.opt_schema() ++
         [
           version: [
-            type: :string,
+            type: :integer,
             doc: """
             The version of the resulting event. If you have breaking changes in your
             input params, increment this.
             """
           ],
-          on_success: [
-            type:
-              {:or,
-               [
-                 {:spark_function_behaviour, Ash.Resource.Actions.Implementation,
-                  {Ash.Resource.Action.ImplementationFunction, 2}},
-                 {:spark, Reactor}
-               ]},
-            default: nil
-          ]
+          on_success: @on_command_success
         ],
-    args: [:name, {:optional, :version}]
+    entities: [
+      changes: [
+        @action_change,
+        @action_validate
+      ],
+      arguments: [
+        @action_argument
+      ]
+    ],
+    args: [:name]
   }
 
   @commands %Spark.Dsl.Section{

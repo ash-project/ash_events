@@ -12,30 +12,33 @@ defmodule AshEvents.Test.Accounts.User do
   commands do
     event_resource AshEvents.Test.Events.EventResource
 
-    create_command :create, "1.0" do
+    create_command :create do
+      version 1
       accept [:id, :email, :given_name, :family_name]
 
-      on_success fn user, ctx ->
-        IO.inspect("User created: #{user.email}")
+      on_success fn user, event, opts ->
+        IO.inspect("User created: #{user.email} event: #{inspect(event)}")
         {:ok, user}
       end
     end
 
-    update_command :update, "1.0" do
+    update_command :update do
+      version 1
       accept [:given_name, :family_name]
       allow_nil_input [:given_name, :family_name]
 
-      on_success fn user, ctx ->
-        IO.inspect("User updated: #{user.email}")
+      on_success fn user, event, opts ->
+        IO.inspect("User updated: #{user.email} event: #{inspect(event)}")
         {:ok, user}
       end
     end
 
-    destroy_command :destroy, "1.0" do
+    destroy_command :destroy do
+      version 1
       primary? true
 
-      on_success fn user, ctx ->
-        IO.inspect("User destroyed: #{user.email}")
+      on_success fn user, event, opts ->
+        IO.inspect("User destroyed: #{user.email} event: #{inspect(event)}")
         {:ok, user}
       end
     end

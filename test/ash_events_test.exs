@@ -25,7 +25,7 @@ defmodule AshEventsTest do
 
     opts = [actor: user]
 
-    [_event] = Ash.read!(EventResource)
+    [event] = Ash.read!(EventResource)
 
     _user =
       Accounts.update_user!(user, %{given_name: "Jane"},
@@ -89,5 +89,7 @@ defmodule AshEventsTest do
         opts
       )
       |> AshEvents.destroy!()
+
+    IO.inspect(event)
   end
 end

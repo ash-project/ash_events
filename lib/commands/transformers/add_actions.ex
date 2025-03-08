@@ -101,7 +101,6 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
     Enum.reduce(commands, {:ok, dsl}, fn action, {:ok, dsl} ->
       action_impl_data = build_action_impl_data(action)
       action_impl_name = :"#{action.name}_ash_events_impl"
-      generic_name = :"#{action.name}_ash_events_generic"
 
       generic_action =
         build_generic_action(action, dsl, event_resource, action_impl_name)

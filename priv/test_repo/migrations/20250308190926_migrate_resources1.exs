@@ -29,7 +29,7 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
     create table(:events, primary_key: false) do
       add(:id, :bigserial, null: false, primary_key: true)
       add(:record_id, :uuid, null: false)
-      add(:version, :text, null: false, default: "1.0")
+      add(:version, :bigint, null: false, default: 1)
       add(:metadata, :map, null: false, default: %{})
       add(:data, :map, null: false, default: %{})
 

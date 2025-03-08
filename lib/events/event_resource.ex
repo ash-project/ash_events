@@ -55,7 +55,7 @@ defmodule AshEvents.EventResource do
   """
 
   defmodule ReplayOverride do
-    defstruct [:event_resource, :event_action, :version_prefix, :route_to]
+    defstruct [:event_resource, :event_action, :versions, :route_to]
   end
 
   defmodule RouteTo do
@@ -103,16 +103,16 @@ defmodule AshEvents.EventResource do
         type: :atom,
         required: true
       ],
-      version_prefix: [
-        type: :string,
+      versions: [
+        type: {:list, :integer},
         doc: """
-        A prefix to match the event's version on. If set, the event will only be routed here
-        if the prefix matches the beginning of the version string.
+        A list of event versions to match on. The event will only be routed here
+        if the version of the event matches one of the listed versions.
         """,
         required: true
       ]
     ],
-    args: [:event_resource, :event_action, :version_prefix],
+    args: [:event_resource, :event_action],
     entities: [route_to: [@route_to]]
   }
 

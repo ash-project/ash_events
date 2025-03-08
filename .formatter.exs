@@ -9,7 +9,9 @@ spark_locals_without_parens = [
   event_handler: 2,
   before_dispatch: 1,
   on_success: 1,
-  route_to: 2
+  route_to: 2,
+  version: 1,
+  versions: 1
 ]
 
 [

@@ -56,14 +56,15 @@ defmodule AshEvents.PersistEvent do
         end
       end)
 
-    run_opts[:event_resource]
-    |> Ash.Changeset.for_create(:create, event_params, opts)
-    |> Ash.create!()
+    event =
+      run_opts[:event_resource]
+      |> Ash.Changeset.for_create(:create, event_params, opts)
+      |> Ash.create!()
 
     case run_opts[:on_success] do
       nil -> {:ok, record}
-      {_, [fun: fun]} -> fun.(record, opts)
-      {module, []} -> module.run(record, opts)
+      {_, [fun: fun]} -> fun.(record, event, opts)
+      {module, []} -> module.run(record, event, opts)
     end
   end
 end

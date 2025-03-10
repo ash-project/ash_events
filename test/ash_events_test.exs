@@ -81,7 +81,7 @@ defmodule AshEventsTest do
       )
       |> AshEvents.update!()
 
-    _destroyed =
+    destroyed =
       new_user
       |> AshEvents.Changeset.for_destroy(
         :destroy,
@@ -90,6 +90,8 @@ defmodule AshEventsTest do
       )
       |> AshEvents.destroy!()
 
-    IO.inspect(event)
+    :ok = Accounts.destroy_user!(user, opts)
+
+    [] = Ash.read!(User)
   end
 end

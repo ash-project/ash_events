@@ -64,7 +64,7 @@ defmodule AshEvents do
   def destroy!(changeset) do
     destroy(changeset)
     |> case do
-      {:ok, result} -> result
+      :ok -> :ok
       {:error, error} -> raise error
     end
   end

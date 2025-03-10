@@ -17,7 +17,7 @@ defmodule AshEvents.PersistEvent do
           record =
             input.resource
             |> Ash.Changeset.for_create(run_opts[:action], params, opts)
-            |> Ash.create!(opts)
+            |> Ash.create!()
 
           {record, Map.get(record, primary_key)}
 
@@ -32,9 +32,9 @@ defmodule AshEvents.PersistEvent do
         :destroy ->
           record =
             extras[:record]
-            |> Ash.destroy!(opts ++ [return_destroyed?: true, action: run_opts[:action]])
+            |> Ash.destroy!(opts ++ [action: run_opts[:action]])
 
-          {record, Map.get(record, primary_key)}
+          {record, Map.get(extras[:record], primary_key)}
       end
 
     event_params = %{
@@ -61,10 +61,11 @@ defmodule AshEvents.PersistEvent do
       |> Ash.Changeset.for_create(:create, event_params, opts)
       |> Ash.create!()
 
-    case run_opts[:on_success] do
-      nil -> {:ok, record}
-      {_, [fun: fun]} -> fun.(record, event, opts)
-      {module, []} -> module.run(record, event, opts)
+    case {action.type, run_opts[:on_success]} do
+      {:destroy, nil} -> :ok
+      {_action_type, nil} -> {:ok, record}
+      {_action_type, {_, [fun: fun]}} -> fun.(record, event, opts)
+      {_action_type, {module, []}} -> module.run(record, event, opts)
     end
   end
 end

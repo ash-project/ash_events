@@ -1,5 +1,6 @@
 defmodule AshEvents.Commands.Resource.Transformers.AddActions do
   @moduledoc false
+  alias Spark.Dsl.Transformer
   use Spark.Dsl.Transformer
 
   @metadata_arg %Ash.Resource.Actions.Argument{
@@ -42,11 +43,18 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
       |> Enum.concat(arguments)
       |> Enum.uniq_by(& &1.name)
 
+    constraints =
+      if action.type == :destroy,
+        do: [],
+        else: [instance_of: dsl.persist.module]
+
+    returns = if action.type == :destroy, do: nil, else: :struct
+
     %Ash.Resource.Actions.Action{
       name: action.name,
       description: action.description,
-      returns: :struct,
-      constraints: [instance_of: dsl.persist.module],
+      returns: returns,
+      constraints: constraints,
       arguments: arguments,
       run:
         {AshEvents.PersistEvent,
@@ -122,32 +130,43 @@ defmodule AshEvents.Commands.Resource.Transformers.AddActions do
       constraints: [instance_of: dsl.persist.module]
     }
 
-    {:ok,
-     dsl
-     |> AshEvents.Commands.Resource.Info.commands()
-     |> Enum.filter(&(Map.get(&1, :type) != nil))
-     |> Enum.group_by(& &1.type)
-     |> Map.put_new(:create, [])
-     |> Map.put_new(:update, [])
-     |> Map.put_new(:destroy, [])
-     |> Enum.reduce_while(dsl, fn {type, commands}, dsl ->
-       case type do
-         :create ->
-           add_create_actions(dsl, event_resource, commands)
+    [primary_key] = Ash.Resource.Info.primary_key(dsl)
 
-         :update ->
-           add_update_actions(dsl, event_resource, commands, record_arg)
+    primary_key_attr =
+      dsl
+      |> Transformer.get_entities([:attributes])
+      |> Enum.find(&(&1.name == primary_key))
 
-         :destroy ->
-           add_destroy_actions(dsl, event_resource, commands, record_arg)
+    if not primary_key_attr.writable? do
+      {:error, "Primary key #{inspect(primary_key)} on #{dsl.persist.module} must be writable"}
+    else
+      {:ok,
+       dsl
+       |> AshEvents.Commands.Resource.Info.commands()
+       |> Enum.filter(&(Map.get(&1, :type) != nil))
+       |> Enum.group_by(& &1.type)
+       |> Map.put_new(:create, [])
+       |> Map.put_new(:update, [])
+       |> Map.put_new(:destroy, [])
+       |> Enum.reduce_while(dsl, fn {type, commands}, dsl ->
+         case type do
+           :create ->
+             add_create_actions(dsl, event_resource, commands)
 
-         _ ->
-           raise "Command type #{inspect(type)} not supported"
-       end
-       |> case do
-         {:ok, dsl} -> {:cont, dsl}
-         {:error, reason} -> {:halt, {:error, reason}}
-       end
-     end)}
+           :update ->
+             add_update_actions(dsl, event_resource, commands, record_arg)
+
+           :destroy ->
+             add_destroy_actions(dsl, event_resource, commands, record_arg)
+
+           _ ->
+             raise "Command type #{inspect(type)} not supported"
+         end
+         |> case do
+           {:ok, dsl} -> {:cont, dsl}
+           {:error, reason} -> {:halt, {:error, reason}}
+         end
+       end)}
+    end
   end
 end

@@ -3,7 +3,7 @@ defmodule AshEvents.Commands.OnSuccess do
   An implementation of a command's on success handler.
   """
 
-  @callback run(record :: map(), event :: map(), opts :: Keyword.t()) ::
+  @callback run(record :: map() | :ok, event :: map(), opts :: Keyword.t()) ::
               {:ok, term()} | {:ok, [Ash.Notifier.Notification.t()]} | {:error, term()}
 
   defmacro __using__(_) do

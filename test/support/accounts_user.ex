@@ -37,9 +37,9 @@ defmodule AshEvents.Test.Accounts.User do
       version 1
       primary? true
 
-      on_success fn user, event, opts ->
-        IO.inspect("User destroyed: #{user.email} event: #{inspect(event)}")
-        {:ok, user}
+      on_success fn :ok, event, opts ->
+        IO.inspect("User destroyed event: #{inspect(event)}")
+        :ok
       end
     end
   end

@@ -33,7 +33,7 @@ defmodule AshEvents.ActionWrapperHelpers do
       ash_events_resource: changeset.resource,
       ash_events_action: module_opts[:action],
       ash_events_action_type: changeset.action_type,
-      metadata: changeset.arguments.event_metadata
+      metadata: changeset.arguments.event_metadata || %{}
     }
 
     event_params =

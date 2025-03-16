@@ -11,7 +11,8 @@ spark_locals_without_parens = [
   on_success: 1,
   route_to: 2,
   version: 1,
-  versions: 1
+  versions: 1,
+  ignore_actions: 1
 ]
 
 [

@@ -2,50 +2,51 @@ defmodule AshEvents.Test.Accounts.User do
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshEvents.CommandResource]
+    extensions: [AshEvents.Events]
 
   postgres do
     table "users"
     repo AshEvents.TestRepo
   end
 
-  commands do
+  events do
     event_resource AshEvents.Test.Events.EventResource
 
-    create_command :create do
-      version 1
-      accept [:id, :email, :given_name, :family_name]
-
-      on_success fn user, event, opts ->
-        IO.inspect("User created: #{user.email} event: #{inspect(event)}")
-        {:ok, user}
-      end
-    end
-
-    update_command :update do
-      version 1
-      accept [:given_name, :family_name]
-      allow_nil_input [:given_name, :family_name]
-
-      on_success fn user, event, opts ->
-        IO.inspect("User updated: #{user.email} event: #{inspect(event)}")
-        {:ok, user}
-      end
-    end
-
-    destroy_command :destroy do
-      version 1
-      primary? true
-
-      on_success fn :ok, event, opts ->
-        IO.inspect("User destroyed event: #{inspect(event)}")
-        :ok
-      end
-    end
+    ignore_actions [:create_v1]
   end
 
   actions do
     defaults [:read]
+
+    create :create do
+      accept [:id, :email, :given_name, :family_name]
+
+      after_action(fn cs, record, ctx ->
+        IO.inspect("User created: #{record.email}")
+        {:ok, record}
+      end)
+    end
+
+    update :update do
+      require_atomic? false
+      accept [:given_name, :family_name]
+
+      after_action(fn cs, record, ctx ->
+        IO.inspect("User updated: #{record.email}")
+        {:ok, record}
+      end)
+    end
+
+    destroy :destroy do
+      require_atomic? false
+      primary? true
+      accept []
+
+      after_action(fn cs, record, ctx ->
+        IO.inspect("User destroyed event: #{inspect(record)}")
+        :ok
+      end)
+    end
 
     read :get_by_id do
       get? true

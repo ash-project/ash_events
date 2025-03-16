@@ -9,8 +9,8 @@ defmodule AshEventsTest do
   require Ash.Query
 
   setup do
-    Ash.bulk_destroy!(EventResource, :destroy, %{})
-    Ash.bulk_destroy!(User, :destroy_ash_events_impl, %{})
+    Ash.bulk_destroy!(EventResource, :destroy, %{}, return_errors?: true, strategy: :stream)
+    Ash.bulk_destroy!(User, :destroy, %{}, return_errors?: true, strategy: :stream)
     :ok
   end
 
@@ -27,17 +27,17 @@ defmodule AshEventsTest do
 
     [event] = Ash.read!(EventResource)
 
-    _user =
+    user =
       Accounts.update_user!(user, %{given_name: "Jane"},
         actor: %AshEvents.Test.Events.SystemActor{name: "Some system worker"}
       )
 
-    [_event1, _event2] = Ash.read!(EventResource)
+    events = Ash.read!(EventResource)
+    IO.inspect(events)
+    [user] = Ash.read!(User)
 
-    Ash.bulk_destroy!(User, :destroy_ash_events_impl, %{})
-
+    AshEvents.TestRepo.delete_all("users")
     [] = Ash.read!(User)
-
     :ok = Events.replay_events!()
 
     [user] = Ash.read!(User)
@@ -65,30 +65,30 @@ defmodule AshEventsTest do
 
     new_user =
       User
-      |> AshEvents.Changeset.for_create(
+      |> Ash.Changeset.for_create(
         :create,
         %{email: "lol", given_name: "asfas", family_name: "omg", event_metadata: %{omg: "lol"}},
         opts
       )
-      |> AshEvents.create!()
+      |> Ash.create!()
 
     new_user =
       new_user
-      |> AshEvents.Changeset.for_update(
+      |> Ash.Changeset.for_update(
         :update,
         %{given_name: "lol", family_name: "omg", event_metadata: %{omg: "lol"}},
         opts
       )
-      |> AshEvents.update!()
+      |> Ash.update!()
 
     destroyed =
       new_user
-      |> AshEvents.Changeset.for_destroy(
+      |> Ash.Changeset.for_destroy(
         :destroy,
         %{},
         opts
       )
-      |> AshEvents.destroy!()
+      |> Ash.destroy!()
 
     :ok = Accounts.destroy_user!(user, opts)
 

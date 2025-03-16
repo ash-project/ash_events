@@ -6,7 +6,6 @@ defmodule AshEvents.Events.Transformers.AddActions do
 
   @metadata_arg %Ash.Resource.Actions.Argument{
     name: :event_metadata,
-    allow_nil?: false,
     type: :map,
     default: %{},
     description: "The metadata to store with the event."

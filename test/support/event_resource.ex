@@ -10,6 +10,7 @@ defmodule AshEvents.Test.Events.EventResource do
   end
 
   event_resource do
+    clear_records_for_replay AshEvents.Test.ClearRecords
     persist_actor_id :user_id, AshEvents.Test.Accounts.User
     persist_actor_id :system_actor, AshEvents.Test.Events.SystemActor, attribute_type: :string
   end

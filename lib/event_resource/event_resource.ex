@@ -151,6 +151,14 @@ defmodule AshEvents.EventResource do
         """,
         default: []
       ],
+      clear_records_for_replay: [
+        type: {:behaviour, AshEvents.ClearRecordsForReplay},
+        required: false,
+        doc: """
+        A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all
+        records before an event replay.
+        """
+      ],
       record_id_type: [
         type: :any,
         doc: """

@@ -14,17 +14,24 @@ defmodule AshEvents.ActionWrapperHelpers do
     Map.merge(attr_params, arg_params)
   end
 
-  def create_event!(changeset, params, record, module_opts, opts) do
+  def create_event!(changeset, params, module_opts, opts) do
     event_resource = module_opts[:event_resource]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
     persist_actor_ids = AshEvents.EventResource.Info.event_resource(event_resource)
     actor = opts[:actor]
 
+    record_id =
+      if changeset.action_type == :create do
+        Map.get(changeset.attributes, primary_key)
+      else
+        Map.get(changeset.data, primary_key)
+      end
+
     event_params = %{
       data: params,
-      record_id: Map.get(record, primary_key),
+      record_id: record_id,
       ash_events_resource: changeset.resource,
-      ash_events_action: module_opts[:replay_action],
+      ash_events_action: module_opts[:action],
       ash_events_action_type: changeset.action_type,
       metadata: changeset.arguments.event_metadata
     }

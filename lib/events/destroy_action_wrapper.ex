@@ -3,26 +3,16 @@ defmodule AshEvents.DestroyActionWrapper do
 
   def destroy(changeset, module_opts, ctx) do
     opts = Ash.Context.to_opts(ctx)
-
     params = AshEvents.ActionWrapperHelpers.build_params(changeset, module_opts)
+    AshEvents.ActionWrapperHelpers.create_event!(changeset, params, module_opts, opts)
 
-    action_result =
-      changeset.data
-      |> Ash.Changeset.for_destroy(
-        module_opts[:action],
-        params,
-        opts
-      )
-      |> Ash.destroy(opts ++ [return_destroyed?: true])
-
-    case action_result do
-      {:error, error} ->
-        {:error, error}
-
-      {:ok, record} ->
-        AshEvents.ActionWrapperHelpers.create_event!(changeset, params, record, module_opts, opts)
-        {:ok, record}
-    end
+    changeset.data
+    |> Ash.Changeset.for_destroy(
+      module_opts[:action],
+      params,
+      opts
+    )
+    |> Ash.destroy(opts ++ [return_destroyed?: true])
 
     # An `{:error, error}` tuple should be returned if something failed
   end

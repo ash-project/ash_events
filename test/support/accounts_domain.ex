@@ -9,5 +9,11 @@ defmodule AshEvents.Test.Accounts do
       define :update_user, action: :update
       define :destroy_user, action: :destroy
     end
+
+    resource AshEvents.Test.Accounts.UserRole do
+      define :create_user_role, action: :create
+      define :update_user_role, action: :update
+      define :destroy_user_role, action: :destroy
+    end
   end
 end

@@ -1,4 +1,6 @@
 defmodule AshEvents.Test.Accounts.User do
+  alias AshEvents.Test.Accounts
+
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
     data_layer: AshPostgres.DataLayer,
@@ -19,33 +21,27 @@ defmodule AshEvents.Test.Accounts.User do
     defaults [:read]
 
     create :create do
-      accept [:id, :email, :given_name, :family_name]
+      accept [:id, :email, :given_name, :family_name, :created_at, :updated_at]
 
-      after_action(fn cs, record, ctx ->
-        IO.inspect("User created: #{record.email}")
-        {:ok, record}
-      end)
+      change AshEvents.Test.CreateUserRole
     end
 
     update :update do
       require_atomic? false
       accept [:given_name, :family_name]
 
-      after_action(fn cs, record, ctx ->
-        IO.inspect("User updated: #{record.email}")
-        {:ok, record}
-      end)
+      change after_action(fn cs, record, ctx ->
+               opts = Ash.Context.to_opts(ctx)
+               user = Ash.load!(record, [:user_role], opts)
+               Accounts.update_user_role!(user.user_role, %{name: "admin"}, opts)
+               {:ok, record}
+             end)
     end
 
     destroy :destroy do
       require_atomic? false
       primary? true
       accept []
-
-      after_action(fn cs, record, ctx ->
-        IO.inspect("User destroyed event: #{inspect(record)}")
-        :ok
-      end)
     end
 
     read :get_by_id do
@@ -74,6 +70,7 @@ defmodule AshEvents.Test.Accounts.User do
     update_timestamp :updated_at do
       public? true
       allow_nil? false
+      writable? true
     end
 
     attribute :email, :string do
@@ -88,6 +85,12 @@ defmodule AshEvents.Test.Accounts.User do
 
     attribute :family_name, :string do
       allow_nil? false
+      public? true
+    end
+  end
+
+  relationships do
+    has_one :user_role, AshEvents.Test.Accounts.UserRole do
       public? true
     end
   end

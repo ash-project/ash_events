@@ -22,30 +22,24 @@ defmodule AshEvents.Events.Transformers.AddActions do
         action.name in ignored or action.type not in [:create, :update, :destroy]
       end)
 
-    IO.inspect(actions, label: "ACTIONS")
-
     Enum.reduce(actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       replaced_action_name =
         (Atom.to_string(action.name) <> "_ash_events_orig_impl") |> String.to_atom()
 
-      replay_action_name =
-        (Atom.to_string(action.name) <> "_ash_events_replay") |> String.to_atom()
-
       replaced_action = %{action | name: replaced_action_name, primary?: false}
 
-      replay_module =
-        case action.type do
-          :create -> AshEvents.ReplayCreateWrapper
-          :update -> AshEvents.ReplayUpdateWrapper
-          :destroy -> AshEvents.ReplayDestroyWrapper
-        end
-
-      replay_action = %{
-        action
-        | name: replay_action_name,
-          primary?: false,
-          manual: {replay_module, [action: replaced_action_name]}
-      }
+      manual_action_changes =
+        action.changes ++
+          [
+            %Ash.Resource.Change{
+              change: {AshEvents.Events.RemoveAfterActionChange, []},
+              on: nil,
+              only_when_valid?: false,
+              description: nil,
+              always_atomic?: false,
+              where: []
+            }
+          ]
 
       manual_module =
         case action.type do
@@ -63,11 +57,11 @@ defmodule AshEvents.Events.Transformers.AddActions do
               {manual_module,
                [
                  action: replaced_action_name,
-                 event_resource: event_resource,
-                 replay_action: replay_action_name
+                 event_resource: event_resource
                ]},
             primary?: action.primary?,
-            arguments: manual_arguments
+            arguments: manual_arguments,
+            changes: manual_action_changes
         }
 
       {:ok,
@@ -77,8 +71,7 @@ defmodule AshEvents.Events.Transformers.AddActions do
          manual_action,
          &(&1.name == action.name)
        )
-       |> Spark.Dsl.Transformer.add_entity([:actions], replaced_action)
-       |> Spark.Dsl.Transformer.add_entity([:actions], replay_action)}
+       |> Spark.Dsl.Transformer.add_entity([:actions], replaced_action)}
     end)
   end
 end

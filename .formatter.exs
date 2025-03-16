@@ -12,7 +12,8 @@ spark_locals_without_parens = [
   route_to: 2,
   version: 1,
   versions: 1,
-  ignore_actions: 1
+  ignore_actions: 1,
+  clear_records_for_replay: 1
 ]
 
 [

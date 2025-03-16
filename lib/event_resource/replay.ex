@@ -2,9 +2,14 @@ defmodule AshEvents.EventResource.Actions.Replay do
   require Ash.Query
   require Logger
 
+  defp remove_after_action(changeset) do
+    Map.put(changeset, :after_action, [])
+  end
+
   defp create!(resource, action, input, opts) do
     resource
     |> Ash.Changeset.for_create(action, input, opts)
+    |> remove_after_action()
     |> Ash.create!(opts)
 
     :ok
@@ -15,6 +20,7 @@ defmodule AshEvents.EventResource.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_update(action, input |> Map.drop([:id]), opts)
+        |> remove_after_action()
         |> Ash.update!(opts)
 
         :ok
@@ -29,6 +35,7 @@ defmodule AshEvents.EventResource.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_destroy(action, %{}, opts)
+        |> remove_after_action()
         |> Ash.destroy!(opts)
 
         :ok
@@ -52,8 +59,15 @@ defmodule AshEvents.EventResource.Actions.Replay do
 
   def run(input, run_opts, ctx) do
     opts = Ash.Context.to_opts(ctx)
-
     overrides = run_opts[:overrides]
+
+    case AshEvents.EventResource.Info.event_resource_clear_records_for_replay(input.resource) do
+      {:ok, module} ->
+        module.clear_records!(opts)
+
+      :error ->
+        raise "clear_records_for_replay must be specified on #{input.resource} when doing a replay"
+    end
 
     last_event_id = input.arguments[:last_event_id]
 

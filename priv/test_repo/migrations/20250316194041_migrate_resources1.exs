@@ -26,6 +26,35 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
       add(:family_name, :text, null: false)
     end
 
+    create table(:user_roles, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+
+      add(:created_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:name, :text, null: false)
+
+      add(
+        :user_id,
+        references(:users,
+          column: :id,
+          name: "user_roles_user_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        ),
+        null: false
+      )
+    end
+
+    create unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")
+
     create table(:events, primary_key: false) do
       add(:id, :bigserial, null: false, primary_key: true)
       add(:record_id, :uuid, null: false)
@@ -48,6 +77,14 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
   def down do
     drop(table(:events))
+
+    drop_if_exists(
+      unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")
+    )
+
+    drop(constraint(:user_roles, "user_roles_user_id_fkey"))
+
+    drop(table(:user_roles))
 
     drop(table(:users))
   end

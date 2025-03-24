@@ -63,6 +63,13 @@ defmodule AshEvents.Events.Transformers.AddActions do
             arguments: manual_arguments,
             changes: manual_action_changes
         }
+        |> then(fn action ->
+          case action.type do
+            :update -> Map.put(action, :require_atomic?, false)
+            :destroy -> Map.merge(action, %{require_atomic?: false, return_destroyed?: true})
+            _ -> action
+          end
+        end)
 
       {:ok,
        dsl

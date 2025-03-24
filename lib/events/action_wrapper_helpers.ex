@@ -8,7 +8,7 @@ defmodule AshEvents.ActionWrapperHelpers do
       |> Map.take(replaced_action.accept)
 
     arg_params =
-      changeset.attributes
+      changeset.arguments
       |> Map.take(arg_names)
 
     Map.merge(attr_params, arg_params)

@@ -55,6 +55,11 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
     create unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")
 
+    create table(:tenants, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+      add(:name, :text, null: false)
+    end
+
     create table(:events, primary_key: false) do
       add(:id, :bigserial, null: false, primary_key: true)
       add(:record_id, :uuid, null: false)
@@ -77,6 +82,8 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
   def down do
     drop(table(:events))
+
+    drop(table(:tenants))
 
     drop_if_exists(
       unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")

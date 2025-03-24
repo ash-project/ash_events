@@ -157,4 +157,35 @@ defmodule AshEventsTest do
 
     [] = Ash.read!(User)
   end
+
+  @tag :only
+  test "bulk_create works as expected" do
+    # 1..2
+    # |> Enum.map(fn _i ->
+    #   %{
+    #     email: Faker.Internet.email(),
+    #     given_name: Faker.Person.first_name(),
+    #     family_name: Faker.Person.last_name()
+    #   }
+    # end)
+    # |> Ash.bulk_create!(User, :create_ash_events_orig_impl,
+    #   actor: %AshEvents.Test.Events.SystemActor{name: "system"},
+    #   return_notifications?: true
+    # )
+
+    1..2
+    |> Enum.map(fn _i ->
+      %{
+        email: Faker.Internet.email(),
+        given_name: Faker.Person.first_name(),
+        family_name: Faker.Person.last_name()
+      }
+    end)
+    |> Ash.bulk_create!(User, :create,
+      actor: %AshEvents.Test.Events.SystemActor{name: "system"},
+      return_notifications?: true,
+      return_records?: true,
+      return_errors?: true
+    )
+  end
 end

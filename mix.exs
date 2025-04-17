@@ -26,13 +26,21 @@ defmodule AshEvents.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
-  if Mix.env() == :test do
-    def application() do
-      [
-        mod: {AshEvents.TestApp, []},
-        extra_applications: [:logger]
-      ]
-    end
+  def application do
+    application(Mix.env())
+  end
+
+  defp application(:test) do
+    [
+      mod: {AshEvents.TestApp, []},
+      extra_applications: [:logger]
+    ]
+  end
+
+  defp application(_) do
+    [
+      extra_applications: [:logger]
+    ]
   end
 
   # Run "mix help deps" to learn about dependencies.

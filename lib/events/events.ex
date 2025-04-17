@@ -18,6 +18,12 @@ defmodule AshEvents.Events do
         type: {:list, :atom},
         default: [],
         doc: "A list of actions that should not have events created when run."
+      ],
+      current_action_versions: [
+        type: :keyword_list,
+        doc:
+          "A keyword list of action versions. This will set the version in the created event when the actions are run. Example: [create: 2, update: 3, destroy: 2]",
+        default: []
       ]
     ]
   }
@@ -27,7 +33,7 @@ defmodule AshEvents.Events do
     sections: [@events]
 end
 
-defmodule AshEvents.Events.Resource.Info do
+defmodule AshEvents.Events.Info do
   use Spark.InfoGenerator,
     extension: AshEvents.Events,
     sections: [:events]

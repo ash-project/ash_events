@@ -1,5 +1,6 @@
 # Used by "mix format"
 spark_locals_without_parens = [
+  current_action_versions: 1,
   event_log: 1,
   event_name: 1,
   event_version: 1,

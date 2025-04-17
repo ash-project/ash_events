@@ -11,8 +11,8 @@ defmodule AshEvents.Test.Accounts.User do
 
   events do
     event_log AshEvents.Test.Events.EventLog
-
     ignore_actions [:create_v1]
+    current_action_versions create: 1
   end
 
   actions do

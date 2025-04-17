@@ -14,16 +14,45 @@ defmodule AshEvents.Events.Transformers.AddActions do
   }
 
   def transform(dsl) do
-    event_log_resource = AshEvents.Events.Resource.Info.events_event_log!(dsl)
-    ignored = AshEvents.Events.Resource.Info.events_ignore_actions!(dsl)
+    event_log_resource = AshEvents.Events.Info.events_event_log!(dsl)
+    ignored = AshEvents.Events.Info.events_ignore_actions!(dsl)
+    action_versions = AshEvents.Events.Info.events_current_action_versions!(dsl)
+    resource = dsl.persist.module
+    all_actions = Ash.Resource.Info.actions(dsl)
 
-    actions =
-      Ash.Resource.Info.actions(dsl)
+    event_actions =
+      all_actions
       |> Enum.reject(fn action ->
         action.name in ignored or action.type not in [:create, :update, :destroy]
       end)
 
-    Enum.reduce(actions, {:ok, dsl}, fn action, {:ok, dsl} ->
+    all_action_names = all_actions |> Enum.map(& &1.name)
+
+    Enum.each(ignored, fn action_name ->
+      if action_name not in all_action_names do
+        raise(
+          "Action :#{action_name} is listed in ignore_actions, but is not a defined action on #{resource}."
+        )
+      end
+    end)
+
+    action_version_names = Keyword.keys(action_versions)
+
+    Enum.each(action_version_names, fn action_name ->
+      if action_name in ignored do
+        raise(
+          "Action :#{action_name} in #{resource} is listed in ignore_actions, but also has an action version defined."
+        )
+      end
+
+      if action_name not in all_action_names do
+        raise(
+          "Action :#{action_name} in #{resource} is listed in action_versions, but is not a defined action on #{resource}."
+        )
+      end
+    end)
+
+    Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       original_action_name = Helpers.build_original_action_name(action.name)
       original_action = %{action | name: original_action_name, primary?: false}
 
@@ -56,7 +85,8 @@ defmodule AshEvents.Events.Transformers.AddActions do
               {manual_module,
                [
                  action: action.name,
-                 event_log: event_log_resource
+                 event_log: event_log_resource,
+                 version: Keyword.get(action_versions, action.name, 1)
                ]},
             primary?: action.primary?,
             arguments: manual_arguments,

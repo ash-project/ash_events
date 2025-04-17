@@ -36,7 +36,7 @@ defmodule AshEvents.EventLog do
     examples: [
       """
       replay_overrides do
-        replay_override MyApp.Accounts.User, :create_ash_events_impl do
+        replay_override MyApp.Accounts.User, :create do
           versions([1])
           route_to MyApp.Accounts.User, :create_v1
         end
@@ -105,6 +105,7 @@ defmodule AshEvents.EventLog do
     examples: [
       """
       event_log do
+        clear_records_for_replay MyApp.Events.ClearAllRecords
         record_id_type :integer # (default is :uuid)
         persist_actor_primary_key :user_id, MyApp.Accounts.User
         persist_actor_primary_key :system_actor, MyApp.SystemActor, attribute_type: :string

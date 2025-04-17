@@ -55,9 +55,22 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
 
     create unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")
 
-    create table(:tenants, primary_key: false) do
+    create table(:routed_users, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
-      add(:name, :text, null: false)
+
+      add(:created_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:email, :text, null: false)
+      add(:given_name, :text, null: false)
+      add(:family_name, :text, null: false)
     end
 
     create table(:events, primary_key: false) do
@@ -66,15 +79,10 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
       add(:version, :bigint, null: false, default: 1)
       add(:metadata, :map, null: false, default: %{})
       add(:data, :map, null: false, default: %{})
-
-      add(:occurred_at, :utc_datetime_usec,
-        null: false,
-        default: fragment("(now() AT TIME ZONE 'utc')")
-      )
-
-      add(:ash_events_resource, :text, null: false)
-      add(:ash_events_action, :text, null: false)
-      add(:ash_events_action_type, :text, null: false)
+      add(:occurred_at, :utc_datetime_usec, null: false)
+      add(:resource, :text, null: false)
+      add(:action, :text, null: false)
+      add(:action_type, :text, null: false)
       add(:user_id, :uuid)
       add(:system_actor, :text)
     end
@@ -83,7 +91,7 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
   def down do
     drop(table(:events))
 
-    drop(table(:tenants))
+    drop(table(:routed_users))
 
     drop_if_exists(
       unique_index(:user_roles, [:user_id], name: "user_roles_unique_for_user_index")

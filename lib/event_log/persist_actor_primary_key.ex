@@ -1,5 +1,7 @@
-defmodule AshEvents.EventResource.PersistActorId do
-  @moduledoc "Adds a field (not relationship) on the event resource to persist the actor id"
+defmodule AshEvents.EventLog.PersistActorPrimaryKey do
+  @moduledoc """
+    Adds a field (not relationship) on the event log resource that will be used to persist the actor primary key.
+  """
 
   defstruct [
     :allow_nil?,
@@ -20,7 +22,7 @@ defmodule AshEvents.EventResource.PersistActorId do
   @schema [
     name: [
       type: :atom,
-      doc: "The name of the field to use for the actor id (e.g. :user_id)",
+      doc: "The name of the field to use for the actor primary_key (e.g. :user_id)",
       required: true
     ],
     allow_nil?: [
@@ -33,7 +35,7 @@ defmodule AshEvents.EventResource.PersistActorId do
     attribute_type: [
       type: :any,
       default: Application.compile_env(:ash, :default_belongs_to_type, :uuid),
-      doc: "The type of the generated created attribute. See `Ash.Type` for more."
+      doc: "The type of the generated attribute. See `Ash.Type` for more."
     ],
     public?: [
       type: :boolean,

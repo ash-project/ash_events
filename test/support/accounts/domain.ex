@@ -15,5 +15,7 @@ defmodule AshEvents.Test.Accounts do
       define :update_user_role, action: :update
       define :destroy_user_role, action: :destroy
     end
+
+    resource AshEvents.Test.Accounts.RoutedUser
   end
 end

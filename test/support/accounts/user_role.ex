@@ -5,7 +5,7 @@ defmodule AshEvents.Test.Accounts.UserRole do
     extensions: [AshEvents.Events]
 
   events do
-    event_resource AshEvents.Test.Events.EventResource
+    event_log AshEvents.Test.Events.EventLog
   end
 
   postgres do

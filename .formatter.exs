@@ -1,10 +1,10 @@
 # Used by "mix format"
 spark_locals_without_parens = [
-  event_resource: 1,
+  event_log: 1,
   event_name: 1,
   event_version: 1,
-  persist_actor_id: 2,
-  persist_actor_id: 3,
+  persist_actor_primary_key: 2,
+  persist_actor_primary_key: 3,
   event_handler: 1,
   event_handler: 2,
   before_dispatch: 1,

@@ -39,8 +39,8 @@ defmodule AshEvents.MixProject do
   defp deps do
     [
       {:sourceror, "~> 1.7", only: [:dev, :test]},
-      # {:ash, "~> 3.0"},
-      {:ash, path: "../ash", override: true},
+      {:ash, "~> 3.0"},
+      # {:ash, path: "../ash", override: true},
       {:ash_postgres, "~> 2.0", only: [:dev, :test]},
       {:faker, "~> 0.18", only: :test}
     ]

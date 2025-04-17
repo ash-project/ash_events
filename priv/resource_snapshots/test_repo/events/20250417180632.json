@@ -52,7 +52,7 @@
     },
     {
       "allow_nil?": false,
-      "default": "fragment(\"(now() AT TIME ZONE 'utc')\")",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
@@ -67,7 +67,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "ash_events_resource",
+      "source": "resource",
       "type": "text"
     },
     {
@@ -77,7 +77,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "ash_events_action",
+      "source": "action",
       "type": "text"
     },
     {
@@ -87,7 +87,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "ash_events_action_type",
+      "source": "action_type",
       "type": "text"
     },
     {
@@ -116,7 +116,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "1A3CDCE3902C0FAB8A53904C8F9AB7AC94B297ECECEE89719EC8AA657613E8AF",
+  "hash": "8D17207A9355B81B847E9FC890B918E07A5E1631EADB1B55642755EC9B441582",
   "identities": [],
   "multitenancy": {
     "attribute": null,

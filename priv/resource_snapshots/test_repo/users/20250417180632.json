@@ -37,7 +37,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "name",
+      "source": "email",
       "type": "text"
     },
     {
@@ -45,29 +45,20 @@
       "default": "nil",
       "generated?": false,
       "primary_key?": false,
-      "references": {
-        "deferrable": false,
-        "destination_attribute": "id",
-        "destination_attribute_default": null,
-        "destination_attribute_generated": null,
-        "index?": false,
-        "match_type": null,
-        "match_with": null,
-        "multitenancy": {
-          "attribute": null,
-          "global": null,
-          "strategy": null
-        },
-        "name": "user_roles_user_id_fkey",
-        "on_delete": null,
-        "on_update": null,
-        "primary_key?": true,
-        "schema": "public",
-        "table": "users"
-      },
+      "references": null,
       "size": null,
-      "source": "user_id",
-      "type": "uuid"
+      "source": "given_name",
+      "type": "text"
+    },
+    {
+      "allow_nil?": false,
+      "default": "nil",
+      "generated?": false,
+      "primary_key?": false,
+      "references": null,
+      "size": null,
+      "source": "family_name",
+      "type": "text"
     }
   ],
   "base_filter": null,
@@ -75,23 +66,8 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "824FD5B18C939FD136A691E1B4D6E03BFAB1C79F505F45EED2364A55DEC283E5",
-  "identities": [
-    {
-      "all_tenants?": false,
-      "base_filter": null,
-      "index_name": "user_roles_unique_for_user_index",
-      "keys": [
-        {
-          "type": "atom",
-          "value": "user_id"
-        }
-      ],
-      "name": "unique_for_user",
-      "nils_distinct?": true,
-      "where": null
-    }
-  ],
+  "hash": "D9D30EDC4FCE2F55F26A9F425D3D639B846779A8BB8D5A85F4406670B287AAB0",
+  "identities": [],
   "multitenancy": {
     "attribute": null,
     "global": null,
@@ -99,5 +75,5 @@
   },
   "repo": "Elixir.AshEvents.TestRepo",
   "schema": null,
-  "table": "user_roles"
+  "table": "users"
 }

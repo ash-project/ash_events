@@ -8,7 +8,7 @@ if Mix.env() == :test do
 
   config :ash_events, AshEvents.TestRepo,
     username: "postgres",
-    password: "password",
+    password: "postgres",
     hostname: "localhost",
     database: "ash_events_test",
     stacktrace: true,
@@ -19,7 +19,6 @@ if Mix.env() == :test do
     prepare: :unnamed
 
   config :ash_events,
-    add_event_resource_destroy?: true,
     event_resource_primary_key_type: :uuid,
     ecto_repos: [AshEvents.TestRepo],
     ash_domains: [

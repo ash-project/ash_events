@@ -1,15 +1,12 @@
-defmodule AshEvents.EventResource.Actions.Replay do
+defmodule AshEvents.EventLog.Actions.Replay do
+  alias AshEvents.Helpers
   require Ash.Query
   require Logger
-
-  defp remove_after_action(changeset) do
-    Map.put(changeset, :after_action, [])
-  end
 
   defp create!(resource, action, input, opts) do
     resource
     |> Ash.Changeset.for_create(action, input, opts)
-    |> remove_after_action()
+    |> Helpers.remove_changeset_lifecycle_hooks()
     |> Ash.create!(opts)
 
     :ok
@@ -20,7 +17,7 @@ defmodule AshEvents.EventResource.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_update(action, input |> Map.drop([:id]), opts)
-        |> remove_after_action()
+        |> Helpers.remove_changeset_lifecycle_hooks()
         |> Ash.update!(opts)
 
         :ok
@@ -35,7 +32,7 @@ defmodule AshEvents.EventResource.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_destroy(action, %{}, opts)
-        |> remove_after_action()
+        |> Helpers.remove_changeset_lifecycle_hooks()
         |> Ash.destroy!(opts)
 
         :ok
@@ -59,40 +56,48 @@ defmodule AshEvents.EventResource.Actions.Replay do
 
   def run(input, run_opts, ctx) do
     opts = Ash.Context.to_opts(ctx)
-    overrides = run_opts[:overrides]
 
-    case AshEvents.EventResource.Info.event_resource_clear_records_for_replay(input.resource) do
+    case AshEvents.EventLog.Info.event_log_clear_records_for_replay(input.resource) do
       {:ok, module} ->
         module.clear_records!(opts)
 
       :error ->
-        raise "clear_records_for_replay must be specified on #{input.resource} when doing a replay"
+        raise "clear_records_for_replay must be specified on #{input.resource} when doing a replay."
     end
 
+    overrides = run_opts[:overrides]
+    point_in_time = input.arguments[:point_in_time]
     last_event_id = input.arguments[:last_event_id]
 
-    if last_event_id do
-      input.resource
-      |> Ash.Query.filter(id <= ^last_event_id)
-    else
-      input.resource
+    cond do
+      last_event_id != nil ->
+        input.resource
+        |> Ash.Query.filter(id <= ^last_event_id)
+
+      point_in_time != nil ->
+        input.resource
+        |> Ash.Query.filter(occurred_at <= ^point_in_time)
+
+      true ->
+        input.resource
     end
+    |> Ash.Query.sort(id: :asc)
     |> Ash.stream!(opts)
     |> Stream.map(fn event ->
       input = Map.put(event.data, :id, event.record_id)
 
       override =
         Enum.find(overrides, fn
-          %{event_resource: resource, event_action: action, versions: versions} ->
-            event.ash_events_resource == resource and
-              event.ash_events_action == action and
+          %{event_log: event_log_resource, event_action: action, versions: versions} ->
+            event.resource == event_log_resource and
+              event.action == action and
               event.version in versions
         end)
 
       if override do
         Enum.each(override.route_to, fn route_to ->
           handle_action(
-            event.ash_events_action_type,
+            event.action_type,
             route_to.resource,
             route_to.action,
             input,
@@ -102,10 +107,12 @@ defmodule AshEvents.EventResource.Actions.Replay do
           )
         end)
       else
+        original_action_name = Helpers.build_original_action_name(event.action)
+
         handle_action(
-          event.ash_events_action_type,
-          event.ash_events_resource,
-          event.ash_events_action,
+          event.action_type,
+          event.resource,
+          original_action_name,
           input,
           event.record_id,
           event.id,

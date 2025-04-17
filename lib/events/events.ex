@@ -9,19 +9,15 @@ defmodule AshEvents.Events do
       """
     ],
     schema: [
-      event_resource: [
-        type: {:behaviour, AshEvents.EventResource},
+      event_log: [
+        type: {:behaviour, AshEvents.EventLog},
         required: true,
-        doc: "The event resource that creates and stores events."
+        doc: "The event-log resource that creates and stores events."
       ],
       ignore_actions: [
         type: {:list, :atom},
         default: [],
-        doc: """
-        A list of actions that should not have events created when run.
-        All actions created for supporting previous event versions must be
-        added to this list.
-        """
+        doc: "A list of actions that should not have events created when run."
       ]
     ]
   }

@@ -7,7 +7,7 @@
 [![Hexdocs badge](https://img.shields.io/badge/docs-hexdocs-purple)](https://hexdocs.pm/ash_events)
 # AshEvents
 
-AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that provides event sourcing capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality.
+AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that provides event capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality.
 
 ## Features
 
@@ -126,7 +126,14 @@ When performing actions, you can include any metadata by adding the `ash_events_
 
 ```elixir
 User
-|> Ash.Changeset.for_create(:create, %{name: "Jane Doe", email: "jane@example.com", ash_events_metadata: %{source: "api", request_id: request_id}}, opts)
+|> Ash.Changeset.for_create(:create, %{
+  name: "Jane Doe",
+  email: "jane@example.com",
+  ash_events_metadata: %{
+    source: "api",
+    request_id: request_id
+  }
+}, opts)
 |> Ash.create(opts)
 ```
 
@@ -147,7 +154,7 @@ MyApp.Events.Event
 
 # Replay events up to a specific point in time
 MyApp.Events.Event
-|> Ash.Action.action(:replay, %{point_in_time: ~U[2023-05-01 00:00:00Z]})
+|> Ash.ActionInput.for_action(:replay, %{point_in_time: ~U[2023-05-01 00:00:00Z]})
 |> Ash.run_action!()
 ```
 
@@ -178,12 +185,12 @@ During replay, AshEvents:
 
 ## Lifecycle Hooks During Replay
 
-During event replay, **all** action lifecycle hooks are automatically skipped to prevent unintended side effects. This includes:
+During event replay, **all** action lifecycle hooks are automatically skipped to prevent unintended side effects. This means none of the functionality contained in these hooks will be executed during replay:
 
 - `before_action`, `after_action` and `around_action` hooks
 - `before_transaction`, `after_transaction` and `around_transaction` hooks
 
-This is crucial because these hooks might perform operations like sending emails, notifications, or making external API calls that should only happen once when the action originally occurred, not when rebuilding state during replay.
+This is crucial because these hooks might perform operations like sending emails, notifications, or making external API calls that should only happen once when the action originally occurred, not when rebuilding your application state during replay.
 
 For example, if a `:create` action has an `after_action` hook that sends a welcome email, you wouldn't want those emails sent again when replaying events to rebuild the system state.
 
@@ -193,18 +200,121 @@ To maintain a complete and accurate event log that can be replayed reliably, we 
 
 - External API calls
 - Email sending
-- File uploads
-- Notifications
+- Anything else
 
 By containing these operations within Ash actions:
 
-1. **They can be used inside lifecycle hooks**: Since all lifecycle hooks run normally during regular action execution, they will create separate events when these actions are called in for example an `after_action`-hook.
+1. **They can be used inside lifecycle hooks**: Since all lifecycle hooks run normally during regular action execution, if side-effects are kept inside actions on resources that are also tracking events, they will create separate events when these actions are called in for example an `after_action`-hook.
 
 2. **All inputs and responses become part of event data**: When external API calls or other side effects are wrapped in their own actions, the inputs and responses are automatically recorded in the event log.
 
 3. **Improved system transparency**: The event log contains a complete record of all operations, including external interactions.
 
 4. **More reliable event replay**: During replay, you have access to the exact same data that was present during the original operation.
+
+### Example: Email Notifications with after_action Hooks
+
+Here's a practical example of how to handle email notifications using an after_action hook that calls another Ash action:
+
+```elixir
+# First, define your email notification resource
+defmodule MyApp.Notifications.EmailNotification do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.Event
+  end
+
+  attributes do
+    uuid_primary_key :id
+    attribute :recipient_email, :string
+    attribute :template, :string
+    attribute :data, :map
+    attribute :sent_at, :utc_datetime
+    attribute :status, :string, default: "pending"
+  end
+
+  actions do
+    create :send_email do
+      accept [:recipient_email, :template, :data]
+
+      change set_attribute(:sent_at, &DateTime.utc_now/0)
+
+      # This would not be triggered again during event replay, since it is in a after_action.
+      change after_action(fn cs, record, ctx ->
+        result = MyApp.EmailService.send_email(record.recipient_email, record.template, record.data)
+
+        # This will result in an event being logged for the update_status action,
+        # which will ensure the correct state is kept during event replay.
+        if result == :ok do
+          MyApp.Notifications.EmailNotification.update_status(record.id, status: "sent")
+          else
+          MyApp.Notifications.EmailNotification.update_status(record.id, status: "failed")
+        end
+      end)
+    end
+
+    update :update_status do
+      accept [:status]
+    end
+  end
+end
+
+# Then in your User resource
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.Event
+  end
+
+  attributes do
+    uuid_primary_key :id
+    attribute :email, :string
+    attribute :name, :string
+  end
+
+  actions do
+    create :create do
+      accept [:email, :name]
+
+      # After creating a user, send a welcome email
+      change after_action(fn cs, record, ctx ->
+        MyApp.Notifications.EmailNotification
+        |> Ash.Changeset.for_create(:send_email, %{
+          recipient_email: user.email,
+          template: "welcome_email",
+          data: %{
+            user_name: user.name
+          },
+          # You can include metadata for the email event
+          ash_events_metadata: %{
+            triggered_by: "user_creation",
+            user_id: user.id
+          }
+        })
+        |> Ash.create!()
+
+        # Return the user unmodified
+        {:ok, record}
+      end)
+    end
+  end
+end
+```
+
+With this approach:
+
+1. When a user is created, the after_action hook is triggered
+2. This hook calls the `send_email` action on the `EmailNotification` resource
+3. Three separate events are recorded in your event log:
+   - The user creation event
+   - The email sending event with its own metadata
+   - The email update status event after getting the response from the email service
+
+During event replay, the lifecycle hooks are skipped, so no duplicate emails will be sent, but all events will still be present in your log for audit purposes, giving you a complete history of what happened and a correct application state.
 
 ## Event Log Structure
 

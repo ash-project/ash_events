@@ -196,11 +196,11 @@ For example, if a `:create` action has an `after_action` hook that sends a welco
 
 ## Best Practices for Side Effects
 
-To maintain a complete and accurate event log that can be replayed reliably, we recommend encapsulating all side effects and processing of both the requests and responses from external services within Ash actions. For example:
+To maintain a complete and accurate event log that can be replayed reliably, we recommend encapsulating all side effects and processing of both the requests and responses from external services within other Ash actions, on resources that are also tracking events. For example for things like:
 
 - External API calls
 - Email sending
-- Anything else
+- Anything else that might have side effects outside of your own application state.
 
 By containing these operations within Ash actions:
 
@@ -214,7 +214,7 @@ By containing these operations within Ash actions:
 
 ### Example: Email Notifications with after_action Hooks
 
-Here's a practical example of how to handle email notifications using an after_action hook that calls another Ash action:
+Here's a practical example of how to handle email notifications using an after_action hook that calls another Ash action for sending the email:
 
 ```elixir
 # First, define your email notification resource

@@ -49,8 +49,9 @@ defmodule MyApp.Events.Event do
     # Optional, defaults to :uuid
     record_id_type :uuid
 
-    # Store actor information
+    # Store primary key of actors running the actions
     persist_actor_primary_key :user_id, MyApp.Accounts.User
+    persist_actor_primary_key :system_actor, MyApp.SystemActor, attribute: :string
   end
 
   # Optional: Configure replay overrides for version handling
@@ -60,13 +61,7 @@ defmodule MyApp.Events.Event do
       route_to MyApp.Accounts.User, :old_create_v1
     end
   end
-
-  # Add your data layer with appropriate configuration
-  # For example:
-  postgres do
-    table "events"
-    repo MyApp.Repo
-  end
+  .....
 end
 ```
 
@@ -80,7 +75,8 @@ defmodule MyApp.Events.ClearAllRecords do
 
   @impl true
   def clear_records!(opts) do
-    # Logic to clear all relevant records
+    # Logic to clear all relevant records for all resources with event tracking
+    # enabled through the event log resource.
     :ok
   end
 end
@@ -99,10 +95,9 @@ defmodule MyApp.Accounts.User do
     # Specify your event log resource
     event_log MyApp.Events.Event
 
-    # Optionally ignore certain actions. This is mainly used for
-    # actions that are kept around for supporting previous event versions.
-    # When these actions are run, which will be during event replay,
-    # new events will not be created.
+    # Optionally ignore certain actions. This is mainly used for actions
+    # that are kept around for supporting previous event versions, and
+    # are configured as replay_overrrides in the event log (see above).
     ignore_actions [:old_create_v1]
 
     # Optionally specify version numbers for actions
@@ -345,9 +340,10 @@ This structure captures all the essential information about each event:
 
 - **id**: Unique identifier for the event
 - **resource**: The full module name of the resource that generated the event
-- **action**: The specific action that was performed (create, update, destroy)
+- **action**: The name of the action that was performed.
+- **action type**: The specific action that was performed (create, update, destroy)
 - **actor primary key**: Primary key of actor that ran the action (multiple actor types are supported)
-- **data**: The actual data that was provided to the action
+- **data**: Any attributes and arguments that was provided to the action
 - **metadata**: Additional contextual information about the event
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
@@ -408,3 +404,8 @@ end
 
 Note: When using multiple actor types, all must have `allow_nil?: true`. This is the default,
 but you will get a compile error if one of them is configured with `allow_nil?: false`.
+
+## Reference
+
+- [AshEvents.Events DSL](documentation/dsls/DSL-AshEvents.Events.md)
+- [AshEvents.EventLog DSL](documentation/dsls/DSL-AshEvents.EventLog.md)

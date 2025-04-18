@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Events.SystemActor do
+  @moduledoc false
   use Ash.Resource,
     domain: AshEvents.Test.Events
 

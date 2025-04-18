@@ -50,7 +50,7 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     end)
   end
 
-  def datetime_default() do
+  def datetime_default do
     DateTime.utc_now(:microsecond)
   end
 end

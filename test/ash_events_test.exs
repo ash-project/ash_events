@@ -3,14 +3,14 @@ defmodule AshEventsTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
   alias AshEvents.Test.Accounts.User
   alias AshEvents.Test.Accounts.UserRole
+  alias AshEvents.Test.Events
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query
 
-  def create_user() do
+  def create_user do
     Accounts.create_user!(%{
       email: "user@example.com",
       given_name: "John",

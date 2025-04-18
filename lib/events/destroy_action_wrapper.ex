@@ -1,4 +1,7 @@
 defmodule AshEvents.DestroyActionWrapper do
+  @moduledoc """
+  Wrapper for destroy actions that enables event tracking.
+  """
   use Ash.Resource.ManualDestroy
   alias AshEvents.Helpers
 

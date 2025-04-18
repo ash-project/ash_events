@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Accounts.RoutedUser do
+  @moduledoc false
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
     data_layer: AshPostgres.DataLayer,

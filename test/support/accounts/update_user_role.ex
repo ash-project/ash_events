@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Accounts.User.UpdateUserRole do
+  @moduledoc false
   alias AshEvents.Test.Accounts
   use Ash.Resource.Change
 

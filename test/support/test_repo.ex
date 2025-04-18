@@ -1,4 +1,5 @@
 defmodule AshEvents.TestRepo do
+  @moduledoc false
   use AshPostgres.Repo, otp_app: :ash_events
 
   def installed_extensions do

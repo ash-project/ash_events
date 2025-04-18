@@ -1,13 +1,15 @@
 defmodule AshEvents.EventLog do
   @moduledoc """
-    Extension to use on the Ash.Resource that will persist events.
+  Extension to use on the Ash.Resource that will persist events.
   """
 
   defmodule ReplayOverride do
-    defstruct [:event_log, :event_action, :versions, :route_to]
+    @moduledoc false
+    defstruct [:event_resource, :event_action, :versions, :route_to]
   end
 
   defmodule RouteTo do
+    @moduledoc false
     defstruct [:resource, :action]
   end
 
@@ -37,7 +39,7 @@ defmodule AshEvents.EventLog do
       """
       replay_overrides do
         replay_override MyApp.Accounts.User, :create do
-          versions([1])
+          versions [1]
           route_to MyApp.Accounts.User, :create_v1
         end
       end
@@ -45,22 +47,24 @@ defmodule AshEvents.EventLog do
     ],
     target: ReplayOverride,
     schema: [
-      event_log: [
+      event_resource: [
         type: :atom,
-        required: true
+        required: true,
+        doc: "The name of the resource stored in the event, that you want to match on."
       ],
       event_action: [
         type: :atom,
-        required: true
+        required: true,
+        doc: "The name of the action stored in the event, that you want to match on."
       ],
       versions: [
         type: {:list, :integer},
         doc:
-          "A list of event versions to match on. The event will only be routed here if the version of the event matches one of the listed versions.",
+          "A list of event versions to match on.",
         required: true
       ]
     ],
-    args: [:event_log, :event_action],
+    args: [:event_resource, :event_action],
     entities: [route_to: [@route_to]]
   }
 
@@ -89,10 +93,7 @@ defmodule AshEvents.EventLog do
       clear_records_for_replay: [
         type: {:behaviour, AshEvents.ClearRecordsForReplay},
         required: false,
-        doc: """
-        A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all
-        records before an event replay.
-        """
+        doc: "A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all records before an event replay."
       ],
       record_id_type: [
         type: :any,

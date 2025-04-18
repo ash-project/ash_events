@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Events.EventLogMissingClear do
+  @moduledoc false
   use Ash.Resource,
     domain: AshEvents.Test.Events,
     data_layer: AshPostgres.DataLayer,
@@ -18,7 +19,7 @@ defmodule AshEvents.Test.Events.EventLogMissingClear do
 
   replay_overrides do
     replay_override AshEvents.Test.Accounts.User, :create do
-      versions([1])
+      versions [1]
       route_to AshEvents.Test.Accounts.User, :create_v1
     end
   end

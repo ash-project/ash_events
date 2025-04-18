@@ -1,4 +1,8 @@
 defmodule AshEvents.Events.ActionWrapperHelpers do
+  @moduledoc """
+  Helper functions used by the action wrappers.
+  """
+
   alias AshEvents.Helpers
 
   def build_params(changeset, module_opts) do

@@ -1,4 +1,7 @@
 defmodule AshEvents.EventLog.Actions.Replay do
+  @moduledoc """
+  Action module used by the event log resource to replay events.
+  """
   alias AshEvents.Helpers
   require Ash.Query
   require Logger
@@ -88,9 +91,9 @@ defmodule AshEvents.EventLog.Actions.Replay do
 
       override =
         Enum.find(overrides, fn
-          %{event_log: event_log_resource, event_action: action, versions: versions} ->
-            event.resource == event_log_resource and
-              event.action == action and
+          %{event_resource: event_resource, event_action: event_action, versions: versions} ->
+            event.resource == event_resource and
+              event.action == event_action and
               event.version in versions
         end)
 

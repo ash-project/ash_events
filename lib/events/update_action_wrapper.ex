@@ -1,4 +1,7 @@
 defmodule AshEvents.UpdateActionWrapper do
+  @moduledoc """
+  Wrapper for update actions that enables event tracking.
+  """
   use Ash.Resource.ManualUpdate
   alias AshEvents.Helpers
 

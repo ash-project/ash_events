@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Events.EventLog do
+  @moduledoc false
   use Ash.Resource,
     domain: AshEvents.Test.Events,
     data_layer: AshPostgres.DataLayer,

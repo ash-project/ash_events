@@ -1,4 +1,5 @@
 defmodule AshEvents.Test.Events.ClearRecords do
+  @moduledoc false
   use AshEvents.ClearRecordsForReplay
   alias AshEvents.TestRepo
 

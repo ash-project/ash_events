@@ -30,7 +30,7 @@ end
 |------|------|---------|------|
 | [`event_log`](#events-event_log){: #events-event_log .spark-required} | `module` |  | The event-log resource that creates and stores events. |
 | [`ignore_actions`](#events-ignore_actions){: #events-ignore_actions } | `list(atom)` | `[]` | A list of actions that should not have events created when run. |
-| [`current_action_versions`](#events-current_action_versions){: #events-current_action_versions } | `keyword` | `[]` | A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Example: [create: 2, update: 3, destroy: 2] |
+| [`current_action_versions`](#events-current_action_versions){: #events-current_action_versions } | `keyword` | `[]` | A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Version will default to 1 for all actions that are not listed here. |
 
 
 

@@ -27,7 +27,7 @@ defmodule AshEvents.Events do
       current_action_versions: [
         type: :keyword_list,
         doc:
-          "A keyword list of action versions. This will be used to set the version in the created events when the actions are run.",
+          "A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Version will default to 1 for all actions that are not listed here.",
         default: []
       ]
     ]

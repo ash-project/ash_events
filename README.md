@@ -57,7 +57,7 @@ defmodule MyApp.Events.Event do
   # Optional: Configure replay overrides for version handling
   replay_overrides do
     replay_override MyApp.Accounts.User, :create do
-      versions([1])
+      versions [1]
       route_to MyApp.Accounts.User, :old_create_v1
     end
   end
@@ -357,12 +357,12 @@ As your application evolves, you might need to handle different versions of even
 ```elixir
 replay_overrides do
   replay_override MyApp.Accounts.User, :create do
-    versions([1])
+    versions [1]
     route_to MyApp.Accounts.User, :old_create_v1
   end
 
   replay_override MyApp.Accounts.User, :update do
-    versions([1, 2])
+    versions [1, 2]
     route_to MyApp.Accounts.User, :update_legacy
   end
 end
@@ -373,7 +373,7 @@ The replay override functionality can also be used to route events to different 
 ```elixir
 replay_overrides do
   replay_override MyApp.Accounts.User, :update do
-    versions([1, 2])
+    versions [1, 2]
     route_to MyApp.Accounts.UserV2, :update_v2
   end
 end
@@ -384,7 +384,7 @@ You can also route an event to multiple actions if needed:
 ```elixir
 replay_overrides do
   replay_override MyApp.Accounts.User, :update do
-    versions([1, 2])
+    versions [1, 2]
     route_to MyApp.Accounts.UserV2, :update
     route_to MyApp.Accounts.UserV3, :update
   end

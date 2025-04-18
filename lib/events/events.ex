@@ -22,23 +22,13 @@ defmodule AshEvents.Events do
       ignore_actions: [
         type: {:list, :atom},
         default: [],
-        doc: "A list of actions that should not have events created when run.",
-        examples: [
-          """
-          ignore_actions [:create_old_v1, :update_old_v1, :update_old_v2, :destroy_old_v1]
-          """
-        ]
+        doc: "A list of actions that should not have events created when run."
       ],
       current_action_versions: [
         type: :keyword_list,
         doc:
-          "A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Example: [create: 2, update: 3, destroy: 2]",
-        default: [],
-        examples: [
-          """
-          current_action_versions create: 2, update: 3, destroy: 2
-          """
-        ]
+          "A keyword list of action versions. This will be used to set the version in the created events when the actions are run.",
+        default: []
       ]
     ]
   }

@@ -1,5 +1,4 @@
-![Logo](https://github.com/ash-project/ash/blob/main/logos/cropped-for-header-black-text.png?raw=true#gh-light-mode-only)
-![Logo](https://github.com/ash-project/ash/blob/main/logos/cropped-for-header-white-text.png?raw=true#gh-dark-mode-only)
+![Logo](https://github.com/ash-project/ash/blob/main/logos/ash-events.png?raw=true)
 
 ![Elixir CI](https://github.com/ash-project/ash_events/workflows/CI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

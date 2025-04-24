@@ -163,6 +163,19 @@ While AshEvents provides powerful event replay capabilities, you can also use it
 
 This approach allows you to benefit from the automatic event tracking of AshEvents while using it purely as an audit log system rather than a full event sourcing solution.
 
+## Differences from `ash_paper_trail` with regards to audit logging
+
+The value proposition offered by AshEvents compared to `ash_paper_trail` is quite similar
+if you only utilize AshEvents for audit logging purposes.
+
+The main differences are:
+
+1. AshEvents stores events in a centralized table/resource, whereas `ash_paper_trail` adds a separate version-resource
+for each resource.
+2. `ash_paper_trail`'s version resources has several options for change tracking and storing action inputs, whereas AshEvents only stores the action inputs in the event log.
+3. Since `ash_paper_trail` uses a unique version-table for each resource, versions can store specific attributes directly in resource, instead of only inside a map. `ash_paper_trail` also gives you the option to ignore certain attributes if needed.
+4. `ash_paper_trail` has better support for exposing earlier versions of records to your app, or for example through `ash_graphql` or `ash_json_api`.
+
 ## How It Works
 
 AshEvents works by wrapping resource actions. When you perform an action on a resource with events enabled:

@@ -11,12 +11,14 @@ defmodule AshEventsTest do
   require Ash.Query
 
   def create_user do
-    Accounts.create_user!(%{
-      email: "user@example.com",
-      given_name: "John",
-      family_name: "Doe",
-      ash_events_metadata: %{source: "Signup form"}
-    })
+    Accounts.create_user!(
+      %{
+        email: "user@example.com",
+        given_name: "John",
+        family_name: "Doe"
+      },
+      context: %{ash_events_metadata: %{source: "Signup form"}}
+    )
   end
 
   test "events are created as expected" do
@@ -64,20 +66,20 @@ defmodule AshEventsTest do
       user,
       %{
         given_name: "Jack",
-        family_name: "Smith",
-        ash_events_metadata: %{source: "Profile update"}
+        family_name: "Smith"
       },
-      actor: user
+      actor: user,
+      context: %{ash_events_metadata: %{source: "Profile update"}}
     )
 
     Accounts.update_user!(
       user,
       %{
         given_name: "Jason",
-        family_name: "Anderson",
-        ash_events_metadata: %{source: "External sync"}
+        family_name: "Anderson"
       },
-      actor: %SystemActor{name: "External sync job"}
+      actor: %SystemActor{name: "External sync job"},
+      context: %{ash_events_metadata: %{source: "External sync"}}
     )
 
     [_event, _event2, profile_event, system_event] =
@@ -106,10 +108,9 @@ defmodule AshEventsTest do
         %{
           email: "email@email.com",
           given_name: "Given",
-          family_name: "Family",
-          ash_events_metadata: %{meta_field: "meta_value"}
+          family_name: "Family"
         },
-        opts
+        opts ++ [context: %{ash_events_metadata: %{meta_field: "meta_value"}}]
       )
       |> Ash.create!()
 
@@ -122,7 +123,7 @@ defmodule AshEventsTest do
           family_name: "Updated family",
           ash_events_metadata: %{meta_field: "meta_value"}
         },
-        opts
+        opts ++ [context: %{ash_events_metadata: %{meta_field: "meta_value"}}]
       )
       |> Ash.update!(load: [:user_role])
 
@@ -159,10 +160,10 @@ defmodule AshEventsTest do
         user,
         %{
           given_name: "Jack",
-          family_name: "Smith",
-          ash_events_metadata: %{source: "Profile update"}
+          family_name: "Smith"
         },
-        actor: user
+        actor: user,
+        context: %{ash_events_metadata: %{source: "Profile update"}}
       )
 
     Accounts.update_user!(
@@ -170,10 +171,10 @@ defmodule AshEventsTest do
       %{
         given_name: "Jason",
         family_name: "Anderson",
-        role: "admin",
-        ash_events_metadata: %{source: "External sync"}
+        role: "admin"
       },
-      actor: %SystemActor{name: "External sync job"}
+      actor: %SystemActor{name: "External sync job"},
+      context: %{ash_events_metadata: %{source: "External sync"}}
     )
     |> Ash.load!([:user_role])
 

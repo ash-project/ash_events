@@ -12,6 +12,7 @@ defmodule AshEvents.CreateActionWrapper do
       |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
     params = AshEvents.Events.ActionWrapperHelpers.build_params(changeset, module_opts)
+
     AshEvents.Events.ActionWrapperHelpers.create_event!(changeset, params, module_opts, opts)
 
     original_action_name = Helpers.build_original_action_name(module_opts[:action])

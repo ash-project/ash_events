@@ -116,18 +116,20 @@ end
 
 ### 4. Track Metadata with Actions
 
-When performing actions, you can include any metadata by adding the `ash_events_metadata` argument:
+When performing actions, you can include any metadata by adding `ash_events_metadata` to the changeset context:
 
 ```elixir
 User
 |> Ash.Changeset.for_create(:create, %{
   name: "Jane Doe",
-  email: "jane@example.com",
-  ash_events_metadata: %{
+  email: "jane@example.com"
+}, [
+  actor: current_user,
+  context: %{ash_events_metadata: %{
     source: "api",
     request_id: request_id
-  }
-}, opts)
+  }}
+])
 |> Ash.create(opts)
 ```
 

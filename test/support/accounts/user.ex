@@ -3,6 +3,7 @@ defmodule AshEvents.Test.Accounts.User do
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [AshEvents.Events]
 
   postgres do
@@ -47,6 +48,12 @@ defmodule AshEvents.Test.Accounts.User do
       accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
       argument :role, :string, default: "user"
       change __MODULE__.CreateUserRole
+    end
+  end
+
+  policies do
+    bypass always() do
+      authorize_if AshEvents.Checks.TestCheck
     end
   end
 

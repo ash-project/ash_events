@@ -58,7 +58,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
   end
 
   def run(input, run_opts, ctx) do
-    opts = Ash.Context.to_opts(ctx)
+    opts = Ash.Context.to_opts(ctx, authorize?: false)
 
     case AshEvents.EventLog.Info.event_log_clear_records_for_replay(input.resource) do
       {:ok, module} ->

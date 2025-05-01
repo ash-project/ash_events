@@ -17,7 +17,8 @@ defmodule AshEventsTest do
         given_name: "John",
         family_name: "Doe"
       },
-      context: %{ash_events_metadata: %{source: "Signup form"}}
+      context: %{ash_events_metadata: %{source: "Signup form"}},
+      actor: %SystemActor{name: "test_runner"}
     )
   end
 
@@ -32,7 +33,7 @@ defmodule AshEventsTest do
 
     assert event.metadata == %{"source" => "Signup form"}
     assert event.user_id == nil
-    assert event.system_actor == nil
+    assert event.system_actor == "test_runner"
     assert event.action == :create
     assert event.resource == User
 
@@ -47,7 +48,7 @@ defmodule AshEventsTest do
 
     assert event2.metadata == %{}
     assert event2.user_id == nil
-    assert event2.system_actor == nil
+    assert event2.system_actor == "test_runner"
     assert event2.action == :create
     assert event2.resource == UserRole
 
@@ -146,7 +147,7 @@ defmodule AshEventsTest do
     )
     |> Ash.destroy!()
 
-    [] = Ash.read!(User)
+    [] = Ash.read!(User, opts)
 
     events = Ash.read!(EventLog)
     assert Enum.count(events) == 5
@@ -193,7 +194,7 @@ defmodule AshEventsTest do
 
     :ok = Events.replay_events!(%{last_event_id: update_user_event_1.id})
 
-    user = Accounts.get_user_by_id!(user.id, load: [:user_role])
+    user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
     assert user.given_name == "Jack"
     assert user.family_name == "Smith"
@@ -204,7 +205,7 @@ defmodule AshEventsTest do
         point_in_time: create_user_role_event.occurred_at
       })
 
-    user = Accounts.get_user_by_id!(user.id, load: [:user_role])
+    user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
     assert user.given_name == "John"
     assert user.family_name == "Doe"
@@ -215,7 +216,7 @@ defmodule AshEventsTest do
         point_in_time: create_user_event.occurred_at
       })
 
-    user = Accounts.get_user_by_id!(user.id, load: [:user_role])
+    user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
     assert user.given_name == "John"
     assert user.family_name == "Doe"
@@ -223,7 +224,7 @@ defmodule AshEventsTest do
 
     :ok = Events.replay_events!()
 
-    user = Accounts.get_user_by_id!(user.id, load: [:user_role])
+    user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
     assert user.given_name == "Jason"
     assert user.family_name == "Anderson"
@@ -284,7 +285,7 @@ defmodule AshEventsTest do
 
     assert Enum.count(events) == 6
 
-    users = Accounts.User |> Ash.read!()
+    users = Accounts.User |> Ash.read!(actor: %SystemActor{name: "system"})
 
     Enum.each(users, fn user ->
       assert user.given_name == "Updated"
@@ -321,14 +322,15 @@ defmodule AshEventsTest do
         return_errors?: true,
         return_notifications?: true,
         return_records?: true,
-        strategy: :stream
+        strategy: :stream,
+        actor: %SystemActor{name: "system"}
       )
 
     assert destroy_users_result.error_count == 0
     assert Enum.count(destroy_users_result.records) == 2
     assert Enum.count(destroy_users_result.notifications) == 4
 
-    [] = Accounts.User |> Ash.read!()
+    [] = Accounts.User |> Ash.read!(actor: %SystemActor{name: "system"})
 
     events =
       EventLog
@@ -352,7 +354,7 @@ defmodule AshEventsTest do
     :ok = Events.replay_events!()
 
     [routed_user] = Ash.read!(Accounts.RoutedUser)
-    [user] = Ash.read!(Accounts.User)
+    [user] = Ash.read!(Accounts.User, actor: %SystemActor{name: "system"})
 
     assert routed_user.given_name == "John"
     assert routed_user.family_name == "Doe"

@@ -128,7 +128,8 @@ defmodule AshEvents.MixProject do
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:igniter, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.37", only: [:dev, :test], runtime: false},
-      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false}
+      {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
+      {:picosat_elixir, "~> 0.2", only: [:dev, :test]}
     ]
   end
 
@@ -149,10 +150,8 @@ defmodule AshEvents.MixProject do
         "spark.replace_doc_links"
       ],
       credo: "credo --strict",
-      "spark.formatter":
-        "spark.formatter --extensions AshEvents.EventLog,AshEvents.Events",
-      "spark.cheat_sheets":
-        "spark.cheat_sheets --extensions AshEvents.EventLog,AshEvents.Events"
+      "spark.formatter": "spark.formatter --extensions AshEvents.EventLog,AshEvents.Events",
+      "spark.cheat_sheets": "spark.cheat_sheets --extensions AshEvents.EventLog,AshEvents.Events"
     ]
   end
 end

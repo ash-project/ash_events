@@ -1,20 +1,20 @@
 # Used by "mix format"
 spark_locals_without_parens = [
+  allow_nil?: 1,
+  attribute_type: 1,
+  clear_records_for_replay: 1,
   current_action_versions: 1,
   event_log: 1,
-  event_name: 1,
-  event_version: 1,
+  ignore_actions: 1,
   persist_actor_primary_key: 2,
   persist_actor_primary_key: 3,
-  event_handler: 1,
-  event_handler: 2,
-  before_dispatch: 1,
-  on_success: 1,
+  public?: 1,
+  record_id_type: 1,
+  replay_override: 2,
+  replay_override: 3,
   route_to: 2,
-  version: 1,
-  versions: 1,
-  ignore_actions: 1,
-  clear_records_for_replay: 1
+  route_to: 3,
+  versions: 1
 ]
 
 [

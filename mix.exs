@@ -2,6 +2,7 @@ defmodule AshEvents.MixProject do
   use Mix.Project
 
   @version "0.1.0"
+  @version "0.1.0"
 
   @description """
   The extension for tracking changes to your resources via a centralized event log, with replay functionality.
@@ -10,7 +11,7 @@ defmodule AshEvents.MixProject do
   def project do
     [
       app: :ash_events,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.15",
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -119,9 +120,9 @@ defmodule AshEvents.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash, ash_version("~> 3.5")},
-      # {:ash, path: "../ash", override: true},
+      {:git_ops, "~> 2.0", only: [:dev], runtime: false},
+      {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0", only: [:dev, :test]},
       {:faker, "~> 0.18", only: :test},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},

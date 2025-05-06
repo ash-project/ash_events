@@ -26,3 +26,5 @@ if Mix.env() == :test do
       AshEvents.Test.Accounts
     ]
 end
+
+import_config "#{config_env()}.exs"

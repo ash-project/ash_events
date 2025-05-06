@@ -18,5 +18,5 @@ defmodule AshEvents.TestRepo do
     %Version{major: 16, minor: 0, patch: 0}
   end
 
-  def all_tenants(), do: []
+  def all_tenants, do: []
 end

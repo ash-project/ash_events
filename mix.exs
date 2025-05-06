@@ -129,7 +129,8 @@ defmodule AshEvents.MixProject do
       {:igniter, "~> 0.5", only: [:dev, :test]},
       {:ex_doc, "~> 0.37", only: [:dev, :test], runtime: false},
       {:sobelow, ">= 0.0.0", only: [:dev, :test], runtime: false},
-      {:picosat_elixir, "~> 0.2", only: [:dev, :test]}
+      {:picosat_elixir, "~> 0.2", only: [:dev, :test]},
+      {:mix_audit, ">= 0.0.0", only: [:dev, :test], runtime: false}
     ]
   end
 

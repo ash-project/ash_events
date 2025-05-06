@@ -1,5 +1,5 @@
 defmodule AshEvents.Events do
-  @moduledoc"""
+  @moduledoc """
   Defines the events section for a resource.
   """
   @events %Spark.Dsl.Section{

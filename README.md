@@ -1,4 +1,4 @@
-![Logo](https://github.com/ash-project/ash_events/blob/main/logos/ash-events.png?raw=true)
+<img src="https://github.com/ash-project/ash_events/blob/main/logos/ash-events.png?raw=true" alt="Logo" width="300"/>
 
 ![Elixir CI](https://github.com/ash-project/ash_events/workflows/CI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)

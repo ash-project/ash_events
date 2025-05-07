@@ -30,6 +30,9 @@ defmodule AshEvents.MixProject do
         "test.drop": :test,
         "test.generate_migrations": :test,
         "test.reset": :test
+      ],
+      dialyzer: [
+        plt_add_apps: [:mix]
       ]
     ]
   end

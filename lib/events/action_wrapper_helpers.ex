@@ -54,8 +54,22 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         end
       end)
 
+    has_atomics? = not Enum.empty?(changeset.atomics)
+
     event_log_resource
     |> Ash.Changeset.for_create(:create, event_params, opts)
+    |> then(fn cs ->
+      if has_atomics? do
+        Ash.Changeset.add_error(
+          cs,
+          Ash.Error.Changes.InvalidChanges.exception(
+            message: "atomic changes are not compatible with ash_events"
+          )
+        )
+      else
+        cs
+      end
+    end)
     |> Ash.create!()
   end
 end

@@ -361,4 +361,39 @@ defmodule AshEventsTest do
     assert user.given_name == "John"
     assert user.family_name == "Doe"
   end
+
+  test "atomic changes throws error" do
+    assert_raise Ash.Error.Invalid, fn ->
+      Accounts.create_user_with_atomic(
+        %{
+          email: "user@example.com",
+          given_name: "John",
+          family_name: "Doe"
+        },
+        context: %{ash_events_metadata: %{source: "Signup form"}},
+        actor: %SystemActor{name: "test_runner"}
+      )
+    end
+
+    user = create_user()
+
+    assert_raise Ash.Error.Invalid, fn ->
+      Accounts.update_user_with_atomic(
+        user,
+        %{
+          given_name: "Jack",
+          family_name: "Smith"
+        },
+        actor: user
+      )
+    end
+
+    assert_raise Ash.Error.Invalid, fn ->
+      Accounts.destroy_user_with_atomic(
+        user,
+        %{},
+        actor: user
+      )
+    end
+  end
 end

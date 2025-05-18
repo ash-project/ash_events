@@ -92,7 +92,7 @@ defmodule AshEvents.EventLog do
       primary_key_type: [
         type: {:one_of, [:integer, Ash.Type.UUIDv7]},
         doc:
-          "The type of the primary key used by the event log resource. Valid options are :integer, :uuid_v4, and :uuid_v7. Defaults to :integer.",
+          "The type of the primary key used by the event log resource. Valid options are :integer  and :uuid_v7. Defaults to :integer.",
         default: :integer
       ],
       clear_records_for_replay: [

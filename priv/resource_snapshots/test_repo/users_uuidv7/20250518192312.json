@@ -66,7 +66,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "D9D30EDC4FCE2F55F26A9F425D3D639B846779A8BB8D5A85F4406670B287AAB0",
+  "hash": "0252BFEFFEB34BFC2F6FA6924A7A9F6D67F50CD500B3F2EAB83696BBC2FCCA85",
   "identities": [],
   "multitenancy": {
     "attribute": null,
@@ -75,5 +75,5 @@
   },
   "repo": "Elixir.AshEvents.TestRepo",
   "schema": null,
-  "table": "users"
+  "table": "users_uuidv7"
 }

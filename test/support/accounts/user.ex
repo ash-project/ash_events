@@ -26,6 +26,13 @@ defmodule AshEvents.Test.Accounts.User do
       change __MODULE__.CreateUserRole
     end
 
+    create :create_with_atomic do
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
+      argument :role, :string, default: "user"
+      change __MODULE__.CreateUserRole
+      change atomic_update(:given_name, expr(given_name + "should_fail"))
+    end
+
     update :update do
       require_atomic? false
       accept [:given_name, :family_name]
@@ -34,10 +41,26 @@ defmodule AshEvents.Test.Accounts.User do
       change __MODULE__.UpdateUserRole
     end
 
+    update :update_with_atomic do
+      require_atomic? false
+      accept [:given_name, :family_name]
+      argument :role, :string, allow_nil?: true
+
+      change __MODULE__.UpdateUserRole
+      change atomic_update(:given_name, expr(given_name + "should_fail"))
+    end
+
     destroy :destroy do
       require_atomic? false
       primary? true
       accept []
+    end
+
+    destroy :destroy_with_atomic do
+      require_atomic? false
+      accept []
+
+      change atomic_update(:given_name, expr(given_name + "should_fail"))
     end
 
     read :get_by_id do

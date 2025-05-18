@@ -20,5 +20,13 @@ defmodule AshEvents.Test.Accounts do
     end
 
     resource AshEvents.Test.Accounts.RoutedUser
+
+    resource AshEvents.Test.Accounts.Org do
+      define :create_org, action: :create
+    end
+
+    resource AshEvents.Test.Accounts.OrgDetails do
+      define :create_org_details, action: :create
+    end
   end
 end

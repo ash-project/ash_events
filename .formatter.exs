@@ -1,5 +1,7 @@
 # Used by "mix format"
 spark_locals_without_parens = [
+  advisory_lock_key_default: 1,
+  advisory_lock_key_generator: 1,
   allow_nil?: 1,
   attribute_type: 1,
   clear_records_for_replay: 1,

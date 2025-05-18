@@ -37,27 +37,7 @@
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "email",
-      "type": "text"
-    },
-    {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "given_name",
-      "type": "text"
-    },
-    {
-      "allow_nil?": false,
-      "default": "nil",
-      "generated?": false,
-      "primary_key?": false,
-      "references": null,
-      "size": null,
-      "source": "family_name",
+      "source": "name",
       "type": "text"
     }
   ],
@@ -66,7 +46,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "E5F54D698514CBEDB5F826D048F176517634A84A2562AE4222B7E7386151E59C",
+  "hash": "C4776AA7420F74FCA650403B50F9A5484D539533FC338BA4B9CEF6E08A4A77CF",
   "identities": [],
   "multitenancy": {
     "attribute": null,
@@ -75,5 +55,5 @@
   },
   "repo": "Elixir.AshEvents.TestRepo",
   "schema": null,
-  "table": "routed_users"
+  "table": "orgs"
 }

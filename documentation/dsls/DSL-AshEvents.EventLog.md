@@ -31,6 +31,7 @@ end
 
 | Name | Type | Default | Docs |
 |------|------|---------|------|
+| [`primary_key_type`](#event_log-primary_key_type){: #event_log-primary_key_type } | `:integer \| Ash.Type.UUIDv7` | `:integer` | The type of the primary key used by the event log resource. Valid options are :integer  and :uuid_v7. Defaults to :integer. |
 | [`clear_records_for_replay`](#event_log-clear_records_for_replay){: #event_log-clear_records_for_replay } | `module` |  | A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all records before an event replay. |
 | [`record_id_type`](#event_log-record_id_type){: #event_log-record_id_type } | `any` | `:uuid` | The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid. |
 

@@ -9,12 +9,25 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(dsl)
 
     dsl
-    |> Ash.Resource.Builder.add_attribute(:id, :integer,
-      primary_key?: true,
-      writable?: false,
-      generated?: true,
-      allow_nil?: false
-    )
+    |> then(fn dsl ->
+      case AshEvents.EventLog.Info.event_log_primary_key_type!(dsl) do
+        :integer ->
+          Ash.Resource.Builder.add_attribute(dsl, :id, :integer,
+            primary_key?: true,
+            writable?: false,
+            generated?: true,
+            allow_nil?: false
+          )
+
+        Ash.Type.UUIDv7 ->
+          Ash.Resource.Builder.add_attribute(dsl, :id, Ash.Type.UUIDv7,
+            primary_key?: true,
+            writable?: false,
+            allow_nil?: false,
+            default: &Ash.UUIDv7.generate/0
+          )
+      end
+    end)
     |> Ash.Resource.Builder.add_attribute(:record_id, record_primary_id_type, allow_nil?: false)
     |> Ash.Resource.Builder.add_attribute(:version, :integer, allow_nil?: false, default: 1)
     |> Ash.Resource.Builder.add_attribute(:metadata, :map,

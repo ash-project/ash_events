@@ -4,6 +4,7 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
 
   def transform(dsl) do
     replay_overrides = AshEvents.EventLog.Info.replay_overrides(dsl)
+    primary_key = AshEvents.EventLog.Info.event_log_primary_key_type!(dsl)
 
     persist_actor_primary_keys =
       AshEvents.EventLog.Info.event_log(dsl)
@@ -26,7 +27,7 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
     )
     |> Ash.Resource.Builder.add_action(:action, :replay,
       arguments: [
-        Ash.Resource.Builder.build_action_argument(:last_event_id, :integer,
+        Ash.Resource.Builder.build_action_argument(:last_event_id, primary_key,
           allow_nil?: true,
           description: "Replay events up to and including this event id."
         ),

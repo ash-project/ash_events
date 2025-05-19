@@ -45,6 +45,10 @@ defmodule MyApp.Events.Event do
     # Module that implements clear_records! callback
     clear_records_for_replay MyApp.Events.ClearAllRecords
 
+    # Optional. Defaults to :integer, Ash.Type.UUIDv7 is the recommended option
+    # if your event log is set up with multitenancy via the attribute-strategy.
+    primary_key_type Ash.Type.UUIDv7
+
     # Optional, defaults to :uuid
     record_id_type :uuid
 

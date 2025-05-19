@@ -89,6 +89,12 @@ defmodule AshEvents.EventLog do
   @event_log %Spark.Dsl.Section{
     name: :event_log,
     schema: [
+      primary_key_type: [
+        type: {:one_of, [:integer, Ash.Type.UUIDv7]},
+        doc:
+          "The type of the primary key used by the event log resource. Valid options are :integer  and :uuid_v7. Defaults to :integer.",
+        default: :integer
+      ],
       clear_records_for_replay: [
         type: {:behaviour, AshEvents.ClearRecordsForReplay},
         required: false,

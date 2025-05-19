@@ -10,6 +10,13 @@ defmodule AshEvents.Test.Accounts do
       define :destroy_user, action: :destroy
     end
 
+    resource AshEvents.Test.Accounts.UserUuidV7 do
+      define :get_user_uuidv7_by_id, action: :get_by_id, args: [:id]
+      define :create_user_uuidv7, action: :create
+      define :update_user_uuidv7, action: :update
+      define :destroy_user_uuidv7, action: :destroy
+    end
+
     resource AshEvents.Test.Accounts.UserRole do
       define :create_user_role, action: :create
       define :update_user_role, action: :update

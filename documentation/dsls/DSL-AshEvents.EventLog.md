@@ -33,6 +33,8 @@ end
 |------|------|---------|------|
 | [`primary_key_type`](#event_log-primary_key_type){: #event_log-primary_key_type } | `:integer \| Ash.Type.UUIDv7` | `:integer` | The type of the primary key used by the event log resource. Valid options are :integer  and :uuid_v7. Defaults to :integer. |
 | [`clear_records_for_replay`](#event_log-clear_records_for_replay){: #event_log-clear_records_for_replay } | `module` |  | A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all records before an event replay. |
+| [`advisory_lock_key_generator`](#event_log-advisory_lock_key_generator){: #event_log-advisory_lock_key_generator } | `module` | `AshEvents.AdvisoryLockKeyGenerator.Default` | A module with the AshEvents.AdvisoryLockKeyGenerator-behaviour, that is expected to generate advisory lock keys when inserting events. |
+| [`advisory_lock_key_default`](#event_log-advisory_lock_key_default){: #event_log-advisory_lock_key_default } | `integer \| list(integer)` | `2147483647` | The value to use when acquiring advisory locks during event inserts. Must be an integer or a list of two 32-bit integers. |
 | [`record_id_type`](#event_log-record_id_type){: #event_log-record_id_type } | `any` | `:uuid` | The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid. |
 
 

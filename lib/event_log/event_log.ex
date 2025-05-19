@@ -101,6 +101,18 @@ defmodule AshEvents.EventLog do
         doc:
           "A module with the AshEvents.ClearRecords-behaviour, that is expected to clear all records before an event replay."
       ],
+      advisory_lock_key_generator: [
+        type: {:behaviour, AshEvents.AdvisoryLockKeyGenerator},
+        default: AshEvents.AdvisoryLockKeyGenerator.Default,
+        doc:
+          "A module with the AshEvents.AdvisoryLockKeyGenerator-behaviour, that is expected to generate advisory lock keys when inserting events."
+      ],
+      advisory_lock_key_default: [
+        type: {:or, [:integer, {:list, :integer}]},
+        default: 2_147_483_647,
+        doc:
+          "The value to use when acquiring advisory locks during event inserts. Must be an integer or a list of two 32-bit integers."
+      ],
       record_id_type: [
         type: :any,
         doc:

@@ -22,6 +22,23 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   end
 
   def create_event!(changeset, params, module_opts, opts) do
+    pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
+
+    if pg_repo do
+      lock_key =
+        module_opts[:advisory_lock_key_generator].generate_key!(
+          changeset,
+          module_opts[:advisory_lock_key_default]
+        )
+
+      if is_list(lock_key) do
+        [key1, key2] = lock_key
+        Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1, $2)", [key1, key2])
+      else
+        Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
+      end
+    end
+
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(event_log_resource)
@@ -54,8 +71,22 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         end
       end)
 
+    has_atomics? = not Enum.empty?(changeset.atomics)
+
     event_log_resource
     |> Ash.Changeset.for_create(:create, event_params, opts)
+    |> then(fn cs ->
+      if has_atomics? do
+        Ash.Changeset.add_error(
+          cs,
+          Ash.Error.Changes.InvalidChanges.exception(
+            message: "atomic changes are not compatible with ash_events"
+          )
+        )
+      else
+        cs
+      end
+    end)
     |> Ash.create!()
   end
 end

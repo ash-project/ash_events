@@ -15,6 +15,13 @@ defmodule AshEvents.Events.Transformers.AddActions do
 
   def transform(dsl) do
     event_log_resource = AshEvents.Events.Info.events_event_log!(dsl)
+
+    advisory_lock_key_generator =
+      AshEvents.EventLog.Info.event_log_advisory_lock_key_generator!(event_log_resource)
+
+    advisory_lock_key_default =
+      AshEvents.EventLog.Info.event_log_advisory_lock_key_default!(event_log_resource)
+
     ignored = AshEvents.Events.Info.events_ignore_actions!(dsl)
     action_versions = AshEvents.Events.Info.events_current_action_versions!(dsl)
     resource = dsl.persist.module
@@ -86,7 +93,9 @@ defmodule AshEvents.Events.Transformers.AddActions do
                [
                  action: action.name,
                  event_log: event_log_resource,
-                 version: Keyword.get(action_versions, action.name, 1)
+                 version: Keyword.get(action_versions, action.name, 1),
+                 advisory_lock_key_generator: advisory_lock_key_generator,
+                 advisory_lock_key_default: advisory_lock_key_default
                ]},
             primary?: action.primary?,
             arguments: manual_arguments,

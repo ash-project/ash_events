@@ -423,6 +423,34 @@ end
 Note: When using multiple actor types, all must have `allow_nil?: true`. This is the default,
 but you will get a compile error if one of them is configured with `allow_nil?: false`.
 
+### Advisory Locks
+
+AshEvents uses Postgres transaction-based advisory locks when running actions on event-tracked resources. This ensures that there aren't any race conditions or data inconsistencies when multiple actions are executed concurrently. The default behaviour for how advisory locks are acquired is as follows:
+
+- The default value used to call `pg_advisory_lock` is `2_147_483_647`, if the resource in question is not configured with the multitenancy attribute-strategy. This can be overridden by setting the `advisory_lock_key_default <my-preferred-integer>` option in the `event_log` section. You can either specify a single integer, or a list of two 32-bit integers.
+- If the resource is configured with the multitenancy attribute-strategy, the tenant id will be used as-is if it is itself an integer. If the tenant id is of the `:uuid`-type, an integer
+will be derived from the UUID. Postgres advisory lock keys only support 64-bit integers or two 32-bit integers, and since a UUID is 128 bits long, the derived integers uses the beginning & end of the UUID. This increases the risk of collisions and unnecessarily blocking writes for other tenants as well, but it is still extremely unlikely to occur in practice.
+- Tenant ids that are not integers or valid UUIDs are not supported at the moment, and you will have to implement a custom `AshEvents.AdvisoryLockKeyGenerator` behaviour module to handle them.
+
+### `AshEvents.AdvisoryLockKeyGenerator` Behaviour
+
+If you want to use a different strategy for setting specific advisory lock keys, you can configure it by implementing a custom `AshEvents.AdvisoryLockKeyGenerator` behaviour module, and declaring it in the `event_log` section.
+
+The `AshEvents.AdvisoryLockKeyGenerator` behaviour requires implementing the `generate_key!/2` function, which takes the action changeset as the first argument, and the `advisory_lock_key_default` integer value as the second argument.
+
+See `AshEvents.AdvisoryLockKeyGenerator.Default` for how the default implementation works, and adapt it to your needs.
+
+Example setup:
+
+```elixir
+event_log do
+  persist_actor_primary_key :user_id, MyApp.Accounts.User
+  persist_actor_primary_key :system_actor, MyApp.SystemActor, attribute_type: :string
+  advisory_lock_default_value 31337 # or [1337, 31337]
+  advisory_lock_key_generator MyApp.MyCustomAdvisoryLockKeyGenerator
+end
+```
+
 ## Reference
 
 - [AshEvents.Events DSL](documentation/dsls/DSL-AshEvents.Events.md)

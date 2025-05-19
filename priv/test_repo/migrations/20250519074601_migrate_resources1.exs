@@ -91,6 +91,49 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
       add(:family_name, :text, null: false)
     end
 
+    create table(:orgs, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+
+      add(:created_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:name, :text, null: false)
+    end
+
+    create table(:org_details, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
+
+      add(:created_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:updated_at, :utc_datetime_usec,
+        null: false,
+        default: fragment("(now() AT TIME ZONE 'utc')")
+      )
+
+      add(:details, :text, null: false)
+
+      add(
+        :org_id,
+        references(:orgs,
+          column: :id,
+          name: "org_details_org_id_fkey",
+          type: :uuid,
+          prefix: "public"
+        ),
+        null: false
+      )
+    end
+
     create table(:events_uuidv7, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("uuid_generate_v7()"), primary_key: true)
       add(:record_id, :uuid, null: false)
@@ -124,6 +167,12 @@ defmodule AshEvents.TestRepo.Migrations.MigrateResources1 do
     drop(table(:events))
 
     drop(table(:events_uuidv7))
+
+    drop(constraint(:org_details, "org_details_org_id_fkey"))
+
+    drop(table(:org_details))
+
+    drop(table(:orgs))
 
     drop(table(:routed_users))
 

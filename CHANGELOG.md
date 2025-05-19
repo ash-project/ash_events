@@ -5,6 +5,12 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.2.0 (2025-05-19)
+
+* Add option for using UUIDv7 as event log primary key
+* Add Postgres transactional advisory locks when inserting events
+
+
 ## v0.1.1 (2025-05-08)
 
 

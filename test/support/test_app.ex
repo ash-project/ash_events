@@ -2,7 +2,8 @@ defmodule AshEvents.TestApp do
   @moduledoc false
   def start(_type, _args) do
     children = [
-      AshEvents.TestRepo
+      AshEvents.TestRepo,
+      AshEvents.Test.Vault
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

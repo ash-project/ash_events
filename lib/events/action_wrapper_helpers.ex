@@ -51,13 +51,25 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         Map.get(changeset.data, primary_key)
       end
 
+    metadata = Map.get(changeset.context, :ash_events_metadata, %{})
+
+    {params, metadata} =
+      case AshEvents.EventLog.Info.event_log_cloak_vault(event_log_resource) do
+        {:ok, vault} ->
+          {params |> Jason.encode!() |> vault.encrypt!(),
+           metadata |> Jason.encode!() |> vault.encrypt!()}
+
+        :error ->
+          {params, metadata}
+      end
+
     event_params = %{
       data: params,
       record_id: record_id,
       resource: changeset.resource,
       action: module_opts[:action],
       action_type: changeset.action_type,
-      metadata: Map.get(changeset.context, :ash_events_metadata, %{}),
+      metadata: metadata,
       version: module_opts[:version]
     }
 

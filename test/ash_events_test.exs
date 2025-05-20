@@ -527,4 +527,8 @@ defmodule AshEventsTest do
     assert :update_ash_events_orig_impl in action_names
     assert :create_not_in_only_ash_events_orig_impl not in action_names
   end
+
+  test "cloaked event logs encrypt data and metadata" do
+    org = Accounts.create_org_cloaked!(%{name: "Cloaked name"})
+  end
 end

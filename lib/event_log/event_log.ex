@@ -113,6 +113,12 @@ defmodule AshEvents.EventLog do
         doc:
           "The value to use when acquiring advisory locks during event inserts. Must be an integer or a list of two 32-bit integers."
       ],
+      cloak_vault: [
+        type: :atom,
+        required: false,
+        doc:
+          "The vault module to use for encrypting and decrypting both the event data and metadata."
+      ],
       record_id_type: [
         type: :any,
         doc:

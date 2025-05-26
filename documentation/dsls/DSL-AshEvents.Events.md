@@ -21,6 +21,15 @@ end
 
 ```
 
+```
+events do
+  event_log MyApp.Events.EventLog
+  only_actions [:create, :update, :destroy]
+  current_action_versions create: 2, update: 3, destroy: 2
+end
+
+```
+
 
 
 
@@ -29,6 +38,7 @@ end
 | Name | Type | Default | Docs |
 |------|------|---------|------|
 | [`event_log`](#events-event_log){: #events-event_log .spark-required} | `module` |  | The event-log resource that creates and stores events. |
+| [`only_actions`](#events-only_actions){: #events-only_actions } | `list(atom)` |  | A list of actions that should be the only actions that have events created when run. |
 | [`ignore_actions`](#events-ignore_actions){: #events-ignore_actions } | `list(atom)` | `[]` | A list of actions that should not have events created when run. |
 | [`current_action_versions`](#events-current_action_versions){: #events-current_action_versions } | `keyword` | `[]` | A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Version will default to 1 for all actions that are not listed here. |
 

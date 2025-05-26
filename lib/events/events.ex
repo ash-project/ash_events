@@ -11,6 +11,13 @@ defmodule AshEvents.Events do
         ignore_actions [:create_old_v1, :update_old_v1, :update_old_v2, :destroy_old_v1]
         current_action_versions create: 2, update: 3, destroy: 2
       end
+      """,
+      """
+      events do
+        event_log MyApp.Events.EventLog
+        only_actions [:create, :update, :destroy]
+        current_action_versions create: 2, update: 3, destroy: 2
+      end
       """
     ],
     schema: [
@@ -18,6 +25,11 @@ defmodule AshEvents.Events do
         type: {:behaviour, AshEvents.EventLog},
         required: true,
         doc: "The event-log resource that creates and stores events."
+      ],
+      only_actions: [
+        type: {:list, :atom},
+        doc:
+          "A list of actions that should be the only actions that have events created when run."
       ],
       ignore_actions: [
         type: {:list, :atom},

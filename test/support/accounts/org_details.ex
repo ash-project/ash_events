@@ -12,12 +12,17 @@ defmodule AshEvents.Test.Accounts.OrgDetails do
 
   events do
     event_log AshEvents.Test.Events.EventLog
+    only_actions([:create, :update])
   end
 
   actions do
     defaults [:read]
 
     create :create do
+      accept [:id, :created_at, :updated_at, :details]
+    end
+
+    create :create_not_in_only do
       accept [:id, :created_at, :updated_at, :details]
     end
 

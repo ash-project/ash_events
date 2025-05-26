@@ -22,18 +22,49 @@ defmodule AshEvents.Events.Transformers.AddActions do
     advisory_lock_key_default =
       AshEvents.EventLog.Info.event_log_advisory_lock_key_default!(event_log_resource)
 
+    only_actions =
+      case AshEvents.Events.Info.events_only_actions(dsl) do
+        {:ok, list} -> list
+        :error -> nil
+      end
+
     ignored = AshEvents.Events.Info.events_ignore_actions!(dsl)
     action_versions = AshEvents.Events.Info.events_current_action_versions!(dsl)
     resource = dsl.persist.module
     all_actions = Ash.Resource.Info.actions(dsl)
 
     event_actions =
-      all_actions
-      |> Enum.reject(fn action ->
-        action.name in ignored or action.type not in [:create, :update, :destroy]
-      end)
+      if only_actions do
+        all_actions
+        |> Enum.filter(&(&1.name in only_actions))
+      else
+        all_actions
+        |> Enum.reject(&(&1.name in ignored or &1.type not in [:create, :update, :destroy]))
+      end
 
     all_action_names = all_actions |> Enum.map(& &1.name)
+
+    if only_actions do
+      if ignored != [] do
+        raise "Resource #{resource} has both only_actions & ignore_actions specified, only one can be in use."
+      end
+
+      Enum.each(only_actions, fn action_name ->
+        if action_name not in all_action_names do
+          raise(
+            "Action :#{action_name} is listed in only_actions, but is not a defined action on #{resource}."
+          )
+        end
+      end)
+
+      Enum.each(event_actions, fn action ->
+        if action.type not in [:create, :update, :destroy] do
+          raise(
+            "Action :#{action.name} on #{resource} is not a create, update, or destroy action, and cannot be used in event logs."
+          )
+        end
+      end)
+    end
 
     Enum.each(ignored, fn action_name ->
       if action_name not in all_action_names do
@@ -55,6 +86,12 @@ defmodule AshEvents.Events.Transformers.AddActions do
       if action_name not in all_action_names do
         raise(
           "Action :#{action_name} in #{resource} is listed in action_versions, but is not a defined action on #{resource}."
+        )
+      end
+
+      if only_actions != nil and action_name not in only_actions do
+        raise(
+          "Action :#{action_name} in #{resource} is listed in action_versions, but not in only_actions."
         )
       end
     end)

@@ -17,6 +17,8 @@ defmodule AshEvents.UpdateActionWrapper do
     original_action_name = Helpers.build_original_action_name(module_opts[:action])
 
     changeset.data
+    |> Ash.Changeset.new()
+    |> Ash.Changeset.set_context(changeset.context)
     |> Ash.Changeset.for_update(original_action_name, params, opts)
     |> Ash.update(opts)
   end

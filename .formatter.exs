@@ -8,6 +8,7 @@ spark_locals_without_parens = [
   current_action_versions: 1,
   event_log: 1,
   ignore_actions: 1,
+  only_actions: 1,
   persist_actor_primary_key: 2,
   persist_actor_primary_key: 3,
   primary_key_type: 1,

@@ -1,4 +1,5 @@
 defmodule AshEventsTest do
+  alias AshEvents.Test.Accounts.OrgDetails
   alias AshEvents.Test.Events.EventLogUuidV7
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
@@ -518,5 +519,12 @@ defmodule AshEventsTest do
 
     assert Enum.count(rows) == 2
     assert lock_row != nil
+  end
+
+  test "only_actions works as expected" do
+    action_names = Ash.Resource.Info.actions(OrgDetails) |> Enum.map(& &1.name)
+    assert :create_ash_events_orig_impl in action_names
+    assert :update_ash_events_orig_impl in action_names
+    assert :create_not_in_only_ash_events_orig_impl not in action_names
   end
 end

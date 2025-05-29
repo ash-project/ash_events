@@ -18,6 +18,8 @@ defmodule AshEvents.CreateActionWrapper do
     original_action_name = Helpers.build_original_action_name(module_opts[:action])
 
     changeset.resource
+    |> Ash.Changeset.new()
+    |> Ash.Changeset.set_context(changeset.context)
     |> Ash.Changeset.for_create(original_action_name, params, opts)
     |> Ash.create(opts)
   end

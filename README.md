@@ -29,6 +29,33 @@ def deps do
   ]
 end
 ```
+> ### Note: Using with AshAuthentication
+>
+> When you use **AshEvents** with **AshAuthentication**, you must let AshEvents
+> know *which* authentication strategy was involved in each sign-in or registration
+> action.
+>
+> To do this, add a `set_context(%{strategy_name: :<strategy>})` change that stores the strategy name on the changeset of the action you want to track:
+>
+> For example, if you want to track `register_with_password`:
+>
+> ```elixir
+> defmodule MyApp.Accounts.User do
+> # ...
+>  extensions: [AshAuthentication, AshEvents.Events]
+>  # ...
+>  create :register_with_password do
+>    # ...
+>    change AshAuthentication.GenerateTokenChange
+>
+>    change set_context(%{strategy_name: :password}) # <- add this line
+>
+>    validate AshAuthentication.Strategy.Password.PasswordConfirmationValidation
+>    # ...
+>  end
+> end
+> ```
+
 
 ## Usage
 

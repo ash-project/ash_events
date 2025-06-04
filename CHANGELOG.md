@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.3.0 (2025-06-04)
+
+
+
+
+### Features:
+
+* add only_actions field in events-section.
+
+### Bug Fixes:
+
+* pass context from the parent to the child
+
 ## v0.2.0 (2025-05-19)
 
 * Add option for using UUIDv7 as event log primary key

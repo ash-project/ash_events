@@ -20,7 +20,7 @@ defmodule AshEvents.Test.Events.EventLog do
 
   replay_overrides do
     replay_override AshEvents.Test.Accounts.User, :create do
-      versions([1])
+      versions [1]
       route_to AshEvents.Test.Accounts.User, :create_v1
       route_to AshEvents.Test.Accounts.RoutedUser, :routed_create
     end

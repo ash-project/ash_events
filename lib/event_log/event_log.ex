@@ -139,7 +139,8 @@ defmodule AshEvents.EventLog do
       AshEvents.EventLog.Transformers.AddAttributes,
       AshEvents.EventLog.Transformers.ValidatePersistActorPrimaryKey
     ],
-    sections: [@event_log, @replay_overrides]
+    sections: [@event_log, @replay_overrides],
+    verifiers: [AshEvents.EventLog.Verifiers.VerifyActorResources]
 end
 
 defmodule AshEvents.EventLog.Info do

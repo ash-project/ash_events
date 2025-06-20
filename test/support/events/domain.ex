@@ -19,6 +19,10 @@ defmodule AshEvents.Test.Events do
       define :replay_events_cloaked, action: :replay
     end
 
+    resource AshEvents.Test.Events.EventLogStateMachine do
+      define :replay_events_state_machine, action: :replay
+    end
+
     resource AshEvents.Test.Events.SystemActor
   end
 end

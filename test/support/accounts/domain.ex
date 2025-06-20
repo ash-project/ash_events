@@ -40,5 +40,11 @@ defmodule AshEvents.Test.Accounts do
       define :create_org_cloaked, action: :create
       define :update_org_cloaked, action: :update
     end
+
+    resource AshEvents.Test.Accounts.OrgStateMachine do
+      define :create_org_state_machine, action: :create
+      define :set_org_state_machine_active, action: :set_active
+      define :set_org_state_machine_inactive, action: :set_inactive
+    end
   end
 end

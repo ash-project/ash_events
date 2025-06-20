@@ -581,4 +581,10 @@ defmodule AshEventsTest do
     org = Ash.load!(org, [:name])
     assert org.name == "Updated name"
   end
+
+  test "handles ash_state_machine validations" do
+    org = Accounts.create_org_state_machine!(%{name: "Test State Machine"})
+    Accounts.set_org_state_machine_inactive!(org)
+    Events.replay_events_state_machine!([])
+  end
 end

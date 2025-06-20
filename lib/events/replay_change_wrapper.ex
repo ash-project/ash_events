@@ -12,12 +12,11 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
 
       is_allowed? =
         Enum.any?(allowed_change_modules, fn {action, modules} ->
-          change_module == Ash.Resource.Change.ManageRelationship or
-            (:"#{action}_ash_events_orig_impl" == cs.action.name and
-               Enum.member?(modules, change_module))
+          :"#{action}_ash_events_orig_impl" == cs.action.name and
+            Enum.member?(modules, change_module)
         end)
 
-      updated_cs = change_module.change(cs, arguments, ctx)
+      updated_cs = process_change(cs, change_module, arguments, ctx)
 
       if is_allowed? do
         updated_cs
@@ -32,6 +31,25 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
             after_action: cs.after_action
         }
       end
+    else
+      process_change(cs, change_module, arguments, ctx)
+    end
+  end
+
+  defp process_change(cs, change_module, arguments, ctx) do
+    if change_module == AshStateMachine.BuiltinChanges.TransitionState do
+      original_action_name =
+        cs.action.name
+        |> to_string()
+        |> String.trim("_ash_events_orig_impl")
+        |> String.to_atom()
+
+      renamed_action = Map.put(cs.action, :name, original_action_name)
+
+      cs
+      |> Map.put(:action, renamed_action)
+      |> change_module.change(arguments, ctx)
+      |> Map.put(:action, cs.action)
     else
       change_module.change(cs, arguments, ctx)
     end

@@ -30,7 +30,7 @@ defmodule AshEvents.Events.Transformers.AddActions do
 
     ignored = AshEvents.Events.Info.events_ignore_actions!(dsl)
     action_versions = AshEvents.Events.Info.events_current_action_versions!(dsl)
-    resource = dsl.persist.module
+    resource = Spark.Dsl.Verifier.get_persisted(dsl, :module)
     all_actions = Ash.Resource.Info.actions(dsl)
 
     event_actions =

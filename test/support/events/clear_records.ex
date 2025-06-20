@@ -7,6 +7,7 @@ defmodule AshEvents.Test.Events.ClearRecords do
     {_, nil} = TestRepo.delete_all("user_roles")
     {_, nil} = TestRepo.delete_all("users")
     {_, nil} = TestRepo.delete_all("routed_users")
+    {_, nil} = TestRepo.delete_all("users_embedded")
     :ok
   end
 end

@@ -3,6 +3,36 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
+  defp process_value(key, value, changeset) when is_struct(value) do
+    attr = Ash.Resource.Info.attribute(changeset.resource, key)
+
+    if Ash.Resource.Info.resource?(attr.type) and Ash.Resource.Info.embedded?(attr.type) do
+      {:ok, dumped} = Ash.Type.dump_to_embedded(attr.type, value, attr.constraints)
+      {key, dumped}
+    else
+      {key, value}
+    end
+  end
+
+  defp process_value(key, [first | _rem] = value, changeset) when is_struct(first) do
+    attr = Ash.Resource.Info.attribute(changeset.resource, key)
+    {:array, type} = attr.type
+
+    if Ash.Resource.Info.resource?(type) and Ash.Resource.Info.embedded?(type) do
+      {key,
+       Enum.map(value, fn v ->
+         {:ok, dumped} = Ash.Type.dump_to_embedded(type, v, attr.constraints)
+         dumped
+       end)}
+    else
+      {key, value}
+    end
+  end
+
+  defp process_value(key, [], _changeset), do: {key, []}
+
+  defp process_value(key, value, _changeset), do: {key, value}
+
   def create_event!(changeset, original_params, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
@@ -26,6 +56,8 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
       |> Map.merge(changeset.arguments)
       |> Map.merge(original_params)
       |> Map.take(changeset.action.accept ++ Enum.map(changeset.action.arguments, & &1.name))
+      |> Enum.map(fn {key, value} -> process_value(key, value, changeset) end)
+      |> Enum.into(%{})
 
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)

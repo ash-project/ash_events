@@ -2,7 +2,6 @@ defmodule AshEvents.EventLog.Actions.Replay do
   @moduledoc """
   Action module used by the event log resource to replay events.
   """
-  alias AshEvents.Helpers
   require Ash.Query
   require Logger
 
@@ -124,12 +123,10 @@ defmodule AshEvents.EventLog.Actions.Replay do
           )
         end)
       else
-        original_action_name = Helpers.build_original_action_name(event.action)
-
         handle_action(
           event.action_type,
           event.resource,
-          original_action_name,
+          event.action,
           input,
           event.record_id,
           event.id,

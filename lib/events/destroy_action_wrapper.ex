@@ -3,28 +3,33 @@ defmodule AshEvents.DestroyActionWrapper do
   Wrapper for destroy actions that enables event tracking.
   """
   use Ash.Resource.ManualDestroy
-  alias AshEvents.Helpers
 
   def destroy(changeset, module_opts, ctx) do
-    opts =
-      ctx
-      |> Ash.Context.to_opts()
-      |> Keyword.put(:return_destroyed?, true)
-      |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
+    merged_ctx = Map.get(ctx, :source_context) |> Map.merge(ctx)
 
-    params = AshEvents.Events.ActionWrapperHelpers.build_params(changeset, module_opts)
-    AshEvents.Events.ActionWrapperHelpers.create_event!(changeset, params, module_opts, opts)
+    if Map.get(merged_ctx, :ash_events_replay?) do
+      data_layer = Ash.Resource.Info.data_layer(changeset.resource)
 
-    original_action_name = Helpers.build_original_action_name(module_opts[:action])
+      data_layer.destroy(changeset.resource, changeset)
+      {:ok, changeset.data}
+    else
+      opts =
+        ctx
+        |> Ash.Context.to_opts()
+        |> Keyword.put(:return_destroyed?, true)
+        |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
-    changeset.data
-    |> Ash.Changeset.new()
-    |> Ash.Changeset.set_context(changeset.context)
-    |> Ash.Changeset.for_destroy(
-      original_action_name,
-      params,
-      opts
-    )
-    |> Ash.destroy(opts)
+      AshEvents.Events.ActionWrapperHelpers.create_event!(
+        changeset,
+        merged_ctx.original_params,
+        module_opts,
+        opts
+      )
+
+      data_layer = Ash.Resource.Info.data_layer(changeset.resource)
+
+      data_layer.destroy(changeset.resource, changeset)
+      {:ok, changeset.data}
+    end
   end
 end

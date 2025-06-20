@@ -3,10 +3,11 @@ defmodule AshEvents.Test.Accounts.OrgStateMachine do
   use Ash.Resource,
     domain: AshEvents.Test.Accounts,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshEvents.Events, AshStateMachine]
+    extensions: [AshEvents.Events, AshStateMachine],
+    authorizers: [Ash.Policy.Authorizer]
 
   postgres do
-    table "org_state_machines"
+    table "org_state_machine"
     repo AshEvents.TestRepo
   end
 
@@ -29,6 +30,10 @@ defmodule AshEvents.Test.Accounts.OrgStateMachine do
 
     create :create do
       accept [:id, :created_at, :updated_at, :name]
+
+      change fn cs, ctx ->
+        cs
+      end
     end
 
     update :set_inactive do
@@ -62,6 +67,16 @@ defmodule AshEvents.Test.Accounts.OrgStateMachine do
     attribute :name, :string do
       public? true
       allow_nil? false
+    end
+  end
+
+  policies do
+    policy action(:create) do
+      authorize_if actor_attribute_equals(:is_system_actor, true)
+    end
+
+    policy action(:set_inactive) do
+      authorize_if actor_attribute_equals(:is_system_actor, true)
     end
   end
 end

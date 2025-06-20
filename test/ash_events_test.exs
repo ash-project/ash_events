@@ -135,8 +135,7 @@ defmodule AshEventsTest do
         :update,
         %{
           given_name: "Updated given",
-          family_name: "Updated family",
-          ash_events_metadata: %{meta_field: "meta_value"}
+          family_name: "Updated family"
         },
         opts ++ [context: %{ash_events_metadata: %{meta_field: "meta_value"}}]
       )
@@ -167,7 +166,6 @@ defmodule AshEventsTest do
     assert Enum.count(events) == 5
   end
 
-  @tag :lol
   test "replay works as expected and skips lifecycle hooks" do
     user = create_user()
 
@@ -325,7 +323,7 @@ defmodule AshEventsTest do
 
     assert result.error_count == 0
     assert Enum.count(result.records) == 2
-    assert Enum.count(result.notifications) == 4
+    assert Enum.count(result.notifications) == 2
 
     events =
       EventLog
@@ -351,7 +349,7 @@ defmodule AshEventsTest do
 
     assert update_result.error_count == 0
     assert Enum.count(update_result.records) == 2
-    assert Enum.count(update_result.notifications) == 4
+    assert Enum.count(update_result.notifications) == 2
 
     events =
       EventLog
@@ -380,7 +378,7 @@ defmodule AshEventsTest do
 
     assert destroy_roles_result.error_count == 0
     assert Enum.count(destroy_roles_result.records) == 2
-    assert Enum.count(destroy_roles_result.notifications) == 4
+    assert Enum.count(destroy_roles_result.notifications) == 2
 
     [] = Accounts.UserRole |> Ash.read!()
 
@@ -403,7 +401,7 @@ defmodule AshEventsTest do
 
     assert destroy_users_result.error_count == 0
     assert Enum.count(destroy_users_result.records) == 2
-    assert Enum.count(destroy_users_result.notifications) == 4
+    assert Enum.count(destroy_users_result.notifications) == 2
 
     [] = Accounts.User |> Ash.read!(actor: %SystemActor{name: "system"})
 
@@ -523,10 +521,13 @@ defmodule AshEventsTest do
   end
 
   test "only_actions works as expected" do
-    action_names = Ash.Resource.Info.actions(OrgDetails) |> Enum.map(& &1.name)
-    assert :create_ash_events_orig_impl in action_names
-    assert :update_ash_events_orig_impl in action_names
-    assert :create_not_in_only_ash_events_orig_impl not in action_names
+    create = Ash.Resource.Info.action(OrgDetails, :create)
+    update = Ash.Resource.Info.action(OrgDetails, :update)
+    create_not_in_only = Ash.Resource.Info.action(OrgDetails, :create_not_in_only)
+
+    assert create.manual != nil
+    assert update.manual != nil
+    assert create_not_in_only.manual == nil
   end
 
   test "cloaked event logs encrypt data and metadata" do
@@ -552,7 +553,6 @@ defmodule AshEventsTest do
     assert decrypted_metadata["some"] == "metadata"
   end
 
-  @tag :only
   test "cloaked event logs calcs and replay work" do
     org = Accounts.create_org_cloaked!(%{name: "Cloaked name"})
 
@@ -583,8 +583,14 @@ defmodule AshEventsTest do
   end
 
   test "handles ash_state_machine validations" do
-    org = Accounts.create_org_state_machine!(%{name: "Test State Machine"})
-    Accounts.set_org_state_machine_inactive!(org)
+    actor = %SystemActor{name: "system"}
+
+    org =
+      Accounts.create_org_state_machine!(%{name: "Test State Machine"},
+        actor: actor
+      )
+
+    Accounts.set_org_state_machine_inactive!(org, actor: actor)
     Events.replay_events_state_machine!([])
   end
 end

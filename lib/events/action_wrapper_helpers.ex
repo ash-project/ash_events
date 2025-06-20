@@ -3,25 +3,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
-  alias AshEvents.Helpers
-
-  def build_params(changeset, module_opts) do
-    original_action_name = Helpers.build_original_action_name(module_opts[:action])
-    original_action = Ash.Resource.Info.action(changeset.resource, original_action_name)
-    arg_names = Enum.map(original_action.arguments, & &1.name)
-
-    attr_params =
-      changeset.attributes
-      |> Map.take(original_action.accept)
-
-    arg_params =
-      changeset.arguments
-      |> Map.take(arg_names)
-
-    Map.merge(attr_params, arg_params)
-  end
-
-  def create_event!(changeset, params, module_opts, opts) do
+  def create_event!(changeset, original_params, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
     if pg_repo do
@@ -38,6 +20,12 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
       end
     end
+
+    params =
+      changeset.attributes
+      |> Map.merge(changeset.arguments)
+      |> Map.merge(original_params)
+      |> Map.take(changeset.action.accept ++ Enum.map(changeset.action.arguments, & &1.name))
 
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)

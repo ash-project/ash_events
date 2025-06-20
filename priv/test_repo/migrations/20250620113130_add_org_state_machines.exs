@@ -8,7 +8,7 @@ defmodule AshEvents.TestRepo.Migrations.AddOrgStateMachines do
   use Ecto.Migration
 
   def up do
-    create table(:org_state_machines, primary_key: false) do
+    create table(:org_state_machine, primary_key: false) do
       add(:id, :uuid, null: false, default: fragment("gen_random_uuid()"), primary_key: true)
 
       add(:created_at, :utc_datetime_usec,
@@ -24,9 +24,25 @@ defmodule AshEvents.TestRepo.Migrations.AddOrgStateMachines do
       add(:name, :text, null: false)
       add(:state, :text, null: false, default: "active")
     end
+
+    create table(:events_state_machine, primary_key: false) do
+      add(:id, :uuid, null: false, default: fragment("uuid_generate_v7()"), primary_key: true)
+      add(:record_id, :uuid, null: false)
+      add(:version, :bigint, null: false, default: 1)
+      add(:metadata, :map, null: false, default: %{})
+      add(:data, :map, null: false, default: %{})
+      add(:occurred_at, :utc_datetime_usec, null: false)
+      add(:resource, :text, null: false)
+      add(:action, :text, null: false)
+      add(:action_type, :text, null: false)
+      add(:user_id, :uuid)
+      add(:system_actor, :text)
+    end
+
   end
 
   def down do
     drop(table(:org_state_machines))
+    drop(table(:events_state_machine))
   end
 end

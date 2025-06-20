@@ -6,7 +6,7 @@ defmodule AshEvents.Test.Events.EventLogStateMachine do
     extensions: [AshEvents.EventLog]
 
   postgres do
-    table "events_uuidv7"
+    table "events_state_machine"
     repo AshEvents.TestRepo
   end
 

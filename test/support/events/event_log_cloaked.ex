@@ -11,7 +11,7 @@ defmodule AshEvents.Test.Events.EventLogCloaked do
   end
 
   event_log do
-    clear_records_for_replay AshEvents.Test.Events.ClearRecords
+    clear_records_for_replay AshEvents.Test.Events.ClearRecordsCloaked
     persist_actor_primary_key :user_id, AshEvents.Test.Accounts.User
 
     persist_actor_primary_key :system_actor, AshEvents.Test.Events.SystemActor,

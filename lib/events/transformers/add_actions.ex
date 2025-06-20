@@ -98,7 +98,25 @@ defmodule AshEvents.Events.Transformers.AddActions do
 
     Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       original_action_name = Helpers.build_original_action_name(action.name)
-      original_action = %{action | name: original_action_name, primary?: false}
+
+      wrapped_changes =
+        Enum.map(action.changes, fn change ->
+          %Ash.Resource.Change{
+            change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
+            on: nil,
+            only_when_valid?: false,
+            description: nil,
+            always_atomic?: false,
+            where: []
+          }
+        end)
+
+      original_action = %{
+        action
+        | name: original_action_name,
+          primary?: false,
+          changes: wrapped_changes
+      }
 
       manual_action_changes =
         action.changes ++

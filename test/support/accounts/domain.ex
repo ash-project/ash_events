@@ -38,6 +38,7 @@ defmodule AshEvents.Test.Accounts do
 
     resource AshEvents.Test.Accounts.OrgCloaked do
       define :create_org_cloaked, action: :create
+      define :update_org_cloaked, action: :update
     end
   end
 end

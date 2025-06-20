@@ -32,23 +32,23 @@
     },
     {
       "allow_nil?": false,
-      "default": "%{}",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "metadata",
-      "type": "map"
+      "source": "encrypted_metadata",
+      "type": "binary"
     },
     {
       "allow_nil?": false,
-      "default": "%{}",
+      "default": "nil",
       "generated?": false,
       "primary_key?": false,
       "references": null,
       "size": null,
-      "source": "data",
-      "type": "map"
+      "source": "encrypted_data",
+      "type": "binary"
     },
     {
       "allow_nil?": false,
@@ -116,7 +116,7 @@
   "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "35483885D66975AC860C85A1302E0A75A1506CDDEF4F9EA19CEE01443BC224E2",
+  "hash": "FA69B85CA3B10827269D50964E56554D38E647753AA70EDC8B7AE6EEF3C529B7",
   "identities": [],
   "multitenancy": {
     "attribute": null,

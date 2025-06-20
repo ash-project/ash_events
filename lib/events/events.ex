@@ -41,6 +41,12 @@ defmodule AshEvents.Events do
         doc:
           "A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Version will default to 1 for all actions that are not listed here.",
         default: []
+      ],
+      allowed_change_modules: [
+        type: :keyword_list,
+        doc:
+          "A keyword list of action names and whitelisted change modules that should not be removed during event replay.",
+        default: []
       ]
     ]
   }

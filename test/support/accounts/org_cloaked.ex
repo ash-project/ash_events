@@ -17,6 +17,7 @@ defmodule AshEvents.Test.Accounts.OrgCloaked do
 
   events do
     event_log AshEvents.Test.Events.EventLogCloaked
+    allowed_change_modules create: [AshCloak.Changes.Encrypt], update: [AshCloak.Changes.Encrypt]
   end
 
   actions do
@@ -24,6 +25,11 @@ defmodule AshEvents.Test.Accounts.OrgCloaked do
 
     create :create do
       accept [:id, :created_at, :updated_at, :name]
+    end
+
+    update :update do
+      require_atomic? false
+      accept [:created_at, :updated_at, :name]
     end
   end
 

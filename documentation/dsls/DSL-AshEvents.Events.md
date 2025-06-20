@@ -41,6 +41,7 @@ end
 | [`only_actions`](#events-only_actions){: #events-only_actions } | `list(atom)` |  | A list of actions that should be the only actions that have events created when run. |
 | [`ignore_actions`](#events-ignore_actions){: #events-ignore_actions } | `list(atom)` | `[]` | A list of actions that should not have events created when run. |
 | [`current_action_versions`](#events-current_action_versions){: #events-current_action_versions } | `keyword` | `[]` | A keyword list of action versions. This will be used to set the version in the created events when the actions are run. Version will default to 1 for all actions that are not listed here. |
+| [`allowed_change_modules`](#events-allowed_change_modules){: #events-allowed_change_modules } | `keyword` | `[]` | A keyword list of action names and whitelisted change modules that should not be removed during event replay. |
 
 
 

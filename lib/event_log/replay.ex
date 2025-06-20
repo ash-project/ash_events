@@ -9,8 +9,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
   defp create!(resource, action, input, opts) do
     resource
     |> Ash.Changeset.for_create(action, input, opts)
-    |> Helpers.remove_changeset_lifecycle_hooks()
-    |> Ash.create!(opts)
+    |> Ash.create!()
 
     :ok
   end
@@ -20,8 +19,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_update(action, input |> Map.drop([:id]), opts)
-        |> Helpers.remove_changeset_lifecycle_hooks()
-        |> Ash.update!(opts)
+        |> Ash.update!()
 
         :ok
 
@@ -35,8 +33,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_destroy(action, %{}, opts)
-        |> Helpers.remove_changeset_lifecycle_hooks()
-        |> Ash.destroy!(opts)
+        |> Ash.destroy!()
 
         :ok
 
@@ -58,7 +55,13 @@ defmodule AshEvents.EventLog.Actions.Replay do
   end
 
   def run(input, run_opts, ctx) do
-    opts = Ash.Context.to_opts(ctx, authorize?: false)
+    opts =
+      Ash.Context.to_opts(ctx,
+        authorize?: false
+      )
+
+    ctx = Map.put(opts[:context] || %{}, :ash_events_replay?, true)
+    opts = Keyword.replace(opts, :context, ctx)
 
     case AshEvents.EventLog.Info.event_log_clear_records_for_replay(input.resource) do
       {:ok, module} ->
@@ -67,6 +70,12 @@ defmodule AshEvents.EventLog.Actions.Replay do
       :error ->
         raise "clear_records_for_replay must be specified on #{input.resource} when doing a replay."
     end
+
+    cloak_vault =
+      case AshEvents.EventLog.Info.event_log_cloak_vault(input.resource) do
+        {:ok, vault} -> vault
+        :error -> nil
+      end
 
     overrides = run_opts[:overrides]
     point_in_time = input.arguments[:point_in_time]
@@ -85,6 +94,11 @@ defmodule AshEvents.EventLog.Actions.Replay do
         input.resource
     end
     |> Ash.Query.sort(id: :asc)
+    |> then(fn query ->
+      if cloak_vault,
+        do: Ash.Query.load(query, [:data, :metadata]),
+        else: query
+    end)
     |> Ash.stream!(opts)
     |> Stream.map(fn event ->
       input = Map.put(event.data, :id, event.record_id)

@@ -13,6 +13,7 @@ defmodule AshEvents.Test.Accounts.OrgDetails do
   events do
     event_log AshEvents.Test.Events.EventLog
     only_actions([:create, :update])
+    allowed_change_modules(update: [AshEvents.Test.Accounts.OrgDetails])
   end
 
   actions do
@@ -27,6 +28,7 @@ defmodule AshEvents.Test.Accounts.OrgDetails do
     end
 
     update :update do
+      require_atomic? false
       accept [:details]
     end
   end

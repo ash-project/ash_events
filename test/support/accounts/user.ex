@@ -70,7 +70,6 @@ defmodule AshEvents.Test.Accounts.User do
     create :create_v1 do
       accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
       argument :role, :string, default: "user"
-      change __MODULE__.CreateUserRole
     end
   end
 

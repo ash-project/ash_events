@@ -15,6 +15,10 @@ defmodule AshEvents.Test.Events do
       define :replay_events_missing_clear, action: :replay
     end
 
+    resource AshEvents.Test.Events.EventLogCloaked do
+      define :replay_events_cloaked, action: :replay
+    end
+
     resource AshEvents.Test.Events.SystemActor
   end
 end

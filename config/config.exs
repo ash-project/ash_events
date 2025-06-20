@@ -25,6 +25,16 @@ if Mix.env() == :test do
       AshEvents.Test.Events,
       AshEvents.Test.Accounts
     ]
+
+  config :ash_events, AshEvents.Test.Vault,
+    ciphers: [
+      default: {
+        Cloak.Ciphers.AES.GCM,
+        tag: "AES.GCM.V1",
+        key: Base.decode64!("1SdF1cWOVIJFvPnGPFjB2RQ7AdvUq7s8fCfOj1gPp0w="),
+        iv_length: 12
+      }
+    ]
 end
 
 import_config "#{config_env()}.exs"

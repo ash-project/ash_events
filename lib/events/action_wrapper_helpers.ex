@@ -51,15 +51,18 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         Map.get(changeset.data, primary_key)
       end
 
-    event_params = %{
-      data: params,
-      record_id: record_id,
-      resource: changeset.resource,
-      action: module_opts[:action],
-      action_type: changeset.action_type,
-      metadata: Map.get(changeset.context, :ash_events_metadata, %{}),
-      version: module_opts[:version]
-    }
+    metadata = Map.get(changeset.context, :ash_events_metadata, %{})
+
+    event_params =
+      %{
+        data: params,
+        record_id: record_id,
+        resource: changeset.resource,
+        action: module_opts[:action],
+        action_type: changeset.action_type,
+        metadata: metadata,
+        version: module_opts[:version]
+      }
 
     event_params =
       Enum.reduce(persist_actor_primary_keys, event_params, fn persist_actor_primary_key, input ->

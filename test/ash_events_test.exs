@@ -167,6 +167,7 @@ defmodule AshEventsTest do
     assert Enum.count(events) == 5
   end
 
+  @tag :lol
   test "replay works as expected and skips lifecycle hooks" do
     user = create_user()
 
@@ -526,5 +527,58 @@ defmodule AshEventsTest do
     assert :create_ash_events_orig_impl in action_names
     assert :update_ash_events_orig_impl in action_names
     assert :create_not_in_only_ash_events_orig_impl not in action_names
+  end
+
+  test "cloaked event logs encrypt data and metadata" do
+    Accounts.create_org_cloaked!(%{name: "Cloaked name"},
+      context: %{ash_events_metadata: %{some: "metadata"}}
+    )
+
+    [event] = Ash.read!(AshEvents.Test.Events.EventLogCloaked)
+
+    decrypted_data =
+      event.encrypted_data
+      |> Base.decode64!()
+      |> AshEvents.Test.Vault.decrypt!()
+      |> Jason.decode!()
+
+    decrypted_metadata =
+      event.encrypted_metadata
+      |> Base.decode64!()
+      |> AshEvents.Test.Vault.decrypt!()
+      |> Jason.decode!()
+
+    assert decrypted_data["name"] == "Cloaked name"
+    assert decrypted_metadata["some"] == "metadata"
+  end
+
+  @tag :only
+  test "cloaked event logs calcs and replay work" do
+    org = Accounts.create_org_cloaked!(%{name: "Cloaked name"})
+
+    Accounts.update_org_cloaked!(org, %{name: "Updated name"},
+      context: %{ash_events_metadata: %{some: "metadata"}}
+    )
+
+    [create_event, update_event] = Ash.read!(AshEvents.Test.Events.EventLogCloaked)
+
+    update_event =
+      update_event
+      |> Ash.load!([:data, :metadata])
+
+    assert update_event.data["name"] == "Updated name"
+    assert update_event.metadata["some"] == "metadata"
+
+    :ok = Events.replay_events_cloaked!(%{last_event_id: create_event.id})
+
+    [org] = Ash.read!(Accounts.OrgCloaked)
+    org = Ash.load!(org, [:name])
+    assert org.name == "Cloaked name"
+
+    :ok = Events.replay_events_cloaked!()
+
+    [org] = Ash.read!(Accounts.OrgCloaked)
+    org = Ash.load!(org, [:name])
+    assert org.name == "Updated name"
   end
 end

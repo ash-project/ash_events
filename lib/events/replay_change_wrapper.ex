@@ -12,9 +12,7 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
 
       is_allowed? =
         Enum.any?(allowed_change_modules, fn {action, modules} ->
-          change_module == Ash.Resource.Change.ManageRelationship or
-            (:"#{action}_ash_events_orig_impl" == cs.action.name and
-               Enum.member?(modules, change_module))
+          action == cs.action.name and Enum.member?(modules, change_module)
         end)
 
       updated_cs = change_module.change(cs, arguments, ctx)

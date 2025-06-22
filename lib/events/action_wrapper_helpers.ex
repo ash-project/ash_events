@@ -16,16 +16,21 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
   defp process_value(key, [first | _rem] = value, changeset) when is_struct(first) do
     attr = Ash.Resource.Info.attribute(changeset.resource, key)
-    {:array, type} = attr.type
 
-    if Ash.Resource.Info.resource?(type) and Ash.Resource.Info.embedded?(type) do
-      {key,
-       Enum.map(value, fn v ->
-         {:ok, dumped} = Ash.Type.dump_to_embedded(type, v, attr.constraints)
-         dumped
-       end)}
-    else
-      {key, value}
+    case attr.type do
+      {:array, type} ->
+        if Ash.Resource.Info.resource?(type) and Ash.Resource.Info.embedded?(type) do
+          {key,
+           Enum.map(value, fn v ->
+             {:ok, dumped} = Ash.Type.dump_to_embedded(type, v, attr.constraints)
+             dumped
+           end)}
+        else
+          {key, value}
+        end
+
+      _ ->
+        {key, value}
     end
   end
 

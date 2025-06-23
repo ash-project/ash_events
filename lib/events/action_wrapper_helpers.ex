@@ -3,40 +3,22 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
-  defp process_value(key, value, changeset) when is_struct(value) do
-    attr = Ash.Resource.Info.attribute(changeset.resource, key)
+  def dump_value(nil, _attribute), do: nil
 
-    if Ash.Resource.Info.resource?(attr.type) and Ash.Resource.Info.embedded?(attr.type) do
-      {:ok, dumped} = Ash.Type.dump_to_embedded(attr.type, value, attr.constraints)
-      {key, dumped}
-    else
-      {key, value}
-    end
+  def dump_value(values, %{type: {:array, attr_type}} = attribute) do
+    item_constraints = attribute.constraints[:items]
+
+    # This is a work around for a bug in Ash.Type.dump_to_embedded/3
+    Enum.map(values, fn value ->
+      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
+      dumped_value
+    end)
   end
 
-  defp process_value(key, [first | _rem] = value, changeset) when is_struct(first) do
-    attr = Ash.Resource.Info.attribute(changeset.resource, key)
-
-    case attr.type do
-      {:array, type} ->
-        if Ash.Resource.Info.resource?(type) and Ash.Resource.Info.embedded?(type) do
-          {key,
-           Enum.map(value, fn v ->
-             {:ok, dumped} = Ash.Type.dump_to_embedded(type, v, attr.constraints)
-             dumped
-           end)}
-        else
-          {key, value}
-        end
-
-      _ ->
-        {key, value}
-    end
+  def dump_value(value, attribute) do
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
+    dumped_value
   end
-
-  defp process_value(key, [], _changeset), do: {key, []}
-
-  defp process_value(key, value, _changeset), do: {key, value}
 
   def create_event!(changeset, original_params, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
@@ -57,11 +39,17 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
 
     params =
-      changeset.attributes
-      |> Map.merge(changeset.arguments)
-      |> Map.merge(original_params)
-      |> Map.take(changeset.action.accept ++ Enum.map(changeset.action.arguments, & &1.name))
-      |> Enum.map(fn {key, value} -> process_value(key, value, changeset) end)
+      original_params
+      |> Enum.map(fn {key, value} ->
+        case Ash.Resource.Info.attribute(changeset.resource, key) do
+          nil ->
+            arg = Enum.find(changeset.action.arguments, &(&1.name == key))
+            {key, dump_value(value, arg)}
+
+          attr ->
+            {key, dump_value(value, attr)}
+        end
+      end)
       |> Enum.into(%{})
 
     event_log_resource = module_opts[:event_log]

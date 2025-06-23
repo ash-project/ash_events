@@ -15,6 +15,8 @@ defmodule AshEvents.Test.Accounts.User do
     event_log AshEvents.Test.Events.EventLog
     ignore_actions [:create_v1]
     current_action_versions create: 1
+    create_timestamp :created_at
+    update_timestamp :updated_at
   end
 
   actions do
@@ -35,7 +37,7 @@ defmodule AshEvents.Test.Accounts.User do
 
     update :update do
       require_atomic? false
-      accept [:given_name, :family_name]
+      accept [:given_name, :family_name, :created_at, :updated_at]
       argument :role, :string, allow_nil?: true
 
       change __MODULE__.UpdateUserRole

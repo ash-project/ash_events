@@ -54,10 +54,7 @@ defmodule AshEventsTest do
     assert %{
              "email" => "user@example.com",
              "given_name" => "John",
-             "family_name" => "Doe",
-             "created_at" => _created_at,
-             "updated_at" => _updated_at,
-             "id" => _id
+             "family_name" => "Doe"
            } = event.data
 
     assert event2.metadata == %{}
@@ -67,11 +64,9 @@ defmodule AshEventsTest do
     assert event2.resource == UserRole
 
     assert %{
-             "role" => "user",
-             "created_at" => _created_at,
-             "updated_at" => _updated_at,
-             "id" => _id
-           } = event.data
+             "name" => "user",
+             "user_id" => _user_id
+           } = event2.data
   end
 
   test "actor primary key is persisted" do
@@ -594,7 +589,6 @@ defmodule AshEventsTest do
     Events.replay_events_state_machine!([])
   end
 
-  @tag :embedded
   test "handles embedded resources" do
     user =
       Accounts.create_user_embedded!(%{
@@ -650,7 +644,7 @@ defmodule AshEventsTest do
     assert user.address.zip_code == "Embedded Zip"
     assert user.other_addresses == []
 
-    Events.replay_events!()
+    :ok = Events.replay_events!()
 
     user = Accounts.get_user_embedded_by_id!(user.id)
 

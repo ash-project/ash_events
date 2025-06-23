@@ -7,6 +7,7 @@ spark_locals_without_parens = [
   attribute_type: 1,
   clear_records_for_replay: 1,
   cloak_vault: 1,
+  create_timestamp: 1,
   current_action_versions: 1,
   event_log: 1,
   ignore_actions: 1,
@@ -20,6 +21,7 @@ spark_locals_without_parens = [
   replay_override: 3,
   route_to: 2,
   route_to: 3,
+  update_timestamp: 1,
   versions: 1
 ]
 

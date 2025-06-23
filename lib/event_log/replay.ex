@@ -5,7 +5,26 @@ defmodule AshEvents.EventLog.Actions.Replay do
   require Ash.Query
   require Logger
 
-  defp create!(resource, action, input, opts) do
+  defp handle_action(%{action_type: :create} = event, resource, action, opts) do
+    create_timestamp = AshEvents.Events.Info.events_create_timestamp!(event.resource)
+    update_timestamp = AshEvents.Events.Info.events_update_timestamp!(event.resource)
+
+    input = Map.put(event.data, :id, event.record_id)
+
+    input =
+      if create_timestamp do
+        Map.put(input, create_timestamp, event.occurred_at)
+      else
+        input
+      end
+
+    input =
+      if update_timestamp do
+        Map.put(input, update_timestamp, event.occurred_at)
+      else
+        input
+      end
+
     resource
     |> Ash.Changeset.for_create(action, input, opts)
     |> Ash.create!()
@@ -13,22 +32,33 @@ defmodule AshEvents.EventLog.Actions.Replay do
     :ok
   end
 
-  defp update!(resource, id, action, input, event_id, opts) do
-    case Ash.get(resource, id, opts) do
+  defp handle_action(%{action_type: :update} = event, resource, action, opts) do
+    case Ash.get(resource, event.record_id, opts) do
       {:ok, record} ->
+        update_timestamp = AshEvents.Events.Info.events_update_timestamp!(resource)
+
+        input =
+          if update_timestamp do
+            Map.put(event.data, update_timestamp, event.occurred_at)
+          else
+            event.data
+          end
+
         record
-        |> Ash.Changeset.for_update(action, input |> Map.drop([:id]), opts)
+        |> Ash.Changeset.for_update(action, input, opts)
         |> Ash.update!()
 
         :ok
 
       _ ->
-        Logger.warning("Record #{id} not found when processing update event #{event_id}")
+        Logger.warning(
+          "Record #{event.record_id} not found when processing update event #{event.id}"
+        )
     end
   end
 
-  defp destroy!(resource, id, action, event_id, opts) do
-    case Ash.get(resource, id, opts) do
+  defp handle_action(%{action_type: :destroy} = event, resource, action, opts) do
+    case Ash.get(resource, event.id, opts) do
       {:ok, record} ->
         record
         |> Ash.Changeset.for_destroy(action, %{}, opts)
@@ -37,20 +67,10 @@ defmodule AshEvents.EventLog.Actions.Replay do
         :ok
 
       _ ->
-        Logger.warning("Record #{id} not found when processing destroy event #{event_id}")
+        Logger.warning(
+          "Record #{event.record_id} not found when processing destroy event #{event.id}"
+        )
     end
-  end
-
-  defp handle_action(:create, resource, action, input, _record_id, _event_id, opts) do
-    create!(resource, action, input, opts)
-  end
-
-  defp handle_action(:update, resource, action, input, record_id, event_id, opts) do
-    update!(resource, record_id, action, input, event_id, opts)
-  end
-
-  defp handle_action(:destroy, resource, action, _input, record_id, event_id, opts) do
-    destroy!(resource, record_id, action, event_id, opts)
   end
 
   def run(input, run_opts, ctx) do
@@ -100,8 +120,6 @@ defmodule AshEvents.EventLog.Actions.Replay do
     end)
     |> Ash.stream!(opts)
     |> Stream.map(fn event ->
-      input = Map.put(event.data, :id, event.record_id)
-
       override =
         Enum.find(overrides, fn
           %{event_resource: event_resource, event_action: event_action, versions: versions} ->
@@ -112,26 +130,10 @@ defmodule AshEvents.EventLog.Actions.Replay do
 
       if override do
         Enum.each(override.route_to, fn route_to ->
-          handle_action(
-            event.action_type,
-            route_to.resource,
-            route_to.action,
-            input,
-            event.record_id,
-            event.id,
-            opts
-          )
+          handle_action(event, route_to.resource, route_to.action, opts)
         end)
       else
-        handle_action(
-          event.action_type,
-          event.resource,
-          event.action,
-          input,
-          event.record_id,
-          event.id,
-          opts
-        )
+        handle_action(event, event.resource, event.action, opts)
       end
     end)
     |> Stream.take_while(fn

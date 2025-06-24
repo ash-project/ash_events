@@ -47,6 +47,16 @@ defmodule AshEvents.Events do
         doc:
           "A keyword list of action names and whitelisted change modules that should not be removed during event replay.",
         default: []
+      ],
+      create_timestamp: [
+        type: :atom,
+        doc: "The name of the create timestamp attribute on the resource",
+        default: nil
+      ],
+      update_timestamp: [
+        type: :atom,
+        doc: "The name of the update timestamp attribute on the resource",
+        default: nil
       ]
     ]
   }

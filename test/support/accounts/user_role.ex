@@ -7,6 +7,8 @@ defmodule AshEvents.Test.Accounts.UserRole do
 
   events do
     event_log AshEvents.Test.Events.EventLog
+    create_timestamp :created_at
+    update_timestamp :updated_at
   end
 
   postgres do

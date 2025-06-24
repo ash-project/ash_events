@@ -3,6 +3,23 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
+  def dump_value(nil, _attribute), do: nil
+
+  def dump_value(values, %{type: {:array, attr_type}} = attribute) do
+    item_constraints = attribute.constraints[:items]
+
+    # This is a work around for a bug in Ash.Type.dump_to_embedded/3
+    Enum.map(values, fn value ->
+      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
+      dumped_value
+    end)
+  end
+
+  def dump_value(value, attribute) do
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
+    dumped_value
+  end
+
   def create_event!(changeset, original_params, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
@@ -22,10 +39,18 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
 
     params =
-      changeset.attributes
-      |> Map.merge(changeset.arguments)
-      |> Map.merge(original_params)
-      |> Map.take(changeset.action.accept ++ Enum.map(changeset.action.arguments, & &1.name))
+      original_params
+      |> Enum.map(fn {key, value} ->
+        case Ash.Resource.Info.attribute(changeset.resource, key) do
+          nil ->
+            arg = Enum.find(changeset.action.arguments, &(&1.name == key))
+            {key, dump_value(value, arg)}
+
+          attr ->
+            {key, dump_value(value, attr)}
+        end
+      end)
+      |> Enum.into(%{})
 
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)

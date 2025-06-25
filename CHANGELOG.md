@@ -5,6 +5,27 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.4.0 (2025-06-25)
+
+
+
+
+### Features:
+
+* add create_timestamp & update_timestamp in events block. by Torkild Kjevik
+
+* Add allowed_change_modules. by Torkild Kjevik
+
+### Bug Fixes:
+
+* add proper handling of embedded resources. by Torkild Kjevik
+
+* make ash_events work seamlessly with policies & other extensions. by Torkild Kjevik
+
+* handle ash_state_machine transitions. by Torkild Kjevik
+
+* verify actor resources used in persist_actor_primary_key. by Torkild Kjevik
+
 ## v0.3.0 (2025-06-04)
 
 

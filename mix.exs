@@ -127,6 +127,7 @@ defmodule AshEvents.MixProject do
       {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0", only: [:dev, :test]},
       {:faker, "~> 0.18", only: :test},
+      {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:dialyxir, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:igniter, "~> 0.5", only: [:dev, :test]},
@@ -150,7 +151,7 @@ defmodule AshEvents.MixProject do
       "test.create": "ash_postgres.create",
       "test.reset": ["test.drop", "test.create", "test.migrate", "ash_postgres.migrate --tenants"],
       "test.drop": "ash_postgres.drop",
-      sobelow: "sobelow --skip",
+      sobelow: "sobelow --skip -i Config.HTTPS",
       docs: [
         "spark.cheat_sheets",
         "docs",

@@ -8,6 +8,7 @@ if Mix.env() == :test do
 
   config :ash_events, AshEvents.TestRepo,
     username: "postgres",
+    # sobelow_skip ["Config.Secrets"]
     password: "postgres",
     hostname: "localhost",
     database: "ash_events_test",

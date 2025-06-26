@@ -3,7 +3,15 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
   use Ash.Resource.Change
 
   def change(cs, opts, ctx) do
-    %Ash.Resource.Change{change: {change_module, arguments}} = opts[:change]
+    {type, change_module, opts} =
+      case opts[:change] do
+        %Ash.Resource.Change{change: {change_module, opts}} ->
+          {:change, change_module, opts}
+
+        %Ash.Resource.Validation{validation: {validation_module, opts}} ->
+          {:validation, validation_module, opts}
+      end
+
     ash_events_replay? = cs.context[:ash_events_replay?] || false
 
     if ash_events_replay? do
@@ -15,7 +23,7 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
           action == cs.action.name and Enum.member?(modules, change_module)
         end)
 
-      updated_cs = change_module.change(cs, arguments, ctx)
+      updated_cs = run_module(cs, type, change_module, opts, ctx)
 
       if is_allowed? do
         updated_cs
@@ -31,7 +39,20 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
         }
       end
     else
-      change_module.change(cs, arguments, ctx)
+      run_module(cs, type, change_module, opts, ctx)
+    end
+  end
+
+  defp run_module(cs, type, module, opts, ctx) do
+    case type do
+      :change ->
+        module.change(cs, opts, ctx)
+
+      :validation ->
+        case module.validate(cs, opts, ctx) do
+          :ok -> cs
+          {:error, error} -> Ash.Changeset.add_error(cs, error)
+        end
     end
   end
 end

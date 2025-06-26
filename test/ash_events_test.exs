@@ -653,4 +653,11 @@ defmodule AshEventsTest do
     assert user.address.state == "Embedded State"
     assert user.address.zip_code == "Embedded Zip"
   end
+
+  test "handles validation modules in wrapper gracefully" do
+    org = Accounts.create_org!(%{name: "Some org"})
+
+    {:error, %{errors: [%Ash.Error.Changes.InvalidAttribute{field: :name}]}} =
+      Accounts.create_org(%{name: "S"})
+  end
 end

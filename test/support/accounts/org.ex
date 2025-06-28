@@ -19,6 +19,8 @@ defmodule AshEvents.Test.Accounts.Org do
 
     create :create do
       accept [:id, :created_at, :updated_at, :name]
+
+      validate string_length(:name, min: 2, max: 100)
     end
   end
 

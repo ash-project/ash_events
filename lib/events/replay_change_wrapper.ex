@@ -44,15 +44,42 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
   end
 
   defp run_module(cs, type, module, opts, ctx) do
-    case type do
-      :change ->
-        module.change(cs, opts, ctx)
+    case module.init(opts) do
+      {:ok, opts} ->
+        opts =
+          templated_opts(
+            opts,
+            cs.context[:private][:actor],
+            cs.tenant,
+            cs.arguments,
+            cs.context,
+            cs
+          )
 
-      :validation ->
-        case module.validate(cs, opts, ctx) do
-          :ok -> cs
-          {:error, error} -> Ash.Changeset.add_error(cs, error)
+        case type do
+          :change ->
+            module.change(cs, opts, ctx)
+
+          :validation ->
+            case module.validate(cs, opts, ctx) do
+              :ok -> cs
+              {:error, error} -> Ash.Changeset.add_error(cs, error)
+            end
         end
+
+      {:error, error} ->
+        Ash.Changeset.add_error(cs, error)
     end
+  end
+
+  defp templated_opts(opts, actor, tenant, arguments, context, changeset) do
+    Ash.Expr.fill_template(
+      opts,
+      actor: actor,
+      tenant: tenant,
+      args: arguments,
+      context: context,
+      changeset: changeset
+    )
   end
 end

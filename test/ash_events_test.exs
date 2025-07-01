@@ -655,7 +655,7 @@ defmodule AshEventsTest do
   end
 
   test "handles validation modules in wrapper gracefully" do
-    org = Accounts.create_org!(%{name: "Some org"})
+    Accounts.create_org!(%{name: "Some org"})
 
     {:error, %{errors: [%Ash.Error.Changes.InvalidAttribute{field: :name}]}} =
       Accounts.create_org(%{name: "S"})

@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.4.1 (2025-07-02)
+
+
+
+
+### Bug Fixes:
+
+* handle opts templates when replaying change modules by Zach Daniel
+
+* Proper handling of validation modules in replay change wrapper. by Torkild Kjevik
+
 ## v0.4.0 (2025-06-25)
 
 

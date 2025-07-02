@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.4.2 (2025-07-02)
+
+
+
+
+### Bug Fixes:
+
+* include usage-rules in the package files by Zach Daniel
+
 ## v0.4.1 (2025-07-02)
 
 

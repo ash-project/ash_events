@@ -71,7 +71,7 @@ defmodule AshEvents.MixProject do
       name: :ash_events,
       licenses: ["MIT"],
       files: ~w(lib .formatter.exs mix.exs README*
-        CHANGELOG* documentation),
+        CHANGELOG* documentation usage-rules.md),
       links: %{
         GitHub: "https://github.com/ash-project/ash_events"
       }

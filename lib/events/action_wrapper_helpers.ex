@@ -20,6 +20,16 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     dumped_value
   end
 
+  defp cast_and_dump_value(value, attr_or_arg) do
+    with {:ok, cast_value} <-
+           Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
+      dump_value(cast_value, attr_or_arg)
+    else
+      {:error, _} ->
+        dump_value(value, attr_or_arg)
+    end
+  end
+
   def create_event!(changeset, original_params, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
@@ -44,10 +54,10 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         case Ash.Resource.Info.attribute(changeset.resource, key) do
           nil ->
             arg = Enum.find(changeset.action.arguments, &(&1.name == key))
-            {key, dump_value(value, arg)}
+            {key, cast_and_dump_value(value, arg)}
 
           attr ->
-            {key, dump_value(value, attr)}
+            {key, cast_and_dump_value(value, attr)}
         end
       end)
       |> Enum.into(%{})

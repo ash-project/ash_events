@@ -16,6 +16,11 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   end
 
   def dump_value(value, attribute) do
+    value =
+      if attribute.type == Ash.Type.Atom and is_binary(value),
+        do: String.to_existing_atom(value),
+        else: value
+
     {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
     dumped_value
   end

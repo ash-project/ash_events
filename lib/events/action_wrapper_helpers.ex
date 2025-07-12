@@ -21,10 +21,10 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   end
 
   defp cast_and_dump_value(value, attr_or_arg) do
-    with {:ok, cast_value} <-
-           Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
-      dump_value(cast_value, attr_or_arg)
-    else
+    case Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
+      {:ok, cast_value} ->
+        dump_value(cast_value, attr_or_arg)
+
       {:error, _} ->
         dump_value(value, attr_or_arg)
     end

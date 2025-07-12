@@ -78,6 +78,41 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
+### 4. Primary Key Requirements for Event-Tracked Resources
+
+**IMPORTANT**: Resources using the `AshEvents.Events` extension have specific primary key requirements:
+
+- **Primary key attribute must be in the accept list** for all create actions
+- **Primary key attribute must have `writable?: true`** (this is the default)
+
+```elixir
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  attributes do
+    # Primary key must be writable for event tracking
+    uuid_primary_key :id, writable?: true
+    
+    attribute :name, :string
+    attribute :email, :string
+  end
+
+  actions do
+    create :create do
+      # Primary key must be in accept list for create actions
+      accept [:id, :name, :email]
+    end
+  end
+
+  events do
+    event_log MyApp.Events.Event
+  end
+end
+```
+
+**Why this is required**: During event replay, AshEvents needs to recreate resources with their original primary key values to maintain referential integrity and ensure the replayed state matches the original state exactly.
+
 ## Event Tracking Patterns
 
 ### Automatic Event Creation

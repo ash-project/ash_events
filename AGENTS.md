@@ -5,25 +5,25 @@ This documentation is optimized for AI assistants working on the AshEvents proje
 ## Documentation Structure
 
 ### Quick Start
-- **[quick-reference.md](quick-reference.md)** - Essential setup patterns and common operations
-- **[core-concepts.md](core-concepts.md)** - Key concepts and terminology
+- **[quick-reference.md](docs/quick-reference.md)** - Essential setup patterns and common operations
+- **[core-concepts.md](docs/core-concepts.md)** - Key concepts and terminology
 
 ### Technical Reference  
-- **[architecture.md](architecture.md)** - System architecture and data flow
-- **[dsl-options.md](dsl-options.md)** - Complete DSL configuration reference
-- **[file-locations.md](file-locations.md)** - Where to find specific functionality
+- **[architecture.md](docs/architecture.md)** - System architecture and data flow
+- **[dsl-options.md](docs/dsl-options.md)** - Complete DSL configuration reference
+- **[file-locations.md](docs/file-locations.md)** - Where to find specific functionality
 
 ### Development
-- **[testing-development.md](testing-development.md)** - Test commands and development workflow
-- **[troubleshooting.md](troubleshooting.md)** - Common issues and debugging
+- **[testing-development.md](docs/testing-development.md)** - Test commands and development workflow
+- **[troubleshooting.md](docs/troubleshooting.md)** - Common issues and debugging
 
 ## Usage Guidelines for AI Assistants
 
-1. **Start with quick-reference.md** for basic setup and operations
-2. **Consult dsl-options.md** for configuration details
-3. **Use file-locations.md** to locate specific implementation files
-4. **Reference architecture.md** for understanding system design
-5. **Check troubleshooting.md** for common issues
+1. **Start with docs/quick-reference.md** for basic setup and operations
+2. **Consult docs/dsl-options.md** for configuration details
+3. **Use docs/file-locations.md** to locate specific implementation files
+4. **Reference docs/architecture.md** for understanding system design
+5. **Check docs/troubleshooting.md** for common issues
 
 ## Project Overview
 AshEvents is an Elixir library that adds event sourcing and audit logging capabilities to Ash Framework resources. It provides:

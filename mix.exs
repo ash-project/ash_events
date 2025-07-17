@@ -1,7 +1,7 @@
 defmodule AshEvents.MixProject do
   use Mix.Project
 
-  @version "0.4.2"
+  @version "0.4.3"
 
   @description """
   The extension for tracking changes to your resources via a centralized event log, with replay functionality.

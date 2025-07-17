@@ -5,6 +5,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.4.3 (2025-07-17)
+
+
+
+
+### Bug Fixes:
+
+* properly cast all attrs/args before creating event. by Torkild G. Kjevik
+
+* try converting value to existing atom before dumping. by Torkild G. Kjevik
+
 ## v0.4.2 (2025-07-02)
 
 

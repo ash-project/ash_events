@@ -1,5 +1,6 @@
 # The directory Mix will write compiled artifacts to.
 /_build/
+/.claude/*.local.json
 
 # If you run "mix test --cover", coverage assets end up here.
 /cover/
@@ -24,6 +25,3 @@ ash_events-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
-
-/test/test.db
-reset-db

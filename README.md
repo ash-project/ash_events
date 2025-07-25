@@ -4,9 +4,50 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hex version badge](https://img.shields.io/hexpm/v/ash_events.svg)](https://hex.pm/packages/ash_events)
 [![Hexdocs badge](https://img.shields.io/badge/docs-hexdocs-purple)](https://hexdocs.pm/ash_events)
+
 # AshEvents
 
 AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that provides event capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality.
+
+## Table of Contents
+
+- [Why AshEvents?](#why-ashevents)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [1. Create an Event Log Resource](#1-create-an-event-log-resource)
+  - [2. Define a Clear Records Implementation](#2-define-a-clear-records-implementation)
+  - [3. Enable Event Logging on Resources](#3-enable-event-logging-on-resources)
+  - [4. Track Metadata with Actions](#4-track-metadata-with-actions)
+  - [5. Replay Events](#5-replay-events)
+- [Event Log Structure](#event-log-structure)
+- [Using AshEvents for Audit Logging Only](#using-ashevents-for-audit-logging-only)
+- [Differences from ash_paper_trail](#differences-from-ash_paper_trail-with-regards-to-audit-logging)
+- [How It Works](#how-it-works)
+- [Lifecycle Hooks During Replay](#lifecycle-hooks-during-replay)
+- [Best Practices for Side Effects](#best-practices-for-side-effects)
+- [Advanced Configuration](#advanced-configuration)
+- [Testing](#testing)
+- [Performance Considerations](#performance-considerations)
+- [Migration Guide](#migration-guide)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [Community](#community)
+- [Reference](#reference)
+
+## Why AshEvents?
+
+AshEvents solves critical challenges in modern applications:
+
+- **🔍 Complete Audit Trail**: Know exactly what happened, when, and who did it
+- **🔄 Time Travel**: Rebuild your application state at any point in time
+- **🔧 Schema Evolution**: Handle changes to your data structure over time
+- **📊 Business Intelligence**: Rich event data for analytics and reporting
+- **🚀 Event-Driven Architecture**: Build reactive systems with event sourcing
+- **🛡️ Compliance**: Meet regulatory requirements with immutable audit logs
+
+Unlike traditional audit logging, AshEvents provides both audit trails AND the ability to replay events to rebuild state, making it ideal for event sourcing patterns.
 
 ## Features
 
@@ -16,6 +57,50 @@ AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that prov
 - **Event Replay**: Rebuild resource state by replaying events
 - **Version-specific Replay Routing**: Route events to different actions based on their version
 - **Customizable Metadata**: Attach arbitrary metadata to events
+- **Multi-tenant Support**: Works seamlessly with Ash's multitenancy features
+- **Type Safety**: Full Elixir type system integration
+- **Performance Optimized**: Advisory locks and efficient replay algorithms
+
+## Quick Start
+
+Get up and running with AshEvents in 5 minutes:
+
+1. **Add to your project**:
+   ```elixir
+   # In mix.exs
+   {:ash_events, "~> 0.4.2"}
+   ```
+
+2. **Create an event log resource**:
+   ```elixir
+   defmodule MyApp.Events.Event do
+     use Ash.Resource, extensions: [AshEvents.EventLog]
+
+     event_log do
+       clear_records_for_replay MyApp.Events.ClearAllRecords
+     end
+   end
+   ```
+
+3. **Add events to your resource**:
+   ```elixir
+   defmodule MyApp.User do
+     use Ash.Resource, extensions: [AshEvents.Events]
+
+     events do
+       event_log MyApp.Events.Event
+     end
+   end
+   ```
+
+4. **Always use actor attribution**:
+   ```elixir
+   User
+   |> Ash.Changeset.for_create(:create, %{name: "Jane"})
+   |> Ash.create!(actor: current_user)
+   ```
+
+**That's it!** Your actions now create events automatically. See the [full usage guide](#usage) for complete setup.
 
 ## Installation
 
@@ -29,6 +114,16 @@ def deps do
   ]
 end
 ```
+
+**Version Requirements**:
+- Elixir ~> 1.15
+- Ash ~> 3.5
+- PostgreSQL (for AshPostgres users)
+
+**Installation Notes**:
+- Run `mix deps.get` after adding the dependency
+- No additional configuration required for basic usage
+- See [Advanced Configuration](#advanced-configuration) for customization options
 > ### Note: Using with AshAuthentication
 >
 > When you use **AshEvents** with **AshAuthentication**, you must let AshEvents
@@ -478,7 +573,153 @@ event_log do
 end
 ```
 
+## Testing
+
+When testing applications with AshEvents:
+
+```elixir
+# In your test setup
+setup do
+  # Always use actor attribution in tests
+  user = create_test_user()
+  {:ok, user: user}
+end
+
+test "user creation creates event", %{user: actor} do
+  user =
+    User
+    |> Ash.Changeset.for_create(:create, %{name: "Test User"})
+    |> Ash.create!(actor: actor)
+
+  # Verify event was created
+  events = EventLog |> Ash.read!()
+  assert length(events) == 1
+  assert hd(events).action == :create
+end
+```
+
+**Testing Best Practices**:
+- Always set actor attribution in tests
+- Test both event creation and replay functionality
+- Use factories for consistent test data
+- Test version migration scenarios
+
+## Performance Considerations
+
+**Advisory Locks**: AshEvents uses PostgreSQL advisory locks to prevent race conditions during event creation. This ensures data consistency but may impact high-concurrency scenarios.
+
+**Event Volume**: Consider event log size for high-volume applications:
+- Implement event log archiving strategies
+- Use appropriate database indices
+- Monitor event log growth
+
+**Replay Performance**: Event replay processes all events chronologically:
+- Optimize clear_records implementation
+- Consider parallel processing for large datasets
+- Use point-in-time replay for specific scenarios
+
+**Best Practices**:
+- Use UUIDv7 for event log primary keys in multi-tenant setups
+- Implement proper database indexing strategies
+- Monitor event log size and implement archiving
+- Consider read replicas for event analytics
+
+## Troubleshooting
+
+### Common Issues
+
+**Q: Events not being created**
+- ✅ Verify actor attribution is set: `actor: current_user`
+- ✅ Check that resource has `AshEvents.Events` extension
+- ✅ Ensure event log resource is properly configured
+
+**Q: Replay fails**
+- ✅ Implement `clear_records_for_replay` module
+- ✅ Verify all event-tracked resources are cleared
+- ✅ Check for missing version management configuration
+
+**Q: Missing actor information**
+- ✅ Configure `persist_actor_primary_key` in event log
+- ✅ Ensure actor is set for all actions
+- ✅ Check actor resource exists and is accessible
+
+**Q: Performance issues**
+- ✅ Review advisory lock configuration
+- ✅ Implement database indexing strategies
+- ✅ Consider event log archiving
+
+### Getting Help
+
+If you encounter issues:
+1. Check the [documentation](#documentation)
+2. Search existing [GitHub issues](https://github.com/ash-project/ash_events/issues)
+3. Join the [Ash Discord](https://discord.gg/ash-hq) for community support
+4. Create a [new issue](https://github.com/ash-project/ash_events/issues/new) with reproduction steps
+
+## Documentation
+
+AshEvents provides comprehensive documentation:
+
+### API Documentation
+- **[API Reference](https://hexdocs.pm/ash_events)** - Complete API documentation
+- **[DSL Reference](documentation/dsls/)** - Event Log and Events DSL guides
+
+### Usage Documentation
+- **[Usage Rules](usage-rules.md)** - Complete patterns and best practices
+- **[AI Assistant Guide](CLAUDE.md)** - Development workflows and commands
+
+### Community Resources
+- **[Ash Framework](https://ash-hq.org/)** - Main framework documentation
+- **[Discord Community](https://discord.gg/ash-hq)** - Community support and discussions
+- **[GitHub Discussions](https://github.com/ash-project/ash_events/discussions)** - Q&A and feature discussions
+
+## Community
+
+### Contributing
+
+We welcome contributions! Please:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/my-feature`
+3. **Make your changes** with tests
+4. **Run the test suite**: `mix test`
+5. **Submit a pull request**
+
+### Development Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/ash-project/ash_events.git
+cd ash_events
+
+# Install dependencies
+mix deps.get
+
+# Set up test database
+mix test.reset
+
+# Run tests
+mix test
+
+# Run quality checks
+mix credo --strict
+mix dialyzer
+```
+
+### Code of Conduct
+
+This project follows the [Ash Framework Code of Conduct](https://github.com/ash-project/ash/blob/main/CODE_OF_CONDUCT.md).
+
+### Getting Help
+
+- 📚 **Documentation**: Check the [documentation](#documentation) first
+- 💬 **Discord**: Join the [Ash Discord](https://discord.gg/ash-hq) for real-time help
+- 🐛 **Issues**: Report bugs on [GitHub Issues](https://github.com/ash-project/ash_events/issues)
+- 💡 **Discussions**: Share ideas on [GitHub Discussions](https://github.com/ash-project/ash_events/discussions)
+
 ## Reference
 
 - [AshEvents.Events DSL](documentation/dsls/DSL-AshEvents.Events.md)
 - [AshEvents.EventLog DSL](documentation/dsls/DSL-AshEvents.EventLog.md)
+- [Changelog](CHANGELOG.md)
+- [Usage Rules](usage-rules.md)

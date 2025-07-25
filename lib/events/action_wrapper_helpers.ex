@@ -40,11 +40,17 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
           module_opts[:advisory_lock_key_default]
         )
 
-      if is_list(lock_key) do
-        [key1, key2] = lock_key
-        Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1, $2)", [key1, key2])
-      else
-        Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
+      case Code.ensure_loaded(Ecto.Adapters.SQL) do
+        {:module, _} ->
+          if is_list(lock_key) do
+            [key1, key2] = lock_key
+            Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1, $2)", [key1, key2])
+          else
+            Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
+          end
+
+        {:error, _} ->
+          raise "Ecto.Adapters.SQL not available when trying to set advisory lock"
       end
     end
 

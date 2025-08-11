@@ -663,7 +663,8 @@ defmodule AshEventsTest do
 
   test "handles ash phoenix forms correctly" do
     form_params = %{
-      email: "user@example.com",
+      "string_key" => "string_value",
+      "email" => "user@example.com",
       given_name: "John",
       family_name: "Doe",
       non_existent: "value"

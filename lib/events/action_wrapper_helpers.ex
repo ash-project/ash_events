@@ -51,6 +51,17 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     params =
       original_params
       |> Enum.reduce(%{}, fn {key, value}, acc ->
+        key =
+          if is_binary(key) do
+            try do
+              String.to_existing_atom(key)
+            rescue
+              ArgumentError -> nil
+            end
+          else
+            key
+          end
+
         cond do
           attr = Ash.Resource.Info.attribute(changeset.resource, key) ->
             Map.put(acc, key, cast_and_dump_value(value, attr))

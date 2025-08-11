@@ -35,6 +35,10 @@ defmodule AshEvents.Test.Accounts.User do
       change atomic_update(:given_name, expr(given_name + "should_fail"))
     end
 
+    create :create_with_form do
+      accept [:email, :given_name, :family_name]
+    end
+
     update :update do
       require_atomic? false
       accept [:given_name, :family_name, :created_at, :updated_at]

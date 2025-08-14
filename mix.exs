@@ -137,7 +137,8 @@ defmodule AshEvents.MixProject do
       {:mix_audit, ">= 0.0.0", only: [:dev, :test], runtime: false},
       {:ash_cloak, "~> 0.1", only: [:dev, :test]},
       {:cloak, "~> 1.1", only: [:dev, :test]},
-      {:ash_state_machine, "~> 0.2.11", only: [:dev, :test]}
+      {:ash_state_machine, "~> 0.2.11", only: [:dev, :test]},
+      {:ash_phoenix, "~> 2.0", only: [:dev, :test]}
     ]
   end
 

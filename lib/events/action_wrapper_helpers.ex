@@ -50,17 +50,29 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
     params =
       original_params
-      |> Enum.map(fn {key, value} ->
-        case Ash.Resource.Info.attribute(changeset.resource, key) do
-          nil ->
-            arg = Enum.find(changeset.action.arguments, &(&1.name == key))
-            {key, cast_and_dump_value(value, arg)}
+      |> Enum.reduce(%{}, fn {key, value}, acc ->
+        key =
+          if is_binary(key) do
+            try do
+              String.to_existing_atom(key)
+            rescue
+              ArgumentError -> nil
+            end
+          else
+            key
+          end
 
-          attr ->
-            {key, cast_and_dump_value(value, attr)}
+        cond do
+          attr = Ash.Resource.Info.attribute(changeset.resource, key) ->
+            Map.put(acc, key, cast_and_dump_value(value, attr))
+
+          arg = Enum.find(changeset.action.arguments, &(&1.name == key)) ->
+            Map.put(acc, key, cast_and_dump_value(value, arg))
+
+          true ->
+            acc
         end
       end)
-      |> Enum.into(%{})
 
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)

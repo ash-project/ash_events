@@ -5,6 +5,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.4.4 (2025-08-21)
+
+
+
+
+### Bug Fixes:
+
+* Ignore params that are not action attributes or arguments when creating event. by Torkild Kjevik
+
 ## v0.4.3 (2025-07-17)
 
 

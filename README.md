@@ -24,7 +24,7 @@ Add `ash_events` to your dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ash_events, "~> 0.4.3"}
+    {:ash_events, "~> 0.4.4"}
     # ... other deps
   ]
 end

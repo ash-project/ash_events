@@ -1,8 +1,61 @@
-# Rules for working with AshEvents
+# AshEvents Usage Rules and Patterns
+
+## 🚨 CRITICAL RULES - READ FIRST
+
+### **RULE 1: ALWAYS SET ACTOR ATTRIBUTION**
+
+**MANDATORY**: You MUST set actor attribution for ALL actions that create events.
+
+```elixir
+# ✅ CORRECT - Always set actor
+Ash.create!(changeset, actor: current_user)
+Ash.update!(changeset, actor: current_user)
+Ash.destroy!(record, actor: current_user)
+
+# ❌ WRONG - Missing actor attribution
+Ash.create!(changeset)  # Will lose audit trail information
+```
+
+### **RULE 2: IMPLEMENT CLEAR_RECORDS_FOR_REPLAY**
+
+**MANDATORY**: You MUST implement the `clear_records_for_replay` module for event replay.
+
+```elixir
+defmodule MyApp.Events.ClearAllRecords do
+  use AshEvents.ClearRecordsForReplay
+  
+  @impl true
+  def clear_records!(opts) do
+    # Must clear ALL resources with event tracking
+    :ok
+  end
+end
+```
+
+---
+
+## Table of Contents
+
+1. [Understanding AshEvents](#understanding-ashevents)
+2. [Core Concepts](#core-concepts)
+3. [Quick Start Setup](#quick-start-setup)
+4. [Event Tracking Patterns](#event-tracking-patterns)
+5. [Event Replay](#event-replay)
+6. [Version Management](#version-management)
+7. [Side Effects and Lifecycle](#side-effects-and-lifecycle)
+8. [Advanced Configuration](#advanced-configuration)
+9. [Testing Best Practices](#testing-best-practices)
+10. [Common Patterns](#common-patterns)
+11. [Error Handling](#error-handling)
+12. [Performance & Security](#performance--security)
+
+---
 
 ## Understanding AshEvents
 
-AshEvents is an extension for the Ash Framework that provides event capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality. **Read the documentation thoroughly before implementing** - AshEvents has specific patterns and conventions that must be followed correctly.
+AshEvents is an extension for the Ash Framework that provides event capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality. 
+
+**🔗 For implementation guidance, see [docs/ai-index.md](docs/ai-index.md)**
 
 ## Core Concepts
 
@@ -12,9 +65,9 @@ AshEvents is an extension for the Ash Framework that provides event capabilities
 - **Actor Attribution**: Stores who performed each action (users, system processes, etc)
 - **Metadata Tracking**: Attaches arbitrary metadata to events for audit purposes
 
-## Project Structure & Setup
+## Quick Start Setup
 
-### 1. Event Log Resource (Required)
+### Step 1: Create Event Log Resource (Required)
 
 **Always start by creating a centralized event log resource** using the `AshEvents.EventLog` extension:
 
@@ -37,9 +90,9 @@ defmodule MyApp.Events.Event do
 end
 ```
 
-### 2. Clear Records Implementation (Required for Replay)
+### Step 2: Clear Records Implementation (Required for Replay)
 
-**Always implement the clear records module** if you plan to use event replay:
+**🚨 CRITICAL**: Always implement the clear records module for event replay functionality:
 
 ```elixir
 defmodule MyApp.Events.ClearAllRecords do
@@ -54,7 +107,7 @@ defmodule MyApp.Events.ClearAllRecords do
 end
 ```
 
-### 3. Enable Event Tracking on Resources
+### Step 3: Enable Event Tracking on Resources
 
 **Add the `AshEvents.Events` extension to resources you want to track**:
 
@@ -85,10 +138,10 @@ end
 **Events are created automatically** when you perform actions on resources with events enabled:
 
 ```elixir
-# This automatically creates an event in your event log
+# ✅ This automatically creates an event in your event log
 user = User
 |> Ash.Changeset.for_create(:create, %{name: "John", email: "john@example.com"})
-|> Ash.create!(actor: current_user)
+|> Ash.create!(actor: current_user)  # 🚨 CRITICAL: Always set actor!
 ```
 
 ### Adding Metadata to Events
@@ -110,18 +163,24 @@ User
 
 ### Actor Attribution
 
-**Always set the actor** when performing actions to ensure proper attribution:
+**🚨 CRITICAL**: Always set the actor when performing actions to ensure proper attribution:
 
 ```elixir
-# GOOD - Actor is properly attributed
+# ✅ CORRECT - Actor is properly attributed
 User
-|> Ash.Query.for_read(:read, %{}, actor: current_user)
-|> Ash.read!()
+|> Ash.Changeset.for_create(:create, %{name: "John"})
+|> Ash.create!(actor: current_user)
 
-# BAD - No actor attribution
 User
-|> Ash.Query.for_read(:read, %{})
-|> Ash.read!()
+|> Ash.Changeset.for_update(:update, %{name: "Jane"})
+|> Ash.update!(actor: current_user)
+
+Ash.destroy!(user, actor: current_user)
+
+# ❌ WRONG - No actor attribution (loses audit trail)
+User
+|> Ash.Changeset.for_create(:create, %{name: "John"})
+|> Ash.create!()  # Missing actor!
 ```
 
 ## Event Replay
@@ -198,15 +257,17 @@ end
 
 ## Side Effects and Lifecycle Hooks
 
-### Important: Lifecycle Hooks During Replay
+### 🚨 CRITICAL: Lifecycle Hooks During Replay
 
 **Understand that ALL lifecycle hooks are skipped during replay**:
 - `before_action`, `after_action`, `around_action`
 - `before_transaction`, `after_transaction`, `around_transaction`
 
-This prevents side effects like emails, notifications, or API calls from being triggered during replay.
+**Why this matters**: This prevents side effects like emails, notifications, or API calls from being triggered during replay.
 
-### Best Practice: Encapsulate Side Effects
+**Key insight**: If you put side effects in lifecycle hooks, they won't execute during replay - this is intentional to prevent duplicate effects.
+
+### ✅ Best Practice: Encapsulate Side Effects
 
 **Create separate Ash actions for side effects** instead of putting them directly in lifecycle hooks:
 
@@ -252,7 +313,7 @@ end
 
 ### External Service Integration
 
-**Wrap external API calls in tracked actions**:
+**✅ Best Practice**: Wrap external API calls in tracked actions:
 
 ```elixir
 defmodule MyApp.External.APICall do
@@ -304,11 +365,11 @@ event_log do
 end
 ```
 
-**Note**: All actor primary key fields must have `allow_nil?: true` (this is the default).
+**📝 Note**: All actor primary key fields must have `allow_nil?: true` (this is the default).
 
 ### Encryption Support
 
-**Use encryption for sensitive event data**:
+**🔐 Use encryption for sensitive event data**:
 
 ```elixir
 event_log do
@@ -318,7 +379,7 @@ end
 
 ### Advisory Locks
 
-**Configure advisory locks** for high-concurrency scenarios:
+**⚡ Configure advisory locks** for high-concurrency scenarios:
 
 ```elixir
 event_log do
@@ -329,7 +390,7 @@ end
 
 ### Timestamp Tracking
 
-**Configure timestamp tracking** if your resources have custom timestamp fields:
+**⏰ Configure timestamp tracking** if your resources have custom timestamp fields:
 
 ```elixir
 events do
@@ -343,7 +404,7 @@ end
 
 ### Testing with Events
 
-**Use `authorize?: false` in tests** where authorization is not the focus:
+**🧪 Use `authorize?: false` in tests** where authorization is not the focus:
 
 ```elixir
 test "creates user with event" do
@@ -357,7 +418,7 @@ test "creates user with event" do
 end
 ```
 
-**Test event replay functionality**:
+**🧪 Test event replay functionality**:
 
 ```elixir
 test "can replay events to rebuild state" do
@@ -383,11 +444,11 @@ end
 
 ### Event Creation Failures
 
-**Events are created in the same transaction** as the original action, so event creation failures will rollback the entire operation.
+**⚠️ Events are created in the same transaction** as the original action, so event creation failures will rollback the entire operation.
 
 ### Replay Failures
 
-**Handle replay failures gracefully**:
+**🛠️ Handle replay failures gracefully**:
 
 ```elixir
 case MyApp.Events.Event |> Ash.ActionInput.for_action(:replay, %{}) |> Ash.run_action() do
@@ -401,13 +462,13 @@ end
 
 ## Audit Logging Only
 
-**You can use AshEvents solely for audit logging** without implementing replay:
+**💡 You can use AshEvents solely for audit logging** without implementing replay:
 
 1. **Skip implementing `clear_records_for_replay`** - only needed for replay
-2. **Skip defining `current_action_versions`** - only needed for schema evolution during replay
+2. **Skip defining `current_action_versions`** - only needed for schema evolution during replay  
 3. **Skip implementing replay overrides** - only needed for replay functionality
 
-This gives you automatic audit trails without the complexity of event sourcing.
+**Benefit**: This gives you automatic audit trails without the complexity of event sourcing.
 
 ## Common Patterns
 
@@ -455,18 +516,59 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
-## Performance Considerations
+## Performance & Security
 
-- **Event insertion uses advisory locks** to prevent race conditions
-- **Replay operations are sequential** and can be time-consuming for large datasets
-- **Consider event retention policies** for long-running applications
-- **Use `primary_key_type Ash.Type.UUIDv7`** for better performance with time-ordered events
-- **Metadata should be kept reasonable in size** as it's stored as JSON
+### Performance Considerations
 
-## Security Considerations
+- **⚡ Event insertion uses advisory locks** to prevent race conditions
+- **⏳ Replay operations are sequential** and can be time-consuming for large datasets
+- **🗄️ Consider event retention policies** for long-running applications
+- **🚀 Use `primary_key_type Ash.Type.UUIDv7`** for better performance with time-ordered events
+- **📊 Metadata should be kept reasonable in size** as it's stored as JSON
 
-- **Never store sensitive data in metadata** unless using encryption
-- **Always validate actor permissions** before performing actions
-- **Use encryption** when storing PII or sensitive information in events
-- **Implement proper access controls** on your event log resource
-- **Consider data retention requirements** for compliance (GDPR, etc.)
+### Security Considerations
+
+- **🔐 Never store sensitive data in metadata** unless using encryption
+- **🛡️ Always validate actor permissions** before performing actions
+- **🔒 Use encryption** when storing PII or sensitive information in events
+- **🚧 Implement proper access controls** on your event log resource
+- **📋 Consider data retention requirements** for compliance (GDPR, etc.)
+
+---
+
+## Quick Reference
+
+### Essential Commands
+```bash
+# Database management
+mix test.reset         # Reset test database (preferred)
+mix test.create        # Create test database
+mix test.migrate       # Run migrations
+
+# Testing
+mix test              # Run all tests
+mix test --trace      # Run with detailed output
+
+# Quality
+mix credo --strict    # Linting
+mix dialyzer         # Type checking
+mix format           # Code formatting
+```
+
+### Must-Have Checklist
+- [ ] Event log resource with `AshEvents.EventLog` extension
+- [ ] Clear records module with `AshEvents.ClearRecordsForReplay`
+- [ ] Resources with `AshEvents.Events` extension
+- [ ] Actor attribution on ALL actions
+- [ ] Side effects as separate tracked actions
+- [ ] Event replay testing
+
+### Emergency Debugging
+1. **Events not created?** → Check actor attribution
+2. **Replay fails?** → Check clear records implementation
+3. **Compilation errors?** → Check clear_records_for_replay configuration
+4. **Performance issues?** → Check advisory locks and metadata size
+
+---
+
+**🔗 For more guidance, see [docs/ai-index.md](docs/ai-index.md)**

@@ -5,7 +5,16 @@ defmodule AshEvents.EventLog.Actions.Replay do
   require Ash.Query
   require Logger
 
-  defp handle_action(%{action_type: :create} = event, resource, action, opts) do
+  # Helper function to safely check if a record exists
+  defp get_record_if_exists(resource, record_id, opts) do
+    case Ash.get(resource, record_id, opts) do
+      {:ok, record} -> {:ok, record}
+      {:error, _} -> {:error, :not_found}
+    end
+  end
+
+  # Extract current create event replay logic into helper function
+  defp replay_as_create(event, resource, action, opts) do
     create_timestamp = AshEvents.Events.Info.events_create_timestamp!(event.resource)
     update_timestamp = AshEvents.Events.Info.events_update_timestamp!(event.resource)
 
@@ -30,6 +39,53 @@ defmodule AshEvents.EventLog.Actions.Replay do
     |> Ash.create!()
 
     :ok
+  end
+
+  # Helper function to replay upsert events as updates when record already exists
+  defp replay_upsert_as_update(event, resource, existing_record, opts) do
+    # For upsert actions, we MUST have the auto-generated replay update action
+    replay_action_name = :"ash_events_replay_#{event.action}_update"
+    actions = Ash.Resource.Info.actions(resource)
+
+    update_action =
+      case Enum.find(actions, &(&1.name == replay_action_name and &1.type == :update)) do
+        nil ->
+          raise "Expected auto-generated replay update action #{replay_action_name} for upsert action #{event.action} on #{resource}, but it was not found. This indicates a bug in the AshEvents transformer."
+
+        action ->
+          action
+      end
+
+    update_timestamp = AshEvents.Events.Info.events_update_timestamp!(event.resource)
+
+    input =
+      if update_timestamp do
+        Map.put(event.data, update_timestamp, event.occurred_at)
+      else
+        event.data
+      end
+
+    existing_record
+    |> Ash.Changeset.for_update(update_action.name, input, opts)
+    |> Ash.update!()
+
+    :ok
+  end
+
+  defp handle_action(%{action_type: :create} = event, resource, action, opts) do
+    action_struct = Ash.Resource.Info.action(resource, action)
+
+    if action_struct.upsert? do
+      case get_record_if_exists(resource, event.record_id, opts) do
+        {:ok, existing_record} ->
+          replay_upsert_as_update(event, resource, existing_record, opts)
+
+        {:error, :not_found} ->
+          replay_as_create(event, resource, action, opts)
+      end
+    else
+      replay_as_create(event, resource, action_struct, opts)
+    end
   end
 
   defp handle_action(%{action_type: :update} = event, resource, action, opts) do

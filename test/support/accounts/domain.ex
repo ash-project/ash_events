@@ -8,6 +8,7 @@ defmodule AshEvents.Test.Accounts do
       define :create_user, action: :create
       define :create_user_with_atomic, action: :create_with_atomic
       define :create_user_with_form, action: :create_with_form
+      define :create_user_upsert, action: :create_upsert
       define :update_user, action: :update
       define :update_user_with_atomic, action: :update_with_atomic
       define :destroy_user, action: :destroy

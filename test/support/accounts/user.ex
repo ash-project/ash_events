@@ -14,7 +14,7 @@ defmodule AshEvents.Test.Accounts.User do
   events do
     event_log AshEvents.Test.Events.EventLog
     ignore_actions [:create_v1]
-    current_action_versions create: 1
+    current_action_versions create: 1, create_upsert: 1
     create_timestamp :created_at
     update_timestamp :updated_at
   end
@@ -77,6 +77,12 @@ defmodule AshEvents.Test.Accounts.User do
       accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
       argument :role, :string, default: "user"
     end
+
+    create :create_upsert do
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
+      upsert? true
+      upsert_identity :unique_email
+    end
   end
 
   policies do
@@ -116,6 +122,10 @@ defmodule AshEvents.Test.Accounts.User do
       allow_nil? false
       public? true
     end
+  end
+
+  identities do
+    identity :unique_email, [:email]
   end
 
   relationships do

@@ -134,19 +134,50 @@ defmodule AshEvents.Events.Transformers.AddActions do
         }
         |> then(fn action ->
           case action.type do
+            :create -> Map.put(action, :upsert?, action.upsert?)
             :update -> Map.put(action, :require_atomic?, false)
             :destroy -> Map.merge(action, %{require_atomic?: false, return_destroyed?: true})
             _ -> action
           end
         end)
 
-      {:ok,
-       Spark.Dsl.Transformer.replace_entity(
-         dsl,
-         [:actions],
-         manual_action,
-         &(&1.name == action.name)
-       )}
+      {:ok, dsl_with_main_action} =
+        {:ok,
+         Spark.Dsl.Transformer.replace_entity(
+           dsl,
+           [:actions],
+           manual_action,
+           &(&1.name == action.name)
+         )}
+
+      if action.type == :create and action.upsert? do
+        replay_update_action_name = :"ash_events_replay_#{action.name}_update"
+
+        replay_update_action = %Ash.Resource.Actions.Update{
+          name: replay_update_action_name,
+          type: :update,
+          accept: action.accept,
+          arguments: action.arguments,
+          primary?: false,
+          description: "Auto-generated update action for replaying #{action.name} upsert events",
+          require_atomic?: false,
+          manual: nil,
+          changes: [],
+          touches_resources: [],
+          transaction?: nil,
+          metadata: [],
+          delay_global_validations?: false
+        }
+
+        {:ok,
+         Spark.Dsl.Transformer.add_entity(
+           dsl_with_main_action,
+           [:actions],
+           replay_update_action
+         )}
+      else
+        {:ok, dsl_with_main_action}
+      end
     end)
   end
 end

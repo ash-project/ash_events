@@ -1,4 +1,4 @@
-defmodule AshEvents.TestRepo.Migrations.AddUniqueEmail do
+defmodule AshEvents.TestRepo.Migrations.AddEmailIdentity do
   @moduledoc """
   Updates resources based on their most recent snapshots.
 

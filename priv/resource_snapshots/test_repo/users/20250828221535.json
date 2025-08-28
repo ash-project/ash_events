@@ -75,45 +75,22 @@
   ],
   "base_filter": null,
   "check_constraints": [],
-  "custom_indexes": [
-    {
-      "all_tenants?": false,
-      "concurrently": false,
-      "error_fields": [
-        "email"
-      ],
-      "fields": [
-        {
-          "type": "atom",
-          "value": "email"
-        }
-      ],
-      "include": null,
-      "message": null,
-      "name": null,
-      "nulls_distinct": true,
-      "prefix": null,
-      "table": null,
-      "unique": true,
-      "using": null,
-      "where": null
-    }
-  ],
+  "custom_indexes": [],
   "custom_statements": [],
   "has_create_action": true,
-  "hash": "E91F84AFD5414512B6575B6C505571253C87FCC5CC09C6E35A04AB198C32D910",
+  "hash": "06D901E44EB8357C2BC9A70B6399393FBC6DFA13B847562B7C2063834FE18FBA",
   "identities": [
     {
       "all_tenants?": false,
       "base_filter": null,
-      "index_name": "users_email_index",
+      "index_name": "users_unique_email_index",
       "keys": [
         {
           "type": "atom",
           "value": "email"
         }
       ],
-      "name": "email",
+      "name": "unique_email",
       "nils_distinct?": true,
       "where": null
     }

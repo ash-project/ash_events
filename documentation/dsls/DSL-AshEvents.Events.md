@@ -26,6 +26,7 @@ events do
   event_log MyApp.Events.EventLog
   only_actions [:create, :update, :destroy]
   current_action_versions create: 2, update: 3, destroy: 2
+  track_auto_changed_attributes [:status, :slug]
 end
 
 ```
@@ -44,6 +45,7 @@ end
 | [`allowed_change_modules`](#events-allowed_change_modules){: #events-allowed_change_modules } | `keyword` | `[]` | A keyword list of action names and whitelisted change modules that should not be removed during event replay. |
 | [`create_timestamp`](#events-create_timestamp){: #events-create_timestamp } | `atom` |  | The name of the create timestamp attribute on the resource |
 | [`update_timestamp`](#events-update_timestamp){: #events-update_timestamp } | `atom` |  | The name of the update timestamp attribute on the resource |
+| [`track_auto_changed_attributes`](#events-track_auto_changed_attributes){: #events-track_auto_changed_attributes } | `list(atom)` | `[]` | Attributes whose changes should be recorded in the event data, even though they were not part of the input given to the action. |
 
 
 

@@ -55,5 +55,11 @@ defmodule AshEvents.Test.Accounts do
       define :set_org_state_machine_active, action: :set_active
       define :set_org_state_machine_inactive, action: :set_inactive
     end
+
+    resource AshEvents.Test.Accounts.UserWithAutoAttrs do
+      define :create_user_with_auto_attrs, action: :create
+      define :update_user_with_auto_attrs, action: :update
+      define :destroy_user_with_auto_attrs, action: :destroy
+    end
   end
 end

@@ -20,6 +20,16 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     dumped_value
   end
 
+  def get_occurred_at(changeset, timestamp_attr) do
+    case Map.get(changeset.attributes, timestamp_attr) do
+      nil ->
+        DateTime.utc_now()
+
+      timestamp ->
+        timestamp
+    end
+  end
+
   defp cast_and_dump_value(value, attr_or_arg) do
     case Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
       {:ok, cast_value} ->
@@ -30,7 +40,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
   end
 
-  def create_event!(changeset, original_params, module_opts, opts) do
+  def create_event!(changeset, original_params, occurred_at, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
     if pg_repo do
@@ -74,6 +84,33 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         end
       end)
 
+    track_auto_changed_attributes =
+      AshEvents.Events.Info.events_track_auto_changed_attributes!(changeset.resource)
+
+    original_param_keys = MapSet.new(Map.keys(original_params))
+
+    params =
+      Enum.reduce(track_auto_changed_attributes, params, fn attr_name, acc ->
+        case Map.get(changeset.attributes, attr_name) do
+          nil ->
+            acc
+
+          value ->
+            if MapSet.member?(original_param_keys, attr_name) or
+                 MapSet.member?(original_param_keys, to_string(attr_name)) do
+              acc
+            else
+              case Ash.Resource.Info.attribute(changeset.resource, attr_name) do
+                nil ->
+                  acc
+
+                attr ->
+                  Map.put(acc, attr_name, dump_value(value, attr))
+              end
+            end
+        end
+      end)
+
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(event_log_resource)
@@ -96,7 +133,8 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         action: module_opts[:action],
         action_type: changeset.action_type,
         metadata: metadata,
-        version: module_opts[:version]
+        version: module_opts[:version],
+        occurred_at: occurred_at
       }
 
     event_params =
@@ -111,20 +149,23 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
     has_atomics? = not Enum.empty?(changeset.atomics)
 
-    event_log_resource
-    |> Ash.Changeset.for_create(:create, event_params, opts)
-    |> then(fn cs ->
-      if has_atomics? do
-        Ash.Changeset.add_error(
-          cs,
-          Ash.Error.Changes.InvalidChanges.exception(
-            message: "atomic changes are not compatible with ash_events"
+    {_event, notifications} =
+      event_log_resource
+      |> Ash.Changeset.for_create(:create, event_params, opts)
+      |> then(fn cs ->
+        if has_atomics? do
+          Ash.Changeset.add_error(
+            cs,
+            Ash.Error.Changes.InvalidChanges.exception(
+              message: "atomic changes are not compatible with ash_events"
+            )
           )
-        )
-      else
-        cs
-      end
-    end)
-    |> Ash.create!()
+        else
+          cs
+        end
+      end)
+      |> Ash.create!(return_notifications?: true)
+
+    Ash.Notifier.notify(notifications)
   end
 end

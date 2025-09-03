@@ -23,7 +23,8 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
           :record_id,
           :resource,
           :action,
-          :action_type
+          :action_type,
+          :occurred_at
         ]
       else
         [
@@ -33,7 +34,8 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
           :record_id,
           :resource,
           :action,
-          :action_type
+          :action_type,
+          :occurred_at
         ]
       end
 

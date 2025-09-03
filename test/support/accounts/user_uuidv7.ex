@@ -14,6 +14,8 @@ defmodule AshEvents.Test.Accounts.UserUuidV7 do
   events do
     event_log AshEvents.Test.Events.EventLogUuidV7
     current_action_versions create: 1
+    create_timestamp :created_at
+    update_timestamp :updated_at
   end
 
   actions do
@@ -25,7 +27,7 @@ defmodule AshEvents.Test.Accounts.UserUuidV7 do
 
     update :update do
       require_atomic? false
-      accept [:given_name, :family_name]
+      accept [:given_name, :family_name, :created_at, :updated_at]
     end
 
     destroy :destroy do

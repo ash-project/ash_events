@@ -5,7 +5,6 @@ defmodule AshEvents.EventLog.Actions.Replay do
   require Ash.Query
   require Logger
 
-  # Helper function to safely check if a record exists
   defp get_record_if_exists(resource, record_id, opts) do
     case Ash.get(resource, record_id, opts) do
       {:ok, record} -> {:ok, record}
@@ -13,26 +12,9 @@ defmodule AshEvents.EventLog.Actions.Replay do
     end
   end
 
-  # Extract current create event replay logic into helper function
   defp replay_as_create(event, resource, action, opts) do
-    create_timestamp = AshEvents.Events.Info.events_create_timestamp!(event.resource)
-    update_timestamp = AshEvents.Events.Info.events_update_timestamp!(event.resource)
-
-    input = Map.put(event.data, :id, event.record_id)
-
-    input =
-      if create_timestamp do
-        Map.put(input, create_timestamp, event.occurred_at)
-      else
-        input
-      end
-
-    input =
-      if update_timestamp do
-        Map.put(input, update_timestamp, event.occurred_at)
-      else
-        input
-      end
+    [primary_key] = Ash.Resource.Info.primary_key(resource)
+    input = Map.put(event.data, primary_key, event.record_id)
 
     resource
     |> Ash.Changeset.for_create(action, input, opts)
@@ -41,9 +23,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
     :ok
   end
 
-  # Helper function to replay upsert events as updates when record already exists
   defp replay_upsert_as_update(event, resource, existing_record, opts) do
-    # For upsert actions, we MUST have the auto-generated replay update action
     replay_action_name = :"ash_events_replay_#{event.action}_update"
     actions = Ash.Resource.Info.actions(resource)
 

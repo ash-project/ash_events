@@ -12,6 +12,8 @@ defmodule AshEvents.Test.Accounts.Org do
 
   events do
     event_log AshEvents.Test.Events.EventLog
+    create_timestamp :created_at
+    update_timestamp :updated_at
   end
 
   actions do
@@ -19,6 +21,12 @@ defmodule AshEvents.Test.Accounts.Org do
 
     create :create do
       accept [:id, :created_at, :updated_at, :name]
+
+      validate string_length(:name, min: 2, max: 100)
+    end
+
+    update :update do
+      accept [:name, :updated_at]
 
       validate string_length(:name, min: 2, max: 100)
     end

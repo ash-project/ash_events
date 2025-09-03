@@ -22,6 +22,7 @@ defmodule AshEvents.DestroyActionWrapper do
       AshEvents.Events.ActionWrapperHelpers.create_event!(
         changeset,
         merged_ctx.original_params,
+        DateTime.utc_now(),
         module_opts,
         opts
       )

@@ -34,18 +34,34 @@ defmodule AshEvents.CreateActionWrapper do
 
       case result do
         {:ok, record} ->
-          # Create event with the actual record ID from the result
           [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
           actual_id = Map.get(record, primary_key)
 
-          event_changeset = %{
+          changeset = %{
             changeset
             | attributes: Map.put(changeset.attributes, primary_key, actual_id)
           }
 
+          create_timestamp_attr =
+            AshEvents.Events.Info.events_create_timestamp!(changeset.resource)
+
+          occurred_at =
+            AshEvents.Events.ActionWrapperHelpers.get_occurred_at(
+              changeset,
+              create_timestamp_attr
+            )
+
+          params =
+            if create_timestamp_attr do
+              Map.put(merged_ctx.original_params, create_timestamp_attr, occurred_at)
+            else
+              merged_ctx.original_params
+            end
+
           AshEvents.Events.ActionWrapperHelpers.create_event!(
-            event_changeset,
-            merged_ctx.original_params,
+            changeset,
+            params,
+            occurred_at,
             module_opts,
             opts
           )

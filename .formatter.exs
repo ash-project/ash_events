@@ -21,13 +21,14 @@ spark_locals_without_parens = [
   replay_override: 3,
   route_to: 2,
   route_to: 3,
+  track_auto_changed_attributes: 1,
   update_timestamp: 1,
   versions: 1
 ]
 
 [
   inputs: ["{mix,.formatter}.exs", "{config,lib,test}/**/*.{ex,exs}"],
-  import_deps: [:ash, :ash_postgres],
+  import_deps: [:ash, :ash_postgres, :ash_state_machine],
   plugins: [Spark.Formatter],
   locals_without_parens: spark_locals_without_parens,
   export: [

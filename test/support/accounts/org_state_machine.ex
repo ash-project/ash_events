@@ -12,12 +12,12 @@ defmodule AshEvents.Test.Accounts.OrgStateMachine do
   end
 
   state_machine do
-    default_initial_state(:active)
-    initial_states([:active])
+    default_initial_state :active
+    initial_states [:active]
 
     transitions do
-      transition(:set_inactive, from: :active, to: :inactive)
-      transition(:set_active, from: :inactive, to: :active)
+      transition :set_inactive, from: :active, to: :inactive
+      transition :set_active, from: :inactive, to: :active
     end
   end
 
@@ -37,11 +37,13 @@ defmodule AshEvents.Test.Accounts.OrgStateMachine do
     end
 
     update :set_inactive do
+      accept []
       require_atomic? false
       change transition_state(:inactive)
     end
 
     update :set_active do
+      accept []
       require_atomic? false
       change transition_state(:active)
     end

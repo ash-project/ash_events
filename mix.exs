@@ -29,7 +29,8 @@ defmodule AshEvents.MixProject do
         "test.check_migrations": :test,
         "test.drop": :test,
         "test.generate_migrations": :test,
-        "test.reset": :test
+        "test.reset": :test,
+        tidewave: :test
       ],
       dialyzer: [
         plt_add_apps: [:mix]
@@ -40,8 +41,8 @@ defmodule AshEvents.MixProject do
   defp ash_version(default_version) do
     case System.get_env("ASH_VERSION") do
       nil -> default_version
-      "local" -> [path: "../ash"]
-      "main" -> [git: "https://github.com/ash-project/ash.git"]
+      "local" -> [path: "../ash", override: true]
+      "main" -> [git: "https://github.com/ash-project/ash.git", override: true]
       version -> "~> #{version}"
     end
   end
@@ -138,7 +139,9 @@ defmodule AshEvents.MixProject do
       {:ash_cloak, "~> 0.1", only: [:dev, :test]},
       {:cloak, "~> 1.1", only: [:dev, :test]},
       {:ash_state_machine, "~> 0.2.11", only: [:dev, :test]},
-      {:ash_phoenix, "~> 2.0", only: [:dev, :test]}
+      {:ash_phoenix, "~> 2.0", only: [:dev, :test]},
+      {:bandit, "~> 1.0", only: [:dev, :test]},
+      {:tidewave, "~> 0.4", only: [:dev, :test]}
     ]
   end
 
@@ -152,6 +155,8 @@ defmodule AshEvents.MixProject do
       "test.create": "ash_postgres.create",
       "test.reset": ["test.drop", "test.create", "test.migrate", "ash_postgres.migrate --tenants"],
       "test.drop": "ash_postgres.drop",
+      tidewave:
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4002) end)'",
       sobelow: "sobelow --skip -i Config.HTTPS",
       docs: [
         "spark.cheat_sheets",

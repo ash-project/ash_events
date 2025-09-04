@@ -10,6 +10,7 @@ AshEvents is an extension for the Ash Framework that provides event capabilities
 - **Event Replay**: Rebuilds resource state by replaying events chronologically
 - **Version Management**: Supports tracking and routing different versions of events
 - **Actor Attribution**: Stores who performed each action (users, system processes, etc)
+- **Changed Attributes Tracking**: Automatically captures attributes modified by business logic that weren't in the original input
 - **Metadata Tracking**: Attaches arbitrary metadata to events for audit purposes
 
 ## Project Structure & Setup
@@ -26,10 +27,10 @@ defmodule MyApp.Events.Event do
   event_log do
     # Required: Module that implements clear_records! callback
     clear_records_for_replay MyApp.Events.ClearAllRecords
-    
+
     # Recommended for new projects
     primary_key_type Ash.Type.UUIDv7
-    
+
     # Store actor information
     persist_actor_primary_key :user_id, MyApp.Accounts.User
     persist_actor_primary_key :system_actor, MyApp.SystemActor, attribute_type: :string
@@ -66,10 +67,17 @@ defmodule MyApp.Accounts.User do
   events do
     # Required: Reference your event log resource
     event_log MyApp.Events.Event
-    
+
     # Optional: Specify action versions for schema evolution
     current_action_versions create: 2, update: 3, destroy: 2
-    
+
+    # Optional: Configure replay strategies for changed attributes
+    replay_non_input_attribute_changes [
+      create: :force_change,    # Default strategy
+      update: :as_arguments,    # Alternative strategy
+      legacy_action: :force_change
+    ]
+
     # Optional: Ignore specific actions (usually legacy versions)
     ignore_actions [:old_create_v1]
   end
@@ -124,6 +132,190 @@ User
 |> Ash.read!()
 ```
 
+### Changed Attributes Tracking
+
+**AshEvents automatically captures attributes that are modified during action execution** but weren't part of the original input. This is essential for complete state reconstruction during replay when business logic, defaults, or extensions modify data beyond the explicit input parameters.
+
+#### Understanding Changed Attributes
+
+**What gets captured:**
+- Default values applied to attributes
+- Auto-generated values (UUIDs, slugs, computed fields)
+- Attributes modified by Ash changes or extensions
+- Business rule transformations of input data
+- Calculated or derived attributes
+
+**What doesn't get captured:**
+- Attributes that were explicitly provided in the original input
+- Attributes that remain unchanged from their current value
+
+#### Event Data Structure
+
+When an event is created, data is separated into two categories:
+
+```elixir
+# Example event structure
+%Event{
+  # Original input parameters only
+  data: %{
+    "name" => "John Doe",
+    "email" => "john@example.com"
+  },
+
+  # Auto-generated or modified attributes
+  changed_attributes: %{
+    "id" => "550e8400-e29b-41d4-a716-446655440000",
+    "status" => "active",           # default value
+    "slug" => "john-doe",           # auto-generated from name
+    "created_at" => "2023-05-01T12:00:00Z"
+  }
+}
+```
+
+#### Replay Strategies
+
+Configure how changed attributes are applied during replay using `replay_non_input_attribute_changes`:
+
+```elixir
+events do
+  event_log MyApp.Events.Event
+
+  replay_non_input_attribute_changes [
+    create: :force_change,      # Uses Ash.Changeset.force_change_attributes
+    update: :force_change,
+    legacy_create_v1: :as_arguments # Merges into action input
+  ]
+end
+```
+
+**`:force_change` Strategy (Default):**
+- Uses `Ash.Changeset.force_change_attributes()` to apply changed attributes directly
+- Bypasses validations and business logic for the changed attributes
+- Best for attributes that shouldn't be recomputed during replay (IDs, timestamps)
+- Ensures exact state reproduction
+
+**`:as_arguments` Strategy:**
+- Merges changed attributes into the action input parameters
+- Allows business logic and validations to run normally
+- Best for legacy events or when you want recomputation during replay
+- May produce slightly different results if business logic has changed
+
+#### Practical Example
+
+```elixir
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.Event
+    replay_non_input_attribute_changes [
+      create: :force_change,
+      update: :force_change
+    ]
+  end
+
+  attributes do
+    uuid_primary_key :id, writable?: true
+    attribute :name, :string, public?: true, allow_nil?: false
+    attribute :email, :string, public?: true, allow_nil?: false
+    attribute :status, :string, default: "active", public?: true
+    attribute :slug, :string, public?: true
+    create_timestamp :created_at
+  end
+
+  changes do
+    # Auto-generate slug from name
+    change fn changeset, _context ->
+      case Map.get(changeset.attributes, :name) do
+        nil -> changeset
+        name ->
+          slug = String.downcase(name)
+                |> String.replace(~r/[^a-z0-9]/, "-")
+          Ash.Changeset.change_attribute(changeset, :slug, slug)
+      end
+    end, on: [:create, :update]
+  end
+end
+
+# Creating a user
+user = User
+|> Ash.Changeset.for_create(:create, %{
+  name: "Jane Smith",
+  email: "jane@example.com"
+})
+|> Ash.create!(actor: current_user)
+
+# The resulting event will have:
+# data: %{"name" => "Jane Smith", "email" => "jane@example.com"}
+# changed_attributes: %{
+#   "id" => "generated-uuid",
+#   "status" => "active",
+#   "slug" => "jane-smith",
+#   "created_at" => timestamp
+# }
+```
+
+#### Best Practices
+
+**Use `:force_change` strategy when:**
+- Attributes should maintain their exact original values (IDs, timestamps)
+- You want guaranteed state reproduction during replay
+- Business logic for generating attributes shouldn't be re-executed
+
+**Use `:as_arguments` strategy when:**
+- You have legacy events that need recomputation
+- Business logic has evolved and you want updated calculations
+- You prefer letting validations run during replay
+
+**Common Patterns:**
+```elixir
+# Mixed strategies for different actions
+replay_non_input_attribute_changes [
+  create: :force_change,          # Preserve exact creation state
+  update: :as_arguments,          # Allow recomputation on updates
+  legacy_import: :as_arguments    # Recompute legacy data
+]
+```
+
+#### Working with Forms
+
+**AshPhoenix.Form automatically works** with changed attributes tracking:
+
+```elixir
+# Form with string keys
+form_params = %{
+  "name" => "John Doe",
+  "email" => "john@example.com"
+  # status and slug will be auto-generated
+}
+
+form = User
+|> AshPhoenix.Form.for_create(:create, actor: current_user)
+|> AshPhoenix.Form.validate(form_params)
+
+{:ok, user} = AshPhoenix.Form.submit(form, params: form_params)
+
+# Event will properly separate form input from generated attributes
+# regardless of whether form used string or atom keys
+```
+
+#### Troubleshooting
+
+**Common Issues:**
+
+1. **Missing attributes after replay:**
+   - Ensure `clear_records_for_replay` includes all relevant tables
+   - Check that replay strategy is appropriate for your use case
+
+2. **Different values after replay:**
+   - Using `:as_arguments` may cause recomputation with updated logic
+   - Switch to `:force_change` for exact reproduction
+
+3. **Attributes appearing in both data and changed_attributes:**
+   - This shouldn't happen - file a bug if you see this
+   - Attributes are only in `changed_attributes` if not in original input
+
 ## Event Replay
 
 ### Basic Replay
@@ -162,7 +354,7 @@ defmodule MyApp.Events.Event do
       versions [1]
       route_to MyApp.Accounts.User, :old_create_v1
     end
-    
+
     replay_override MyApp.Accounts.User, :update do
       versions [1, 2]
       route_to MyApp.Accounts.User, :update_legacy
@@ -181,14 +373,14 @@ defmodule MyApp.Accounts.User do
       # Current implementation
     end
   end
-  
+
   # Legacy actions for replay (mark as ignored)
   actions do
     create :old_create_v1 do
       # Implementation for version 1 events
     end
   end
-  
+
   events do
     event_log MyApp.Events.Event
     ignore_actions [:old_create_v1]  # Don't create new events for legacy actions
@@ -216,7 +408,7 @@ defmodule MyApp.Accounts.User do
   actions do
     create :create do
       accept [:name, :email]
-      
+
       # Use after_action to trigger other tracked actions
       change after_action(fn changeset, user, context ->
         # This creates a separate event that won't be re-executed during replay
@@ -226,7 +418,7 @@ defmodule MyApp.Accounts.User do
           email: user.email
         })
         |> Ash.create!(actor: context.actor)
-        
+
         {:ok, user}
       end)
     end
@@ -266,11 +458,11 @@ defmodule MyApp.External.APICall do
   actions do
     create :make_api_call do
       accept [:endpoint, :payload, :method]
-      
+
       change after_action(fn changeset, record, context ->
         # Make the actual API call
         response = HTTPClient.request(record.endpoint, record.payload)
-        
+
         # Update with response (creates another event)
         record
         |> Ash.Changeset.for_update(:update_response, %{
@@ -278,11 +470,11 @@ defmodule MyApp.External.APICall do
           status: "completed"
         })
         |> Ash.update!(actor: context.actor)
-        
+
         {:ok, record}
       end)
     end
-    
+
     update :update_response do
       accept [:response, :status]
     end
@@ -350,7 +542,7 @@ test "creates user with event" do
   user = User
   |> Ash.Changeset.for_create(:create, %{name: "Test"})
   |> Ash.create!(authorize?: false)
-  
+
   # Verify event was created
   events = MyApp.Events.Event |> Ash.read!(authorize?: false)
   assert length(events) == 1
@@ -364,15 +556,15 @@ test "can replay events to rebuild state" do
   # Create some data
   user = create_user()
   update_user(user)
-  
+
   # Clear state
   clear_all_records()
-  
+
   # Replay events
   MyApp.Events.Event
   |> Ash.ActionInput.for_action(:replay, %{})
   |> Ash.run_action!(authorize?: false)
-  
+
   # Verify state is restored
   restored_user = get_user(user.id)
   assert restored_user.name == user.name
@@ -391,9 +583,9 @@ end
 
 ```elixir
 case MyApp.Events.Event |> Ash.ActionInput.for_action(:replay, %{}) |> Ash.run_action() do
-  {:ok, _} -> 
+  {:ok, _} ->
     Logger.info("Event replay completed successfully")
-  {:error, error} -> 
+  {:error, error} ->
     Logger.error("Event replay failed: #{inspect(error)}")
     # Handle cleanup or notification
 end
@@ -455,18 +647,76 @@ defmodule MyApp.Blog.Post do
 end
 ```
 
+### Changed Attributes Configuration Patterns
+
+```elixir
+# Pattern 1: Default configuration (recommended for most cases)
+defmodule MyApp.Accounts.User do
+  events do
+    event_log MyApp.Events.Event
+    # Uses :force_change for all actions by default
+    # No explicit configuration needed
+  end
+end
+
+# Pattern 2: Mixed strategies based on action type
+defmodule MyApp.Blog.Post do
+  events do
+    event_log MyApp.Events.Event
+    replay_non_input_attribute_changes [
+      create: :force_change,      # Preserve exact creation state
+      update: :as_arguments,      # Allow recomputation on updates
+      publish: :force_change,     # Preserve published state exactly
+      archive: :force_change      # Preserve archive timestamps
+    ]
+  end
+end
+
+# Pattern 3: Legacy compatibility with gradual migration
+defmodule MyApp.Legacy.Document do
+  events do
+    event_log MyApp.Events.Event
+    replay_non_input_attribute_changes [
+      create: :force_change,        # New events use force_change
+      legacy_create_v1: :as_arguments,  # Legacy events recompute
+      legacy_create_v2: :as_arguments   # Multiple legacy versions
+    ]
+  end
+end
+```
+
+### Common Auto-Generated Attribute Patterns
+
+```elixir
+# Pattern 1: Status + Slug generation
+defmodule MyApp.Content.Article do
+  attributes do
+    attribute :title, :string, public?: true
+    attribute :content, :string, public?: true
+    attribute :status, :string, default: "draft", public?: true
+    attribute :slug, :string, public?: true
+    attribute :word_count, :integer, public?: true
+  end
+
+  changes do
+    # Auto-generate slug and word count
+    change fn changeset, _context ->
+      changeset
+      |> auto_generate_slug()
+      |> calculate_word_count()
+    end, on: [:create, :update]
+  end
+
+  events do
+    event_log MyApp.Events.Event
+    # status, slug, word_count will be tracked as changed_attributes
+  end
+end
+```
+
 ## Performance Considerations
 
 - **Event insertion uses advisory locks** to prevent race conditions
 - **Replay operations are sequential** and can be time-consuming for large datasets
-- **Consider event retention policies** for long-running applications
 - **Use `primary_key_type Ash.Type.UUIDv7`** for better performance with time-ordered events
 - **Metadata should be kept reasonable in size** as it's stored as JSON
-
-## Security Considerations
-
-- **Never store sensitive data in metadata** unless using encryption
-- **Always validate actor permissions** before performing actions
-- **Use encryption** when storing PII or sensitive information in events
-- **Implement proper access controls** on your event log resource
-- **Consider data retention requirements** for compliance (GDPR, etc.)

@@ -31,6 +31,7 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
           :version,
           :data,
           :metadata,
+          :changed_attributes,
           :record_id,
           :resource,
           :action,
@@ -51,6 +52,12 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
             allow_nil?: false,
             default: %{},
             description: "This is where the action params (attrs & args) are stored."
+          ),
+          Ash.Resource.Builder.build_action_argument(:changed_attributes, :map,
+            allow_nil?: false,
+            default: %{},
+            description:
+              "Attributes that were changed but not present in the original action input."
           )
         ]
       else

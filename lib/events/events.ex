@@ -17,7 +17,7 @@ defmodule AshEvents.Events do
         event_log MyApp.Events.EventLog
         only_actions [:create, :update, :destroy]
         current_action_versions create: 2, update: 3, destroy: 2
-        track_auto_changed_attributes [:status, :slug]
+        replay_non_input_attribute_changes [create_v1: :as_arguments, update_v2: :force_change]
       end
       """
     ],
@@ -59,10 +59,10 @@ defmodule AshEvents.Events do
         doc: "The name of the update timestamp attribute on the resource",
         default: nil
       ],
-      track_auto_changed_attributes: [
-        type: {:list, :atom},
+      replay_non_input_attribute_changes: [
+        type: :keyword_list,
         doc:
-          "Attributes whose changes should be recorded in the event data, even though they were not part of the input given to the action.",
+          "Configure how non-input attribute changes are handled during replay for each action. Options are :force_change (apply via force_change_attributes) or :as_arguments (merge into action input). Defaults to :force_change for all actions.",
         default: []
       ]
     ]
@@ -70,6 +70,12 @@ defmodule AshEvents.Events do
 
   use Spark.Dsl.Extension,
     transformers: [AshEvents.Events.Transformers.AddActions],
+    verifiers: [
+      AshEvents.Events.Verifiers.VerifyEventLog,
+      AshEvents.Events.Verifiers.VerifyActions,
+      AshEvents.Events.Verifiers.VerifyTimestamps,
+      AshEvents.Events.Verifiers.VerifyReplayNonInputAttributeChanges
+    ],
     sections: [@events]
 end
 

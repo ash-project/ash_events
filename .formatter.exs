@@ -17,11 +17,11 @@ spark_locals_without_parens = [
   primary_key_type: 1,
   public?: 1,
   record_id_type: 1,
+  replay_non_input_attribute_changes: 1,
   replay_override: 2,
   replay_override: 3,
   route_to: 2,
   route_to: 3,
-  track_auto_changed_attributes: 1,
   update_timestamp: 1,
   versions: 1
 ]

@@ -31,7 +31,7 @@ defmodule AshEvents.DefaultsTest do
         actor: %SystemActor{name: "test_update_default"}
       )
 
-    assert updated_user.updated_at > initial_updated_at,
+    assert DateTime.after?(updated_user.updated_at, initial_updated_at),
            "updated_at should be automatically updated by update_default, but it was not. " <>
              "Initial: #{initial_updated_at}, After update: #{updated_user.updated_at}"
 
@@ -41,7 +41,8 @@ defmodule AshEvents.DefaultsTest do
       |> Ash.Query.filter(resource == ^User and data[:given_name] == "Updated")
       |> Ash.read!()
 
-    assert event.data["updated_at"] != nil, "Event data should contain the updated_at timestamp"
+    assert event.changed_attributes["updated_at"] != nil,
+           "Event changed_attributes should contain the updated_at timestamp"
   end
 
   test "default values work correctly with Events extension" do
@@ -58,11 +59,12 @@ defmodule AshEvents.DefaultsTest do
     assert user.created_at != nil, "created_at should be automatically set by create_timestamp"
     assert is_struct(user.created_at, DateTime), "created_at should be a DateTime"
 
-    events =
+    [event] =
       EventLog
       |> Ash.Query.filter(resource == ^User and data[:email] == "create_test@example.com")
       |> Ash.read!()
 
-    assert length(events) > 0, "Events should be created for user creation"
+    assert event.changed_attributes["created_at"] != nil,
+           "Event changed_attributes should contain the created_at timestamp"
   end
 end

@@ -15,6 +15,7 @@ AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that prov
 - **Actor Attribution**: Store who performed each action (users, system processes, etc)
 - **Event Replay**: Rebuild resource state by replaying events
 - **Version-specific Replay Routing**: Route events to different actions based on their version
+- **Changed Attributes Tracking**: Automatically captures and replays auto-generated attributes and business logic changes
 - **Customizable Metadata**: Attach arbitrary metadata to events
 
 ## Installation
@@ -222,6 +223,108 @@ During replay, AshEvents:
 2. Loads events in chronological order
 3. Applies each event to rebuild resource state
 4. Routes events to version-specific implementations if configured
+
+## Changed Attributes Tracking
+
+AshEvents automatically tracks attributes that are modified during action execution but were not part of the original input parameters. This is crucial for maintaining complete application state during event replay when business logic, defaults, or extensions modify data beyond what was explicitly provided.
+
+### What Gets Tracked
+
+**Changed attributes** include:
+- Auto-generated values (UUIDs, slugs, computed fields)
+- Default values applied to attributes
+- Attributes modified by Ash changes or extensions
+
+**Example scenario:**
+```elixir
+# Original input
+User
+|> Ash.Changeset.for_create(:create, %{
+  name: "John Doe",
+  email: "john@example.com"
+})
+|> Ash.create!(actor: current_user)
+
+# If your User resource has:
+# - status: defaults to "active"
+# - slug: auto-generated from name ("john-doe")
+# These will be captured as changed_attributes in the event
+```
+
+### How It Works
+
+1. **During Event Creation**: AshEvents compares the final `changeset.attributes` with the original input parameters
+2. **Separation**: Original input stays in `event.data`, auto-generated changes go in `event.changed_attributes`
+3. **During Replay**: Both original data and changed attributes are applied to recreate the complete state
+
+### Replay Configuration
+
+Configure how changed attributes are applied during replay using the `replay_non_input_attribute_changes` option:
+
+```elixir
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.Event
+
+    # Configure per-action replay strategies
+    replay_non_input_attribute_changes [
+      create: :force_change,     # Default: use force_change_attributes
+      update: :as_arguments,     # Merge into action input
+      legacy_action: :force_change
+    ]
+  end
+end
+```
+
+**Replay Strategies:**
+
+- **`:force_change`** (default): Uses `Ash.Changeset.force_change_attributes()` to apply changed attributes directly
+- **`:as_arguments`**: Merges changed attributes into the action input parameters
+
+### Practical Example
+
+```elixir
+# User resource with auto-generated attributes
+defmodule MyApp.Accounts.User do
+  attributes do
+    attribute :name, :string, public?: true
+    attribute :email, :string, public?: true
+    attribute :status, :string, default: "active", public?: true
+    attribute :slug, :string, public?: true
+  end
+
+  changes do
+    # Auto-generate slug from name
+    change fn changeset, _context ->
+      case Map.get(changeset.attributes, :name) do
+        nil -> changeset
+        name ->
+          slug = String.downcase(name) |> String.replace(~r/[^a-z0-9]/, "-")
+          Ash.Changeset.change_attribute(changeset, :slug, slug)
+      end
+    end, on: [:create, :update]
+  end
+end
+
+# When you create a user:
+user = User
+|> Ash.Changeset.for_create(:create, %{
+  name: "Jane Smith",
+  email: "jane@example.com"
+})
+|> Ash.create!(actor: current_user)
+
+# The event will contain:
+# event.data = %{"name" => "Jane Smith", "email" => "jane@example.com"}
+# event.changed_attributes = %{"status" => "active", "slug" => "jane-smith"}
+
+# During replay, both are applied to recreate the complete user state
+```
+
+This ensures that during event replay, your resources are recreated with the exact same state they had originally, including all auto-generated and business logic-derived attributes.
 
 ## Lifecycle Hooks During Replay
 

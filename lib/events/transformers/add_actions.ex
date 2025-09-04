@@ -96,6 +96,17 @@ defmodule AshEvents.Events.Transformers.AddActions do
       where: []
     }
 
+    replay_config = AshEvents.Events.Info.events_replay_non_input_attribute_changes!(dsl)
+
+    apply_changed_attributes = %Ash.Resource.Change{
+      change: {AshEvents.Events.Changes.ApplyChangedAttributes, [replay_config: replay_config]},
+      on: nil,
+      only_when_valid?: false,
+      description: nil,
+      always_atomic?: false,
+      where: []
+    }
+
     Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       wrapped_changes =
         Enum.map(action.changes, fn change ->
@@ -130,7 +141,7 @@ defmodule AshEvents.Events.Transformers.AddActions do
                ]},
             primary?: action.primary?,
             arguments: action.arguments,
-            changes: [store_changeset_params] ++ wrapped_changes
+            changes: [store_changeset_params | wrapped_changes] ++ [apply_changed_attributes]
         }
         |> then(fn action ->
           case action.type do

@@ -146,7 +146,15 @@ defmodule AshEvents.EventLog do
       AshEvents.EventLog.Transformers.ValidatePersistActorPrimaryKey
     ],
     sections: [@event_log, @replay_overrides],
-    verifiers: [AshEvents.EventLog.Verifiers.VerifyActorResources]
+    verifiers: [
+      AshEvents.EventLog.Verifiers.VerifyActorResources,
+      AshEvents.EventLog.Verifiers.VerifyAdvisoryLockConfig,
+      AshEvents.EventLog.Verifiers.VerifyClearRecordsForReplay,
+      AshEvents.EventLog.Verifiers.VerifyCloakVault,
+      AshEvents.EventLog.Verifiers.VerifyPrimaryKeyType,
+      AshEvents.EventLog.Verifiers.VerifyRecordIdType,
+      AshEvents.EventLog.Verifiers.VerifyReplayOverrides
+    ]
 end
 
 defmodule AshEvents.EventLog.Info do

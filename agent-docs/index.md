@@ -45,7 +45,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 |------|----------------------|-----------|
 | **Add Feature Tests** | [validation-safety.md](validation-safety.md) | [test/ash_events/](../test/ash_events/) |
 | **Set up Test Resources** | [test/support/](../test/support/) patterns | [test/support/events/](../test/support/events/), [test/support/accounts/](../test/support/accounts/) |
-| **Test Specific Scenarios** | Existing test files for patterns | [test/ash_events/encryption_test.exs](../test/ash_events/encryption_test.exs), [test/ash_events/state_machine_test.exs](../test/ash_events/state_machine_test.exs) |
+| **Test Specific Scenarios** | Existing test files for patterns | [test/ash_events/encryption_test.exs](../test/ash_events/encryption_test.exs), [test/ash_events/changed_attributes_test.exs](../test/ash_events/changed_attributes_test.exs), [test/ash_events/state_machine_test.exs](../test/ash_events/state_machine_test.exs) |
 | **Debug Test Failures** | [quick-reference.md](quick-reference.md) | [validation-safety.md](validation-safety.md) |
 
 ### Build and Documentation

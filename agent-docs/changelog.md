@@ -36,6 +36,28 @@ Each entry includes:
 
 ---
 
+## 2025-01-25 (Continued)
+
+### Changed Attributes Tracking Implementation
+**Change**: Added comprehensive changed attributes tracking and replay functionality to AshEvents core
+**Context**: Event replay was incomplete for resources with business logic that modified attributes beyond the original input parameters. Default values, auto-generated attributes (slugs, UUIDs, computed fields), and attributes modified by Ash changes/extensions were not being captured in events, causing incomplete state reconstruction during replay. This is a critical gap for real-world event sourcing applications where business logic transforms input data.
+**Files**: 
+- `lib/event_log/transformers/add_attributes.ex` - Added `changed_attributes` field to event resources
+- `lib/events/events.ex` - Added `replay_non_input_attribute_changes` DSL option
+- `lib/events/changes/apply_changed_attributes.ex` - New change module for applying changed attributes during replay
+- `lib/events/action_wrapper_helpers.ex` - Modified to capture changed attributes during event creation
+- `lib/event_log/replay.ex` - Enhanced to pass changed attributes context during replay
+- `test/ash_events/changed_attributes_test.exs` - Comprehensive test coverage
+**Impact**: AshEvents now supports complete state reconstruction for complex business logic scenarios. This enables proper event sourcing for applications with extensive attribute transformations, default value applications, and computed field generation. The two-strategy approach (`:force_change` vs `:as_arguments`) provides flexibility for different replay requirements.
+**Key Insights**: 
+- Event sourcing requires capturing not just input parameters but also all business logic transformations
+- Separating original input (`event.data`) from business logic changes (`event.changed_attributes`) provides clear audit trails
+- Context propagation in Ash action pipelines requires careful timing - changes must have context available from the start
+- Both atom and string key handling is critical for form compatibility in web applications
+- Testing replay functionality requires proper database cleanup patterns to avoid interference between create/destroy events
+
+---
+
 ## 2025-08-21 (Inferred from CHANGELOG.md)
 
 ### Parameter Filtering Enhancement

@@ -4,7 +4,6 @@ defmodule AshEvents.BulkActionsTest do
 
   alias AshEvents.Test.Accounts
   alias AshEvents.Test.Accounts.User
-  alias AshEvents.Test.Accounts.UserRole
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

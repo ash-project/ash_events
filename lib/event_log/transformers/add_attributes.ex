@@ -38,6 +38,9 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
         dsl
         |> Ash.Resource.Builder.add_attribute(:encrypted_metadata, :binary, allow_nil?: false)
         |> Ash.Resource.Builder.add_attribute(:encrypted_data, :binary, allow_nil?: false)
+        |> Ash.Resource.Builder.add_attribute(:encrypted_changed_attributes, :binary,
+          allow_nil?: false
+        )
         |> Ash.Resource.Builder.add_calculation(
           :data,
           :map,
@@ -46,6 +49,16 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
           allow_nil?: false,
           sensitive?: true,
           description: "This is where the action params (attrs & args) are stored."
+        )
+        |> Ash.Resource.Builder.add_calculation(
+          :changed_attributes,
+          :map,
+          {AshEvents.EventLog.Calculations.Decrypt, [field: :encrypted_changed_attributes]},
+          public?: true,
+          allow_nil?: false,
+          sensitive?: true,
+          description:
+            "Attributes that were changed but not present in the original action input."
         )
         |> Ash.Resource.Builder.add_calculation(
           :metadata,
@@ -67,6 +80,13 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
           allow_nil?: false,
           default: %{},
           description: "This is where the action params (attrs & args) are stored."
+        )
+        |> Ash.Resource.Builder.add_attribute(:changed_attributes, :map,
+          allow_nil?: false,
+          default: %{},
+          public?: true,
+          description:
+            "Attributes that were changed but not present in the original action input."
         )
       end
     end)

@@ -12,14 +12,17 @@ defmodule AshEvents.Test.Accounts.UserWithAutoAttrs do
 
   events do
     event_log AshEvents.Test.Events.EventLog
-    track_auto_changed_attributes([:status, :slug])
+
+    replay_non_input_attribute_changes create: :force_change,
+                                       update: :as_arguments,
+                                       destroy: :force_change
   end
 
   actions do
     defaults [:read]
 
     create :create do
-      accept [:id, :email, :name, :status, :slug]
+      accept [:id, :email, :name, :status]
     end
 
     update :update do

@@ -13,7 +13,7 @@ defmodule AshEvents.Test.Accounts.OrgDetails do
   events do
     event_log AshEvents.Test.Events.EventLog
     only_actions([:create, :update])
-    allowed_change_modules(update: [AshEvents.Test.Accounts.OrgDetails])
+    allowed_change_modules(update: [])
   end
 
   actions do

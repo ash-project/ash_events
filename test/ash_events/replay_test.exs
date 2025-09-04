@@ -1,6 +1,5 @@
 defmodule AshEvents.ReplayTest do
   use AshEvents.RepoCase, async: false
-  alias AshEvents.Test.Accounts.User
   alias AshEvents.Test.Events.EventLogUuidV7
   alias AshEvents.Test.Events.SystemActor
 

@@ -3,7 +3,6 @@ defmodule AshEvents.TimestampTest do
   alias AshEvents.Test.Accounts.User
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
-
   alias AshEvents.Test.Accounts
   alias AshEvents.Test.Events.EventLog
 
@@ -42,8 +41,6 @@ defmodule AshEvents.TimestampTest do
           },
           actor: %SystemActor{name: "test_runner"}
         )
-
-      :timer.sleep(10)
 
       updated_user =
         user

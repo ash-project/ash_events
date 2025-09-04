@@ -21,7 +21,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   end
 
   def get_occurred_at(changeset, timestamp_attr) do
-    case Map.get(changeset.attributes, timestamp_attr) do
+    case Ash.Changeset.get_attribute(changeset, timestamp_attr) do
       nil ->
         DateTime.utc_now()
 
@@ -84,33 +84,6 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         end
       end)
 
-    track_auto_changed_attributes =
-      AshEvents.Events.Info.events_track_auto_changed_attributes!(changeset.resource)
-
-    original_param_keys = MapSet.new(Map.keys(original_params))
-
-    params =
-      Enum.reduce(track_auto_changed_attributes, params, fn attr_name, acc ->
-        case Map.get(changeset.attributes, attr_name) do
-          nil ->
-            acc
-
-          value ->
-            if MapSet.member?(original_param_keys, attr_name) or
-                 MapSet.member?(original_param_keys, to_string(attr_name)) do
-              acc
-            else
-              case Ash.Resource.Info.attribute(changeset.resource, attr_name) do
-                nil ->
-                  acc
-
-                attr ->
-                  Map.put(acc, attr_name, dump_value(value, attr))
-              end
-            end
-        end
-      end)
-
     event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(event_log_resource)
@@ -125,6 +98,23 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
     metadata = Map.get(changeset.context, :ash_events_metadata, %{})
 
+    # Calculate changed attributes from the final changeset state
+    original_params = Map.get(changeset.context, :original_params, %{})
+    original_param_keys = MapSet.new(Map.keys(original_params))
+
+    changed_attributes =
+      Enum.reduce(changeset.attributes, %{}, fn {attr_name, value}, acc ->
+        if MapSet.member?(original_param_keys, attr_name) or
+             MapSet.member?(original_param_keys, to_string(attr_name)) do
+          acc
+        else
+          case Ash.Resource.Info.attribute(changeset.resource, attr_name) do
+            nil -> acc
+            attr -> Map.put(acc, attr_name, dump_value(value, attr))
+          end
+        end
+      end)
+
     event_params =
       %{
         data: params,
@@ -134,7 +124,8 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         action_type: changeset.action_type,
         metadata: metadata,
         version: module_opts[:version],
-        occurred_at: occurred_at
+        occurred_at: occurred_at,
+        changed_attributes: changed_attributes
       }
 
     event_params =

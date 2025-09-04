@@ -51,16 +51,9 @@ defmodule AshEvents.CreateActionWrapper do
               create_timestamp_attr
             )
 
-          params =
-            if create_timestamp_attr do
-              Map.put(merged_ctx.original_params, create_timestamp_attr, occurred_at)
-            else
-              merged_ctx.original_params
-            end
-
           AshEvents.Events.ActionWrapperHelpers.create_event!(
             changeset,
-            params,
+            merged_ctx.original_params,
             occurred_at,
             module_opts,
             opts

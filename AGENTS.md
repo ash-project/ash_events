@@ -8,6 +8,7 @@
 - **Event Logging**: Automatically records create, update, and destroy actions as events
 - **Event Replay**: Rebuilds resource state by replaying events chronologically
 - **Actor Attribution**: Stores who performed each action (users, system processes, etc)
+- **Changed Attributes Tracking**: Captures and replays auto-generated attributes and business logic changes
 - **Version Management**: Handles schema evolution through replay overrides
 - **Audit Trails**: Provides complete audit history with metadata tracking
 
@@ -168,7 +169,7 @@ mix docs                                 # Generate documentation
    end
    ```
 
-2. **Create Clear Records Module**: 
+2. **Create Clear Records Module**:
    ```elixir
    defmodule MyApp.Events.ClearAllRecords do
      use AshEvents.ClearRecordsForReplay
@@ -194,6 +195,12 @@ mix docs                                 # Generate documentation
      events do
        event_log MyApp.Events.Event
        current_action_versions create: 1, update: 1
+
+       # Configure changed attributes replay strategies
+       replay_non_input_attribute_changes [
+         create: :force_change,    # Default: preserve exact state
+         update: :as_arguments     # Alternative: :as_arguments
+       ]
      end
    end
    ```
@@ -326,13 +333,15 @@ mix docs                                 # Generate documentation
 | **Create Event Log** | 1. Add `AshEvents.EventLog` extension<br>2. Implement `clear_records_for_replay`<br>3. Configure actor attribution |
 | **Event Replay** | 1. Ensure clear records works<br>2. Call replay action<br>3. Verify state restoration |
 | **Version Management** | 1. Update action versions<br>2. Configure replay overrides<br>3. Create legacy actions |
+| **Changed Attributes Setup** | 1. Add `replay_non_input_attribute_changes` config<br>2. Choose strategy (`:force_change` vs `:as_arguments`)<br>3. Test replay with auto-generated attributes |
 
 ### Key Abstractions
 
 - **Event Log Resource**: Central resource using `AshEvents.EventLog` extension
 - **Events Extension**: Added to resources needing event tracking via `AshEvents.Events`
 - **Actor Attribution**: Critical for audit trails - always set actor when performing actions
-- **Event Replay**: Rebuilds state by replaying events chronologically  
+- **Event Replay**: Rebuilds state by replaying events chronologically
+- **Changed Attributes**: Automatically tracks attributes modified by business logic not in original input
 - **Version Management**: Handles schema evolution through replay overrides
 - **Clear Records**: Required implementation for event replay functionality
 
@@ -340,9 +349,10 @@ mix docs                                 # Generate documentation
 
 - Actor attribution is set on all actions that create events
 - Clear records implementation covers all event-tracked resources
+- Changed attributes replay strategy is configured appropriately for each action
 - Version management is configured for schema evolution
 - Side effects are implemented as separate tracked actions
-- Event replay works correctly with test data
+- Event replay works correctly with test data and auto-generated attributes
 
 ## Context and Evolution
 

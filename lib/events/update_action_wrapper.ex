@@ -21,16 +21,9 @@ defmodule AshEvents.UpdateActionWrapper do
       occurred_at =
         AshEvents.Events.ActionWrapperHelpers.get_occurred_at(changeset, update_timestamp_attr)
 
-      params =
-        if update_timestamp_attr do
-          Map.put(merged_ctx.original_params, update_timestamp_attr, occurred_at)
-        else
-          merged_ctx.original_params
-        end
-
       AshEvents.Events.ActionWrapperHelpers.create_event!(
         changeset,
-        params,
+        merged_ctx.original_params,
         occurred_at,
         module_opts,
         opts

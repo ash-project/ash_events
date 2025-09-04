@@ -3,7 +3,6 @@ defmodule AshEvents.StateMachineTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Accounts.Upload
   alias AshEvents.Test.Events
 
   test "handles ash_state_machine validations" do

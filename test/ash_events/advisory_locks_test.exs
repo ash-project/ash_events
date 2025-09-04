@@ -52,4 +52,33 @@ defmodule AshEvents.AdvisoryLocksTest do
     assert Enum.count(rows) == 2
     assert lock_row != nil
   end
+
+  test "advisory lock generator raises on unsupported tenant type" do
+    org = Accounts.create_org!(%{name: "Test Org"})
+    org_details = Accounts.create_org_details!(%{details: "Test details"}, tenant: org.id)
+
+    # Create changeset with string tenant (not a UUID)
+    changeset_string =
+      org_details
+      |> Ash.Changeset.for_update(:update, %{details: "new details"})
+      |> Map.put(:tenant, "invalid-string-tenant")
+
+    assert_raise RuntimeError,
+                 "Unsupported tenant type: \"invalid-string-tenant\". You must implement a custom AdvisoryLockKeyGenerator module.",
+                 fn ->
+                   AshEvents.AdvisoryLockKeyGenerator.Default.generate_key!(changeset_string, 0)
+                 end
+
+    # Create changeset with atom tenant
+    changeset_atom =
+      org_details
+      |> Ash.Changeset.for_update(:update, %{details: "new details"})
+      |> Map.put(:tenant, :invalid_atom_tenant)
+
+    assert_raise RuntimeError,
+                 "Unsupported tenant type: :invalid_atom_tenant. You must implement a custom AdvisoryLockKeyGenerator module.",
+                 fn ->
+                   AshEvents.AdvisoryLockKeyGenerator.Default.generate_key!(changeset_atom, 0)
+                 end
+  end
 end

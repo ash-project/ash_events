@@ -142,8 +142,7 @@ defmodule AshEvents.EventLog do
   use Spark.Dsl.Extension,
     transformers: [
       AshEvents.EventLog.Transformers.AddActions,
-      AshEvents.EventLog.Transformers.AddAttributes,
-      AshEvents.EventLog.Transformers.ValidatePersistActorPrimaryKey
+      AshEvents.EventLog.Transformers.AddAttributes
     ],
     sections: [@event_log, @replay_overrides],
     verifiers: [
@@ -151,6 +150,7 @@ defmodule AshEvents.EventLog do
       AshEvents.EventLog.Verifiers.VerifyAdvisoryLockConfig,
       AshEvents.EventLog.Verifiers.VerifyClearRecordsForReplay,
       AshEvents.EventLog.Verifiers.VerifyCloakVault,
+      AshEvents.EventLog.Verifiers.VerifyPersistActorPrimaryKey,
       AshEvents.EventLog.Verifiers.VerifyPrimaryKeyType,
       AshEvents.EventLog.Verifiers.VerifyRecordIdType,
       AshEvents.EventLog.Verifiers.VerifyReplayOverrides

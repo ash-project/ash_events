@@ -33,21 +33,7 @@ defmodule AshEvents.Events.Transformers.WrapActions do
         |> Enum.reject(&(&1.name in ignored or &1.type not in [:create, :update, :destroy]))
       end
 
-    all_action_names = all_actions |> Enum.map(& &1.name)
-
     if only_actions do
-      if ignored != [] do
-        raise "Resource #{resource} has both only_actions & ignore_actions specified, only one can be in use."
-      end
-
-      Enum.each(only_actions, fn action_name ->
-        if action_name not in all_action_names do
-          raise(
-            "Action :#{action_name} is listed in only_actions, but is not a defined action on #{resource}."
-          )
-        end
-      end)
-
       Enum.each(event_actions, fn action ->
         if action.type not in [:create, :update, :destroy] do
           raise(
@@ -57,26 +43,12 @@ defmodule AshEvents.Events.Transformers.WrapActions do
       end)
     end
 
-    Enum.each(ignored, fn action_name ->
-      if action_name not in all_action_names do
-        raise(
-          "Action :#{action_name} is listed in ignore_actions, but is not a defined action on #{resource}."
-        )
-      end
-    end)
-
     action_version_names = Keyword.keys(action_versions)
 
     Enum.each(action_version_names, fn action_name ->
       if action_name in ignored do
         raise(
           "Action :#{action_name} in #{resource} is listed in ignore_actions, but also has an action version defined."
-        )
-      end
-
-      if action_name not in all_action_names do
-        raise(
-          "Action :#{action_name} in #{resource} is listed in action_versions, but is not a defined action on #{resource}."
         )
       end
 

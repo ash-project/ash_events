@@ -210,4 +210,180 @@ defmodule AshEvents.ChangedAttributesTest do
     assert event.data["email"] == "form@example.com"
     assert event.data["name"] == "Form User"
   end
+
+  test ":as_arguments strategy during replay merges changed_attributes as action arguments" do
+    # Create a user first
+    user =
+      UserWithAutoAttrs
+      |> Ash.Changeset.for_create(:create, %{
+        email: "test@example.com",
+        name: "John Doe"
+      })
+      |> Ash.create!(actor: %SystemActor{name: "test"})
+
+    # Update the user - this will use the :as_arguments strategy
+    # The slug will be auto-generated and stored in changed_attributes
+    updated_user =
+      user
+      |> Ash.Changeset.for_update(:update, %{name: "Jane Smith"})
+      |> Ash.update!(actor: %SystemActor{name: "test"})
+
+    # Verify the update worked as expected
+    assert updated_user.name == "Jane Smith"
+    assert updated_user.slug == "jane-smith"
+
+    # Get the update event to verify changed_attributes
+    update_event =
+      EventLog
+      |> Ash.Query.filter(resource == UserWithAutoAttrs and action == :update)
+      |> Ash.read_one!()
+
+    # Verify the event structure
+    assert update_event.data["name"] == "Jane Smith"
+    assert update_event.changed_attributes["slug"] == "jane-smith"
+
+    # Clear all records and replay events
+    :ok = Events.replay_events!()
+
+    # Verify user was recreated with correct attributes
+    replayed_user = Ash.get!(UserWithAutoAttrs, user.id)
+
+    # With :as_arguments strategy, the changed_attributes should have been merged
+    # into the update action arguments during replay
+    assert replayed_user.name == "Jane Smith"
+    assert replayed_user.slug == "jane-smith"
+    assert replayed_user.email == "test@example.com"
+  end
+
+  test "as_arguments strategy vs force_change strategy behavior difference" do
+    # First test create (uses :force_change) - auto-generated attributes go to changed_attributes
+    user =
+      UserWithAutoAttrs
+      |> Ash.Changeset.for_create(:create, %{
+        email: "test@example.com",
+        name: "Test User"
+      })
+      |> Ash.create!(actor: %SystemActor{name: "test"})
+
+    create_event =
+      EventLog
+      |> Ash.Query.filter(resource == UserWithAutoAttrs and action == :create)
+      |> Ash.read_one!()
+
+    # With create (:force_change), auto-generated attributes are in changed_attributes
+    assert create_event.data["name"] == "Test User"
+    assert create_event.changed_attributes["slug"] == "test-user"
+    refute Map.has_key?(create_event.data, "slug")
+
+    # Now test update (uses :as_arguments) - auto-generated attributes still go to changed_attributes
+    _updated_user =
+      user
+      |> Ash.Changeset.for_update(:update, %{name: "Updated User"})
+      |> Ash.update!(actor: %SystemActor{name: "test"})
+
+    update_event =
+      EventLog
+      |> Ash.Query.filter(resource == UserWithAutoAttrs and action == :update)
+      |> Ash.read_one!()
+
+    # With update (:as_arguments), input params are in data, auto-generated in changed_attributes
+    assert update_event.data["name"] == "Updated User"
+    assert update_event.changed_attributes["slug"] == "updated-user"
+    refute Map.has_key?(update_event.data, "slug")
+
+    # Test replay behavior - both strategies should produce the same final result
+    :ok = Events.replay_events!()
+
+    replayed_user = Ash.get!(UserWithAutoAttrs, user.id)
+
+    # Final result should be the same regardless of strategy
+    assert replayed_user.name == "Updated User"
+    assert replayed_user.slug == "updated-user"
+    assert replayed_user.email == "test@example.com"
+  end
+
+  test "as_arguments strategy passes changed_attributes as required arguments during replay" do
+    # Generate a user ID for testing
+    user_id = Ash.UUID.generate()
+
+    # Manually create events for testing - first a create event
+    create_event = %{
+      action: :create,
+      action_type: :create,
+      resource: UserWithAutoAttrs,
+      record_id: user_id,
+      data: %{"email" => "test@example.com", "name" => "John Doe"},
+      changed_attributes: %{"status" => "active", "slug" => "john-doe"},
+      system_actor: "test",
+      occurred_at: DateTime.utc_now()
+    }
+
+    # Create an update event with the required slug argument in changed_attributes
+    # This simulates what would happen when using :as_arguments strategy
+    update_event = %{
+      action: :update_with_required_slug,
+      action_type: :update,
+      resource: UserWithAutoAttrs,
+      record_id: user_id,
+      data: %{"name" => "Jane Smith"},
+      # Required argument stored here
+      changed_attributes: %{"slug" => "custom-slug"},
+      system_actor: "test",
+      occurred_at: DateTime.utc_now()
+    }
+
+    # Insert both events
+    EventLog |> Ash.Changeset.for_create(:create, create_event) |> Ash.create!()
+    EventLog |> Ash.Changeset.for_create(:create, update_event) |> Ash.create!()
+
+    # Clear records and replay events
+    :ok = Events.replay_events!()
+
+    # Verify the replayed user has the correct attributes
+    # This test specifically verifies that the required slug argument was passed during replay
+    replayed_user = Ash.get!(UserWithAutoAttrs, user_id)
+    assert replayed_user.name == "Jane Smith"
+    assert replayed_user.slug == "custom-slug"
+    assert replayed_user.email == "test@example.com"
+  end
+
+  test "as_arguments strategy would fail if required argument is not provided during replay" do
+    # Generate a user ID for testing
+    user_id = Ash.UUID.generate()
+
+    # First create a proper create event to establish the user
+    create_event = %{
+      action: :create,
+      action_type: :create,
+      resource: UserWithAutoAttrs,
+      record_id: user_id,
+      data: %{"email" => "test@example.com", "name" => "John Doe"},
+      changed_attributes: %{"status" => "active", "slug" => "john-doe"},
+      system_actor: "test",
+      occurred_at: DateTime.utc_now()
+    }
+
+    # Create an update event for the update_with_required_slug action without a slug in changed_attributes
+    # This simulates what would happen if changed_attributes didn't capture the required argument
+    update_event_bad = %{
+      action: :update_with_required_slug,
+      action_type: :update,
+      resource: UserWithAutoAttrs,
+      record_id: user_id,
+      data: %{"name" => "Manual Update"},
+      # Empty - no slug provided (this should cause failure)
+      changed_attributes: %{},
+      system_actor: "test",
+      occurred_at: DateTime.utc_now()
+    }
+
+    # Insert both events
+    EventLog |> Ash.Changeset.for_create(:create, create_event) |> Ash.create!()
+    EventLog |> Ash.Changeset.for_create(:create, update_event_bad) |> Ash.create!()
+
+    # Attempting to replay should fail because the required slug argument is missing
+    assert_raise Ash.Error.Invalid, ~r/argument slug is required/, fn ->
+      Events.replay_events!()
+    end
+  end
 end

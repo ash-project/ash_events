@@ -15,6 +15,7 @@ defmodule AshEvents.Test.Accounts.UserWithAutoAttrs do
 
     replay_non_input_attribute_changes create: :force_change,
                                        update: :as_arguments,
+                                       update_with_required_slug: :as_arguments,
                                        destroy: :force_change
   end
 
@@ -26,7 +27,27 @@ defmodule AshEvents.Test.Accounts.UserWithAutoAttrs do
     end
 
     update :update do
+      accept [:name, :slug]
+    end
+
+    update :update_with_required_slug do
       accept [:name]
+
+      argument :slug, :string do
+        allow_nil? false
+      end
+
+      change fn changeset, _context ->
+        case Ash.Changeset.get_argument(changeset, :slug) do
+          nil ->
+            changeset
+
+          slug ->
+            # Force set the slug from the argument to ensure it takes priority
+            changeset
+            |> Ash.Changeset.force_change_attribute(:slug, slug)
+        end
+      end
     end
 
     destroy :destroy do
@@ -63,12 +84,17 @@ defmodule AshEvents.Test.Accounts.UserWithAutoAttrs do
 
   changes do
     change fn changeset, _context ->
-             # Auto-generate slug from name when creating or updating
-             case Map.get(changeset.attributes, :name) do
-               nil ->
+             # Auto-generate slug from name when creating or updating,
+             # but only if slug is not already set (e.g., by an argument)
+             case {Map.get(changeset.attributes, :name), Map.get(changeset.attributes, :slug)} do
+               {nil, _} ->
                  changeset
 
-               name ->
+               {_, slug} when not is_nil(slug) ->
+                 # Slug is already set, don't override it
+                 changeset
+
+               {name, nil} ->
                  slug = name |> String.downcase() |> String.replace(~r/[^a-z0-9]/, "-")
                  Ash.Changeset.change_attribute(changeset, :slug, slug)
              end

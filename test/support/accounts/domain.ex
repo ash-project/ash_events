@@ -39,6 +39,7 @@ defmodule AshEvents.Test.Accounts do
 
     resource AshEvents.Test.Accounts.Org do
       define :create_org, action: :create
+      define :reactivate_org, action: :reactivate
     end
 
     resource AshEvents.Test.Accounts.OrgDetails do

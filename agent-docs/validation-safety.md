@@ -176,7 +176,7 @@ mix test test/ash_events/actor_attribution_test.exs
 # Event encryption (if applicable)  
 mix test test/ash_events/encryption_test.exs
 
-# Validation bypass prevention
+# Validation message preservation and bypass prevention
 mix test test/ash_events/validation_test.exs
 ```
 
@@ -250,6 +250,7 @@ end
 2. **Test invalid parameter scenarios**  
 3. **Test replay failure scenarios**
 4. **Test resource validation scenarios**
+5. **Test custom validation message preservation**
 
 ## Troubleshooting Validation Issues
 
@@ -282,6 +283,13 @@ mix test
 1. Check clear records implementation
 2. Verify replay logic in `lib/event_log/replay.ex`
 3. Test with simpler scenario first
+
+### Validation Message Issues
+**Symptoms**: Custom validation messages not appearing, default messages shown instead
+**Solution**:
+1. Check that validations are using ReplayValidationWrapper (not ReplayChangeWrapper)
+2. Verify custom message is passed to wrapper in transformer
+3. Test with `mix test test/ash_events/validation_test.exs`
 
 ### Documentation Generation Failures
 **Symptoms**: `mix docs` failing, DSL documentation missing

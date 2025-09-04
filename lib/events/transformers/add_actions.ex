@@ -110,14 +110,32 @@ defmodule AshEvents.Events.Transformers.AddActions do
     Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       wrapped_changes =
         Enum.map(action.changes, fn change ->
-          %Ash.Resource.Change{
-            change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
-            on: nil,
-            only_when_valid?: false,
-            description: nil,
-            always_atomic?: false,
-            where: []
-          }
+          case change do
+            %Ash.Resource.Validation{} = validation ->
+              %Ash.Resource.Change{
+                change:
+                  {AshEvents.Events.ReplayValidationWrapper,
+                   [
+                     validation: validation,
+                     message: validation.message
+                   ]},
+                on: nil,
+                only_when_valid?: false,
+                description: nil,
+                always_atomic?: false,
+                where: []
+              }
+
+            _ ->
+              %Ash.Resource.Change{
+                change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
+                on: nil,
+                only_when_valid?: false,
+                description: nil,
+                always_atomic?: false,
+                where: []
+              }
+          end
         end)
 
       manual_module =

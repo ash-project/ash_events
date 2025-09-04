@@ -32,6 +32,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 | **Modify Action Wrappers** | [lib/events/action_wrapper_helpers.ex](../lib/events/action_wrapper_helpers.ex) | [lib/events/*_action_wrapper.ex](../lib/events/) |
 | **Add New Action Types** | [lib/events/transformers/add_actions.ex](../lib/events/transformers/add_actions.ex) | [test/ash_events/](../test/ash_events/) for patterns |
 | **Debug Action Creation** | [validation-safety.md](validation-safety.md) | [test/ash_events/event_creation_test.exs](../test/ash_events/event_creation_test.exs) |
+| **Validation Message Issues** | [lib/events/replay_validation_wrapper.ex](../lib/events/replay_validation_wrapper.ex) | [test/ash_events/validation_test.exs](../test/ash_events/validation_test.exs) |
 
 ### Event Replay Development
 | Task | Primary Documentation | Key Files |
@@ -62,6 +63,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 - [validation-safety.md](validation-safety.md) (~250 lines)  
 - [changelog.md](changelog.md) (~300 lines)
 - [lib/events/action_wrapper_helpers.ex](../lib/events/action_wrapper_helpers.ex) (~150 lines)
+- [lib/events/replay_validation_wrapper.ex](../lib/events/replay_validation_wrapper.ex) (~140 lines)
 - Individual test files in [test/ash_events/](../test/ash_events/) (~100-200 lines each)
 
 ### Medium Files (300-600 lines) - Manageable

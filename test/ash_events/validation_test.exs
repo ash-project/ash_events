@@ -90,4 +90,32 @@ defmodule AshEvents.ValidationTest do
     assert user.given_name == "John"
     assert user.family_name == "Doe"
   end
+
+  test "custom validation messages are preserved when using AshEvents" do
+    # Create an active org (active = true by default)
+    org =
+      Accounts.create_org!(%{name: "Test Organization"}, actor: %SystemActor{name: "test_runner"})
+
+    assert org.active == true
+
+    # Try to reactivate an already active org - this should fail with our custom message
+    {:error, %{errors: errors}} =
+      Accounts.reactivate_org(
+        org,
+        %{justification: "Some reason"},
+        actor: %SystemActor{name: "test_runner"}
+      )
+
+    # The validation should fail with our custom message, not the default one
+    validation_error =
+      Enum.find(errors, fn error ->
+        error.__struct__ == Ash.Error.Changes.InvalidAttribute &&
+          error.field == :active
+      end)
+
+    assert validation_error != nil
+    # This should be our custom message: "Organization is already active"
+    # But due to the bug, it will be the default message: "Invalid value provided for active: must equal false."
+    assert validation_error.message == "Organization is already active"
+  end
 end

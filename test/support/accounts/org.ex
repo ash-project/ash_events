@@ -30,6 +30,12 @@ defmodule AshEvents.Test.Accounts.Org do
 
       validate string_length(:name, min: 2, max: 100)
     end
+
+    update :reactivate do
+      require_atomic? false
+      argument :justification, :string, allow_nil?: false, constraints: [allow_empty?: true]
+      validate attribute_equals(:active, false), message: "Organization is already active"
+    end
   end
 
   attributes do
@@ -52,6 +58,12 @@ defmodule AshEvents.Test.Accounts.Org do
     attribute :name, :string do
       public? true
       allow_nil? false
+    end
+
+    attribute :active, :boolean do
+      public? true
+      allow_nil? false
+      default true
     end
   end
 end

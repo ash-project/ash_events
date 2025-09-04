@@ -87,6 +87,14 @@ mix compile --force
 mix docs
 ```
 
+### Validation Message Issues  
+**Symptoms**: Custom validation messages not appearing, default messages shown instead
+**Solution**: Check that validations are using ReplayValidationWrapper (not ReplayChangeWrapper)
+**Debug Commands**:
+```bash
+mix test test/ash_events/validation_test.exs --trace
+```
+
 ### Type Check Failures
 **Symptoms**: Dialyzer errors, type specification issues
 **Solution**: Check type specifications in modified files
@@ -107,6 +115,8 @@ mix dialyzer --format dialyxir
 - **Create Events**: `lib/events/create_action_wrapper.ex`
 - **Update Events**: `lib/events/update_action_wrapper.ex`
 - **Destroy Events**: `lib/events/destroy_action_wrapper.ex`
+- **Change Wrapper**: `lib/events/replay_change_wrapper.ex`
+- **Validation Wrapper**: `lib/events/replay_validation_wrapper.ex`
 
 ### Transformers and Verifiers
 - **EventLog Transformers**: `lib/event_log/transformers/`
@@ -118,6 +128,7 @@ mix dialyzer --format dialyxir
 - **Actor Attribution**: `test/ash_events/actor_attribution_test.exs`
 - **Replay Tests**: `test/ash_events/replay_test.exs`
 - **Bulk Actions**: `test/ash_events/bulk_actions_test.exs`
+- **Validation Messages**: `test/ash_events/validation_test.exs`
 
 ### Test Support Resources
 - **Event Log**: `test/support/events/event_log.ex`

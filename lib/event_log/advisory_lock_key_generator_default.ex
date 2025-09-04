@@ -5,6 +5,7 @@ defmodule AshEvents.AdvisoryLockKeyGenerator.Default do
   integer or uuid. For other scenarios, users must implemeent a custom implementation
   and declare it in their event-log resource configuration.
   """
+  use AshEvents.AdvisoryLockKeyGenerator
 
   def generate_key!(changeset, default_integer) do
     case Ash.Resource.Info.multitenancy_strategy(changeset.resource) do

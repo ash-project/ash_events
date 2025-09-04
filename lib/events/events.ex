@@ -69,7 +69,7 @@ defmodule AshEvents.Events do
   }
 
   use Spark.Dsl.Extension,
-    transformers: [AshEvents.Events.Transformers.AddActions],
+    transformers: [AshEvents.Events.Transformers.WrapActions],
     verifiers: [
       AshEvents.Events.Verifiers.VerifyEventLog,
       AshEvents.Events.Verifiers.VerifyActions,

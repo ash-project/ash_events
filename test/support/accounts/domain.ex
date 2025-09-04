@@ -62,5 +62,11 @@ defmodule AshEvents.Test.Accounts do
       define :update_user_with_auto_attrs, action: :update
       define :destroy_user_with_auto_attrs, action: :destroy
     end
+
+    resource AshEvents.Test.Accounts.Upload do
+      define :create_upload, action: :create
+      define :mark_upload_uploaded, action: :mark_uploaded
+      define :mark_upload_skipped, action: :mark_skipped
+    end
   end
 end

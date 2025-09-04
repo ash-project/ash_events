@@ -1,4 +1,4 @@
-defmodule AshEvents.Events.Transformers.AddActions do
+defmodule AshEvents.Events.Transformers.WrapActions do
   @moduledoc false
   use Spark.Dsl.Transformer
 
@@ -119,21 +119,21 @@ defmodule AshEvents.Events.Transformers.AddActions do
                      validation: validation,
                      message: validation.message
                    ]},
-                on: nil,
-                only_when_valid?: false,
-                description: nil,
+                on: validation.on,
+                only_when_valid?: validation.only_when_valid?,
+                description: validation.description,
                 always_atomic?: false,
-                where: []
+                where: validation.where || []
               }
 
-            _ ->
+            %Ash.Resource.Change{} = change ->
               %Ash.Resource.Change{
                 change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
-                on: nil,
-                only_when_valid?: false,
-                description: nil,
-                always_atomic?: false,
-                where: []
+                on: change.on,
+                only_when_valid?: change.only_when_valid?,
+                description: change.description,
+                always_atomic?: change.always_atomic?,
+                where: change.where || []
               }
           end
         end)

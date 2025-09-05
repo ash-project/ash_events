@@ -142,9 +142,8 @@ mix test.migrate                         # Run migrations
 mix test.generate_migrations             # Generate migrations
 
 # Testing commands
-mix test                                 # Run all tests
+mix test                                 # Run all tests (41 tests, ~1 second)
 mix test --trace                         # Run tests with detailed output
-mix test test/ash_events_test.exs        # Run specific test file
 
 # Quality checks
 mix format                               # Format code
@@ -182,7 +181,7 @@ mix docs                                 # Generate documentation
    end
    ```
 
-3. **Test Event Log**: `mix test test/support/events/`
+3. **Test Event Log**: `mix test` (tests full event log functionality)
 
 ### Add Event Tracking to Resource
 
@@ -206,20 +205,20 @@ mix docs                                 # Generate documentation
    ```
 
 2. **Set Actor Attribution**: `Ash.create!(changeset, actor: current_user)`
-3. **Test Event Creation**: Verify events are created with proper attribution
+3. **Test Event Creation**: `mix test` (verifies events are created with proper attribution)
 
 ### Event Replay Workflow
 
 1. **Implement Clear Records**: Ensure all tracked resources are cleared
 2. **Configure Version Management**: Set up replay overrides if needed
-3. **Test Replay**: `mix test --grep "replay"`
+3. **Test Replay**: `mix test` (includes all replay tests)
 4. **Validate State**: Verify replayed state matches expected state
 
 ### Testing Workflow
 
 1. **Reset Database**: `mix test.reset`
-2. **Run Tests**: `mix test --trace`
-3. **Check Quality**: `mix credo --strict`
+2. **Run Tests**: `mix test` (add `--trace` for detailed output if needed)
+3. **Check Quality**: `mix format && mix credo --strict`
 4. **Type Check**: `mix dialyzer`
 
 ### Version Management Workflow (Critical for Schema Evolution)
@@ -246,7 +245,7 @@ mix docs                                 # Generate documentation
    ```
 
 3. **Create Legacy Actions**: Implement old versions for replay
-4. **Test Version Routing**: Verify events route to correct actions
+4. **Test Version Routing**: `mix test` (verifies events route to correct actions)
 
 **Key Event Files**:
 - `lib/event_log/event_log.ex` - Event log resource extension
@@ -260,14 +259,11 @@ mix docs                                 # Generate documentation
 
 **Debugging Pattern**:
 ```bash
-# 1. Check event creation
-mix test -t event_creation
+# 1. Reset database and run full test suite
+mix test.reset && mix test
 
-# 2. Check event replay
-mix test -t event_replay
-
-# 3. Check actor attribution
-mix test -t actor_attribution
+# 2. Check individual issues manually in IEx
+iex -S mix
 ```
 
 ## Documentation Reference Map
@@ -287,7 +283,6 @@ mix test -t actor_attribution
 ### Agent-Specific Documentation (see agent-docs/ folder)
 - **[agent-docs/index.md](agent-docs/index.md)** - **START HERE** - Comprehensive documentation index with task-specific guidance, context window optimization, and direct links to relevant files
 - **[agent-docs/quick-reference.md](agent-docs/quick-reference.md)** - **EMERGENCY REFERENCE** - Quick commands, patterns, and critical reminders for immediate help
-- **[agent-docs/validation-safety.md](agent-docs/validation-safety.md)** - **BEFORE ANY CHANGES** - Testing and validation procedures to ensure safe development
 - **[agent-docs/changelog.md](agent-docs/changelog.md)** - **CONTEXT AND EVOLUTION** - Understanding why current patterns exist and the reasoning behind architectural decisions
 - **[agent-docs/documentation-update-guide.md](agent-docs/documentation-update-guide.md)** - **MANDATORY FOR DOCS UPDATES** - Complete guide for updating agent documentation with established patterns and workflows
 
@@ -310,9 +305,8 @@ mix test.generate_migrations             # Generate migrations
 
 **Testing:**
 ```bash
-mix test                                 # Run all tests
+mix test                                 # Run all tests (41 tests, ~1 second)
 mix test --trace                         # Run tests with detailed output
-mix test test/ash_events_test.exs        # Run specific test file
 ```
 
 **🚨 IMPORTANT: Always use `mix test.reset` for database management in AshEvents**

@@ -1,217 +1,166 @@
-# AshEvents Internal Development Quick Reference
+# AshEvents Emergency Debugging Reference
 
-## Emergency Commands
+> **Purpose**: Rapid debugging assistance and validation checklists for active development
+> **For basic commands and workflows**: See [../CLAUDE.md](../CLAUDE.md)
 
-### 🚨 CRITICAL REMINDERS
-- **ALWAYS use `mix test.reset` - NEVER use `mix ecto.reset`**
-- **ALWAYS set actor attribution in tests - NEVER create events without actor**
-- **ALWAYS read [AGENTS.md](../AGENTS.md) before making changes**
-
-### Core Development Commands
-
-```bash
-# Database Management (AshEvents specific)
-mix test.reset                           # Drop, create, migrate test database
-mix test.create                          # Create test database
-mix test.migrate                         # Run migrations
-mix test.generate_migrations             # Generate migrations
-
-# Testing AshEvents
-mix test                                 # Run all AshEvents tests
-mix test --trace                         # Run tests with detailed output
-mix test test/ash_events/event_creation_test.exs  # Test event creation
-mix test --grep "replay"                 # Test replay functionality
-
-# Quality checks for AshEvents code
-mix format                               # Format AshEvents codebase
-mix credo --strict                       # Lint AshEvents code
-mix dialyzer                             # Type check AshEvents code
-mix docs                                 # Generate AshEvents documentation
-```
-
-## Quick Development Patterns
-
-### Adding New DSL Option to EventLog
-1. Add option in `lib/event_log/event_log.ex` DSL definition
-2. Implement logic in appropriate transformer in `lib/event_log/transformers/`
-3. Add tests in `test/ash_events/`
-4. Regenerate docs with `mix docs`
-
-### Adding New DSL Option to Events
-1. Add option in `lib/events/events.ex` DSL definition
-2. Implement logic in appropriate transformer in `lib/events/transformers/`
-3. Add tests in `test/ash_events/`
-4. Test with example resource in `test/support/`
-
-### Modifying Action Wrapper Behavior
-1. Edit relevant wrapper in `lib/events/*_action_wrapper.ex`
-2. Update common functionality in `lib/events/action_wrapper_helpers.ex`
-3. Update tests in `test/ash_events/event_creation_test.exs`
-4. Verify actor attribution tests still pass
-
-## Common Error Patterns
+## 🚨 Common Error Patterns & Solutions
 
 ### Test Database Issues
-**Symptoms**: Tests failing with database errors, stale migrations
-**Solution**: Reset test database completely
-**Commands**:
+**Symptoms**: Tests failing with database errors, stale migrations, connection refused
+**Root Causes**: Stale test database state, migration conflicts, connection issues
+**Solution**: Complete database reset and verification
 ```bash
-mix test.reset
-mix test --trace
+mix test.reset          # Reset test database completely
+mix test --trace        # Verify tests pass with detailed output
 ```
+**Prevention**: Always use `mix test.reset` before debugging, never `mix ecto.reset`
 
 ### Event Creation Failures  
-**Symptoms**: Events not being created, actor attribution errors
-**Solution**: Check action wrapper implementation and actor setup
-**Debug Commands**:
+**Symptoms**: Events not being created, `nil` event_id, actor attribution missing
+**Root Causes**: Missing actor in action calls, action wrapper not applied, event log misconfiguration
+**Solution**: Run full test suite and check actor attribution
 ```bash
-mix test test/ash_events/event_creation_test.exs --trace
-mix test test/ash_events/actor_attribution_test.exs --trace
+mix test.reset && mix test    # Reset and run all tests
 ```
+**Debug Pattern**: 
+1. Check action call has `actor: user` parameter
+2. Verify resource has `AshEvents.Events` extension
+3. Confirm event_log reference is correct
 
 ### Replay Functionality Issues
-**Symptoms**: Replay tests failing, clear records not working
-**Solution**: Check replay logic and clear records implementation
-**Debug Commands**:
+**Symptoms**: Replay tests failing, "clear records not implemented", state mismatch after replay
+**Root Causes**: Missing clear_records implementation, replay logic errors, version mismatches
+**Solution**: Reset database and run full test suite
 ```bash
-mix test test/ash_events/replay_test.exs --trace
-mix test --grep "replay" --trace
+mix test.reset && mix test    # Reset and run all tests
 ```
-
-### Documentation Generation Issues
-**Symptoms**: `mix docs` failing, DSL docs not updating
-**Solution**: Check DSL definitions and ensure code compiles
-**Debug Commands**:
-```bash
-mix compile --force
-mix docs
-```
+**Debug Pattern**:
+1. Verify `clear_records_for_replay` module exists and works
+2. Check event chronological ordering
+3. Test replay manually with `iex -S mix`
 
 ### Validation Message Issues  
-**Symptoms**: Custom validation messages not appearing, default messages shown instead
-**Solution**: Check that validations are using ReplayValidationWrapper (not ReplayChangeWrapper)
-**Debug Commands**:
+**Symptoms**: Custom validation messages disappearing during replay, default messages shown instead
+**Root Cause**: Using `ReplayChangeWrapper` instead of `ReplayValidationWrapper`
+**Solution**: Run tests to identify validation issues
 ```bash
-mix test test/ash_events/validation_test.exs --trace
+mix test.reset && mix test    # Reset and run all tests
+```
+**Fix**: Ensure validations use `ReplayValidationWrapper.wrap_validator/2`
+
+### Changed Attributes Replay Failures
+**Symptoms**: Auto-generated attributes not replaying correctly, timestamp mismatches, computed fields lost
+**Root Cause**: Incorrect replay strategy configuration for non-input attributes
+**Solution**: Check replay strategy configuration
+**Debug Pattern**:
+1. Verify `replay_non_input_attribute_changes` is set correctly
+2. Test `:force_change` vs `:as_arguments` strategies
+3. Check if attributes are properly marked as non-input
+
+### Type Check Failures (Dialyzer)
+**Symptoms**: Type specification errors, unknown function warnings
+**Root Cause**: Missing or incorrect type specifications after changes
+**Solution**: Progressive type checking
+```bash
+mix dialyzer --format dialyxir           # Full type check
+mix dialyzer lib/path/to/changed_file.ex # Check specific file
 ```
 
-### Type Check Failures
-**Symptoms**: Dialyzer errors, type specification issues
-**Solution**: Check type specifications in modified files
-**Debug Commands**:
+## ⚡ Quick Debugging Workflows
+
+### 🔍 Debug Event Creation Issues
 ```bash
-mix dialyzer --format dialyxir
+# 1. Run full test suite to identify failures
+mix test.reset && mix test
+
+# 2. Inspect event log configuration manually
+iex -S mix
+> MyApp.Events.EventLog.__ash_extension_config__()
+
+# 3. Test with minimal example in IEx
+# Create simple action with explicit actor, verify event created
 ```
 
-## Critical File Locations
+### 🔄 Debug Replay Issues
+```bash
+# 1. Run full test suite first
+mix test.reset && mix test
 
-### Core Extension Files
-- **EventLog DSL**: `lib/event_log/event_log.ex`
-- **Events DSL**: `lib/events/events.ex`
-- **Action Helpers**: `lib/events/action_wrapper_helpers.ex`
-- **Replay Logic**: `lib/event_log/replay.ex`
+# 2. Test clear records manually
+iex -S mix
+> MyApp.Events.ClearAllRecords.clear_records!([])
 
-### Action Wrappers
-- **Create Events**: `lib/events/create_action_wrapper.ex`
-- **Update Events**: `lib/events/update_action_wrapper.ex`
-- **Destroy Events**: `lib/events/destroy_action_wrapper.ex`
-- **Change Wrapper**: `lib/events/replay_change_wrapper.ex`
-- **Validation Wrapper**: `lib/events/replay_validation_wrapper.ex`
+# 3. Check event ordering manually
+iex -S mix
+> MyApp.Events.EventLog |> Ash.Query.sort(:inserted_at) |> Ash.read!()
 
-### Transformers and Verifiers
-- **EventLog Transformers**: `lib/event_log/transformers/`
-- **Events Transformers**: `lib/events/transformers/`
-- **EventLog Verifiers**: `lib/event_log/verifiers/`
+# 4. Test step-by-step replay manually in IEx
+# Clear -> Create one event -> Replay -> Verify state
+```
 
-### Key Test Files
-- **Event Creation**: `test/ash_events/event_creation_test.exs`
-- **Actor Attribution**: `test/ash_events/actor_attribution_test.exs`
-- **Replay Tests**: `test/ash_events/replay_test.exs`
-- **Bulk Actions**: `test/ash_events/bulk_actions_test.exs`
-- **Validation Messages**: `test/ash_events/validation_test.exs`
+### 🔧 Debug DSL Configuration Issues  
+```bash
+# 1. Check DSL compilation
+mix compile --force --warnings-as-errors
 
-### Test Support Resources
-- **Event Log**: `test/support/events/event_log.ex`
-- **Clear Records**: `test/support/events/clear_records.ex`  
-- **Test User**: `test/support/accounts/user.ex`
-- **Test Org**: `test/support/accounts/org.ex`
+# 2. Inspect generated configuration
+iex -S mix
+> MyResource.__ash_extension_config__()
+> MyResource.__ash_events_config__()
 
-## Development Validation Checklist
+# 3. Test DSL options manually in IEx
+```
 
-### Before Committing Changes
-- [ ] `mix test` - All tests pass
-- [ ] `mix format` - Code is formatted
-- [ ] `mix credo --strict` - No linting issues
-- [ ] `mix dialyzer` - No type errors
-- [ ] `mix docs` - Documentation generates without errors
+### 🏗️ Debug Build/Compilation Issues
+```bash
+# 1. Clean compile with error details
+rm -rf _build/ && mix compile --force --warnings-as-errors
 
-### After DSL Changes
-- [ ] DSL options work in test resources
-- [ ] Generated documentation reflects changes
-- [ ] Tests cover new functionality
-- [ ] Existing functionality still works
+# 2. Check dependency consistency
+mix deps.get && mix deps.compile --force
 
-### After Action Wrapper Changes
-- [ ] Event creation tests pass
-- [ ] Actor attribution tests pass
-- [ ] All action types (create/update/destroy) work
-- [ ] Bulk action tests pass if applicable
+# 3. Run full test suite after fixing compilation
+mix test
+```
 
-### After Replay Changes
-- [ ] Replay tests pass
-- [ ] Clear records functionality works
-- [ ] Complex replay scenarios work (state machines, etc.)
-- [ ] Version management still functions
+## ✅ Development Validation Checklist
 
-## Quick Debugging Workflows
+### 🎯 Before Committing Any Changes
+- [ ] **Database Reset**: `mix test.reset` - Clean test state
+- [ ] **All Tests Pass**: `mix test` - Full test suite passes (41 tests, ~1 second)
+- [ ] **Code Quality**: `mix format && mix credo --strict` - Format and lint
+- [ ] **Type Check**: `mix dialyzer` - No type specification errors  
+- [ ] **Documentation**: `mix docs` - Documentation builds without warnings
+- [ ] **Manual Testing**: Test your changes in `iex -S mix` if needed
 
-### Debug Event Creation Issues
-1. Run specific test: `mix test test/ash_events/event_creation_test.exs --trace`
-2. Check actor setup in test resource
-3. Verify action wrapper logic
-4. Check parameter filtering and casting
+## 🏗️ Internal Architecture Quick Reference
 
-### Debug Replay Issues
-1. Run replay tests: `mix test test/ash_events/replay_test.exs --trace`
-2. Check clear records implementation
-3. Verify replay logic in `lib/event_log/replay.ex`
-4. Test with simple scenario first
+### Event Creation Flow
+```
+Action Called → Action Wrapper → Event Created → Actor Attributed → Original Action Proceeds
+```
 
-### Debug DSL Issues
-1. Check DSL definition syntax
-2. Verify transformer implementation
-3. Test with minimal example resource
-4. Check generated documentation for errors
+### Event Replay Flow  
+```
+Clear Records → Fetch Events (chronological) → Replay Actions → Reconstruct State
+```
 
-### Debug Build Issues
-1. `mix compile --force --warnings-as-errors`
-2. `mix deps.get` to ensure dependencies are current
-3. `mix dialyzer` for type issues
-4. Check `mix.exs` for configuration issues
+### DSL Processing Flow
+```
+DSL Definition → Transformers Apply Logic → Verifiers Validate → Documentation Generated
+```
 
-## Internal Architecture Reference
-
-### Event Flow
-1. **Action called** on resource with Events extension
-2. **Action wrapper** intercepts action
-3. **Event created** using EventLog resource
-4. **Actor attributed** from action context
-5. **Original action** proceeds normally
-
-### Replay Flow  
-1. **Clear records** called to clean state
-2. **Events fetched** chronologically from EventLog
-3. **Actions replayed** using stored parameters
-4. **State reconstructed** from event sequence
-
-### DSL Extension Pattern
-1. **DSL defined** in main extension file
-2. **Transformers** implement DSL logic
-3. **Verifiers** validate DSL usage
-4. **Documentation** generated from DSL definitions
+### Critical Extension Points
+- **Action Wrappers**: Intercept and wrap resource actions
+- **Transformers**: Implement DSL logic during compilation  
+- **Verifiers**: Validate DSL configuration and usage
+- **Replay Logic**: Reconstruct state from event history
 
 ---
 
-**Emergency Contact**: Check [AGENTS.md](../AGENTS.md) for comprehensive guidance  
+**🆘 When This Reference Fails**: Check [../CLAUDE.md](../CLAUDE.md) for comprehensive project guidance  
+**⚡ For Basic Commands**: See [../CLAUDE.md](../CLAUDE.md) command reference section  
+**📚 For Understanding Context**: See [../agent-docs/index.md](index.md) for complete documentation map  
+
 **Last Updated**: 2025-01-25  
-**Focus**: Internal AshEvents development commands and patterns
+**Focus**: Emergency debugging, error resolution, and validation workflows

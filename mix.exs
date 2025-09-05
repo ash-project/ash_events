@@ -127,6 +127,7 @@ defmodule AshEvents.MixProject do
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0", only: [:dev, :test]},
+      {:ash_authentication, "~> 4.0", only: [:dev, :test]},
       {:faker, "~> 0.18", only: :test},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},

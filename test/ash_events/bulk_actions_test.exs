@@ -1,10 +1,10 @@
 defmodule AshEvents.BulkActionsTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
   alias AshEvents.Accounts.User
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -15,11 +15,12 @@ defmodule AshEvents.BulkActionsTest do
         %{
           email: Faker.Internet.email(),
           given_name: Faker.Person.first_name(),
-          family_name: Faker.Person.last_name()
+          family_name: Faker.Person.last_name(),
+          hashed_password: "hashed_password_123"
         }
       end)
       |> Ash.bulk_create!(User, :create,
-        actor: %AshEvents.Test.Events.SystemActor{name: "system"},
+        actor: %AshEvents.EventLogs.SystemActor{name: "system"},
         return_notifications?: true,
         return_errors?: true,
         return_records?: true
@@ -44,7 +45,7 @@ defmodule AshEvents.BulkActionsTest do
           given_name: "Updated",
           family_name: "Name"
         },
-        actor: %AshEvents.Test.Events.SystemActor{name: "system"},
+        actor: %AshEvents.EventLogs.SystemActor{name: "system"},
         return_notifications?: true,
         return_errors?: true,
         return_records?: true,

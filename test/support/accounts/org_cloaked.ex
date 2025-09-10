@@ -16,7 +16,7 @@ defmodule AshEvents.Accounts.OrgCloaked do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLogCloaked
+    event_log AshEvents.EventLogs.EventLogCloaked
     allowed_change_modules create: [AshCloak.Changes.Encrypt], update: [AshCloak.Changes.Encrypt]
   end
 

@@ -11,7 +11,7 @@ defmodule AshEvents.Accounts.UserEmbedded do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLog
+    event_log AshEvents.EventLogs.EventLog
   end
 
   actions do

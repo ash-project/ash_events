@@ -1,11 +1,11 @@
 defmodule AshEvents.UpsertTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
   alias AshEvents.Accounts.User
-  alias AshEvents.Events
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -16,7 +16,8 @@ defmodule AshEvents.UpsertTest do
         %{
           email: "upsert@example.com",
           given_name: "Initial",
-          family_name: "User"
+          family_name: "User",
+          hashed_password: "hashed_password_123"
         },
         actor: %SystemActor{name: "test_upsert"}
       )
@@ -27,7 +28,8 @@ defmodule AshEvents.UpsertTest do
         %{
           email: "upsert@example.com",
           given_name: "Updated",
-          family_name: "Person"
+          family_name: "Person",
+          hashed_password: "hashed_password_123"
         },
         actor: %SystemActor{name: "test_upsert"}
       )
@@ -65,13 +67,13 @@ defmodule AshEvents.UpsertTest do
     assert second_event.data["email"] == "upsert@example.com"
 
     # Verify event replay works correctly with upserts
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     # After replay, should still have the updated values
     replayed_user = Accounts.get_user_by_id!(user2.id, actor: %SystemActor{name: "test_replay"})
     assert replayed_user.given_name == "Updated"
     assert replayed_user.family_name == "Person"
-    assert replayed_user.email == "upsert@example.com"
+    assert to_string(replayed_user.email) == "upsert@example.com"
   end
 
   test "auto-generated replay update action is created for upsert actions" do

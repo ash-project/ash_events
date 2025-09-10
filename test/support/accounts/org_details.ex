@@ -11,7 +11,7 @@ defmodule AshEvents.Accounts.OrgDetails do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLog
+    event_log AshEvents.EventLogs.EventLog
     only_actions([:create, :update])
     allowed_change_modules(update: [])
   end

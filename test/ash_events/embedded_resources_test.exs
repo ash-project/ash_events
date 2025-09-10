@@ -2,7 +2,7 @@ defmodule AshEvents.EmbeddedResourcesTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Events
+  alias AshEvents.EventLogs
 
   test "handles embedded resources" do
     user =
@@ -35,7 +35,7 @@ defmodule AshEvents.EmbeddedResourcesTest do
     user = Ash.load!(user, [:address])
     assert user.address.street == "Embedded Street"
 
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     [user] = Ash.read!(Accounts.UserEmbedded)
     user = Ash.load!(user, [:address])
@@ -59,7 +59,7 @@ defmodule AshEvents.EmbeddedResourcesTest do
     assert user.address.zip_code == "Embedded Zip"
     assert user.other_addresses == []
 
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     user = Accounts.get_user_embedded_by_id!(user.id)
 

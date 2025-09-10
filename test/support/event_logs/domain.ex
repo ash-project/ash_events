@@ -1,28 +1,28 @@
-defmodule AshEvents.Test.Events do
+defmodule AshEvents.EventLogs do
   @moduledoc false
   use Ash.Domain
 
   resources do
-    resource AshEvents.Test.Events.EventLog do
+    resource AshEvents.EventLogs.EventLog do
       define :replay_events, action: :replay
     end
 
-    resource AshEvents.Test.Events.EventLogUuidV7 do
+    resource AshEvents.EventLogs.EventLogUuidV7 do
       define :replay_events_uuidv7, action: :replay
     end
 
-    resource AshEvents.Test.Events.EventLogMissingClear do
+    resource AshEvents.EventLogs.EventLogMissingClear do
       define :replay_events_missing_clear, action: :replay
     end
 
-    resource AshEvents.Test.Events.EventLogCloaked do
+    resource AshEvents.EventLogs.EventLogCloaked do
       define :replay_events_cloaked, action: :replay
     end
 
-    resource AshEvents.Test.Events.EventLogStateMachine do
+    resource AshEvents.EventLogs.EventLogStateMachine do
       define :replay_events_state_machine, action: :replay
     end
 
-    resource AshEvents.Test.Events.SystemActor
+    resource AshEvents.EventLogs.SystemActor
   end
 end

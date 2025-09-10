@@ -2,14 +2,14 @@ defmodule AshEvents.EncryptionTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Events
+  alias AshEvents.EventLogs
 
   test "cloaked event logs encrypt data and metadata" do
     Accounts.create_org_cloaked!(%{name: "Cloaked name"},
       context: %{ash_events_metadata: %{some: "metadata"}}
     )
 
-    [event] = Ash.read!(AshEvents.Test.Events.EventLogCloaked)
+    [event] = Ash.read!(AshEvents.EventLogs.EventLogCloaked)
 
     decrypted_data =
       event.encrypted_data
@@ -34,7 +34,7 @@ defmodule AshEvents.EncryptionTest do
       context: %{ash_events_metadata: %{some: "metadata"}}
     )
 
-    [create_event, update_event] = Ash.read!(AshEvents.Test.Events.EventLogCloaked)
+    [create_event, update_event] = Ash.read!(AshEvents.EventLogs.EventLogCloaked)
 
     update_event =
       update_event
@@ -43,13 +43,13 @@ defmodule AshEvents.EncryptionTest do
     assert update_event.data["name"] == "Updated name"
     assert update_event.metadata["some"] == "metadata"
 
-    :ok = Events.replay_events_cloaked!(%{last_event_id: create_event.id})
+    :ok = EventLogs.replay_events_cloaked!(%{last_event_id: create_event.id})
 
     [org] = Ash.read!(Accounts.OrgCloaked)
     org = Ash.load!(org, [:name])
     assert org.name == "Cloaked name"
 
-    :ok = Events.replay_events_cloaked!()
+    :ok = EventLogs.replay_events_cloaked!()
 
     [org] = Ash.read!(Accounts.OrgCloaked)
     org = Ash.load!(org, [:name])

@@ -11,6 +11,10 @@ defmodule AshEvents.Accounts.Token do
     repo AshEvents.TestRepo
   end
 
+  actions do
+    defaults [:read]
+  end
+
   policies do
     bypass AshAuthentication.Checks.AshAuthenticationInteraction do
       authorize_if always()

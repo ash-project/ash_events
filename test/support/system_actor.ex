@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Events.SystemActor do
+defmodule AshEvents.EventLogs.SystemActor do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Events
+    domain: AshEvents.EventLogs
 
   attributes do
     attribute :name, :string, primary_key?: true, allow_nil?: false

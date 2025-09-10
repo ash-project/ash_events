@@ -1,5 +1,5 @@
 defmodule AshEvents.Checks.TestCheck do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   @moduledoc false
   use Ash.Policy.SimpleCheck
 

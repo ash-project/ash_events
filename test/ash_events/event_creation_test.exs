@@ -1,11 +1,11 @@
 defmodule AshEvents.EventCreationTest do
   alias AshEvents.Accounts.User
   alias AshEvents.Accounts.UserRole
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -14,7 +14,8 @@ defmodule AshEvents.EventCreationTest do
       %{
         email: "user@example.com",
         given_name: "John",
-        family_name: "Doe"
+        family_name: "Doe",
+        hashed_password: "hashed_password_123"
       },
       context: %{ash_events_metadata: %{source: "Signup form"}},
       actor: %SystemActor{name: "test_runner"}
@@ -55,7 +56,7 @@ defmodule AshEvents.EventCreationTest do
   end
 
   test "can be used just like normal actions/changesets" do
-    opts = [actor: %AshEvents.Test.Events.SystemActor{name: "Some system worker"}]
+    opts = [actor: %AshEvents.EventLogs.SystemActor{name: "Some system worker"}]
 
     user =
       User
@@ -64,7 +65,8 @@ defmodule AshEvents.EventCreationTest do
         %{
           email: "email@email.com",
           given_name: "Given",
-          family_name: "Family"
+          family_name: "Family",
+          hashed_password: "hashed_password_123"
         },
         opts ++ [context: %{ash_events_metadata: %{meta_field: "meta_value"}}]
       )

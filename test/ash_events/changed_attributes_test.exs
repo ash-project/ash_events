@@ -3,8 +3,8 @@ defmodule AshEvents.ChangedAttributesTest do
   use ExUnit.Case, async: false
 
   alias AshEvents.Accounts.UserWithAutoAttrs
-  alias AshEvents.Events
-  alias AshEvents.Events.{EventLog, SystemActor}
+  alias AshEvents.EventLogs
+  alias AshEvents.EventLogs.{EventLog, SystemActor}
 
   require Ash.Query
 
@@ -62,7 +62,7 @@ defmodule AshEvents.ChangedAttributesTest do
 
     # Don't manually destroy - replay_events! will clear records and replay events
     # Replay events
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     # Verify user was recreated with correct attributes
     replayed_user = Ash.get!(UserWithAutoAttrs, original_id)
@@ -113,7 +113,7 @@ defmodule AshEvents.ChangedAttributesTest do
     refute Map.has_key?(event.data, "slug")
 
     # Test replay functionality with form-created data
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     # Verify user was recreated with correct attributes including auto-generated ones
     replayed_user = Ash.get!(UserWithAutoAttrs, user.id)
@@ -243,7 +243,7 @@ defmodule AshEvents.ChangedAttributesTest do
     assert update_event.changed_attributes["slug"] == "jane-smith"
 
     # Clear all records and replay events
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     # Verify user was recreated with correct attributes
     replayed_user = Ash.get!(UserWithAutoAttrs, user.id)
@@ -292,7 +292,7 @@ defmodule AshEvents.ChangedAttributesTest do
     refute Map.has_key?(update_event.data, "slug")
 
     # Test replay behavior - both strategies should produce the same final result
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     replayed_user = Ash.get!(UserWithAutoAttrs, user.id)
 
@@ -337,7 +337,7 @@ defmodule AshEvents.ChangedAttributesTest do
     EventLog |> Ash.Changeset.for_create(:create, update_event) |> Ash.create!()
 
     # Clear records and replay events
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     # Verify the replayed user has the correct attributes
     # This test specifically verifies that the required slug argument was passed during replay
@@ -383,7 +383,7 @@ defmodule AshEvents.ChangedAttributesTest do
 
     # Attempting to replay should fail because the required slug argument is missing
     assert_raise Ash.Error.Invalid, ~r/argument slug is required/, fn ->
-      Events.replay_events!()
+      EventLogs.replay_events!()
     end
   end
 end

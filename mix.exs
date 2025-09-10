@@ -123,6 +123,7 @@ defmodule AshEvents.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:bcrypt_elixir, "~> 3.0"},
       {:ash, ash_version("~> 3.5")},
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},

@@ -22,7 +22,7 @@ defmodule AshEvents.Accounts.OrgStateMachine do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLogStateMachine
+    event_log AshEvents.EventLogs.EventLogStateMachine
   end
 
   actions do

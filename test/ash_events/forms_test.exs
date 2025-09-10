@@ -1,5 +1,5 @@
 defmodule AshEvents.FormsTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
@@ -10,7 +10,8 @@ defmodule AshEvents.FormsTest do
       "email" => "user@example.com",
       given_name: "John",
       family_name: "Doe",
-      non_existent: "value"
+      non_existent: "value",
+      hashed_password: "hashed_password_123"
     }
 
     form =

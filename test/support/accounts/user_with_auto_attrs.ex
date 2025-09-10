@@ -11,7 +11,7 @@ defmodule AshEvents.Accounts.UserWithAutoAttrs do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLog
+    event_log AshEvents.EventLogs.EventLog
 
     replay_non_input_attribute_changes create: :force_change,
                                        update: :as_arguments,

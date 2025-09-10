@@ -1,16 +1,17 @@
 defmodule AshEvents.ValidationTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Events
+  alias AshEvents.EventLogs
 
   def create_user do
     Accounts.create_user!(
       %{
         email: "user@example.com",
         given_name: "John",
-        family_name: "Doe"
+        family_name: "Doe",
+        hashed_password: "hashed_password_123"
       },
       context: %{ash_events_metadata: %{source: "Signup form"}},
       actor: %SystemActor{name: "test_runner"}
@@ -23,7 +24,8 @@ defmodule AshEvents.ValidationTest do
         %{
           email: "user@example.com",
           given_name: "John",
-          family_name: "Doe"
+          family_name: "Doe",
+          hashed_password: "hashed_password_123"
         },
         context: %{ash_events_metadata: %{source: "Signup form"}},
         actor: %SystemActor{name: "test_runner"}
@@ -55,8 +57,8 @@ defmodule AshEvents.ValidationTest do
   test "replay events on event log missing clear function throws RuntimeError" do
     assert_raise(
       RuntimeError,
-      "clear_records_for_replay must be specified on Elixir.AshEvents.Test.Events.EventLogMissingClear when doing a replay.",
-      fn -> Events.replay_events_missing_clear() end
+      "clear_records_for_replay must be specified on Elixir.AshEvents.EventLogs.EventLogMissingClear when doing a replay.",
+      fn -> EventLogs.replay_events_missing_clear() end
     )
   end
 
@@ -80,7 +82,7 @@ defmodule AshEvents.ValidationTest do
   test "replay events handles routed actions correctly" do
     create_user()
     [] = Ash.read!(Accounts.RoutedUser)
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     [routed_user] = Ash.read!(Accounts.RoutedUser)
     [user] = Ash.read!(Accounts.User, actor: %SystemActor{name: "system"})

@@ -1,4 +1,4 @@
-defmodule AshEvents.Test.Events.ClearRecords do
+defmodule AshEvents.EventLogs.ClearRecords do
   @moduledoc false
   use AshEvents.ClearRecordsForReplay
   alias AshEvents.TestRepo
@@ -13,7 +13,7 @@ defmodule AshEvents.Test.Events.ClearRecords do
   end
 end
 
-defmodule AshEvents.Test.Events.ClearRecordsUuidV7 do
+defmodule AshEvents.EventLogs.ClearRecordsUuidV7 do
   @moduledoc false
   use AshEvents.ClearRecordsForReplay
   alias AshEvents.TestRepo
@@ -24,7 +24,7 @@ defmodule AshEvents.Test.Events.ClearRecordsUuidV7 do
   end
 end
 
-defmodule AshEvents.Test.Events.ClearRecordsCloaked do
+defmodule AshEvents.EventLogs.ClearRecordsCloaked do
   @moduledoc false
   use AshEvents.ClearRecordsForReplay
   alias AshEvents.TestRepo
@@ -35,7 +35,7 @@ defmodule AshEvents.Test.Events.ClearRecordsCloaked do
   end
 end
 
-defmodule AshEvents.Test.Events.ClearRecordsStateMachine do
+defmodule AshEvents.EventLogs.ClearRecordsStateMachine do
   @moduledoc false
   use AshEvents.ClearRecordsForReplay
   alias AshEvents.TestRepo

@@ -1,10 +1,10 @@
 defmodule AshEvents.DefaultsTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
   alias AshEvents.Accounts.User
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -13,7 +13,8 @@ defmodule AshEvents.DefaultsTest do
       %{
         email: "user@example.com",
         given_name: "John",
-        family_name: "Doe"
+        family_name: "Doe",
+        hashed_password: "hashed_password_123"
       },
       context: %{ash_events_metadata: %{source: "Signup form"}},
       actor: %SystemActor{name: "test_runner"}
@@ -51,7 +52,8 @@ defmodule AshEvents.DefaultsTest do
         %{
           email: "create_test@example.com",
           given_name: "Create",
-          family_name: "Test"
+          family_name: "Test",
+          hashed_password: "hashed_password_123"
         },
         actor: %SystemActor{name: "test_create_default"}
       )

@@ -6,7 +6,7 @@ defmodule AshEvents.Accounts.UserRole do
     extensions: [AshEvents.Events]
 
   events do
-    event_log AshEvents.Test.Events.EventLog
+    event_log AshEvents.EventLogs.EventLog
     create_timestamp :created_at
     update_timestamp :updated_at
   end

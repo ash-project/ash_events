@@ -1,9 +1,8 @@
 defmodule AshEvents.StateMachineTest do
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Events
 
   test "handles ash_state_machine validations" do
     actor = %SystemActor{name: "system"}
@@ -14,7 +13,7 @@ defmodule AshEvents.StateMachineTest do
       )
 
     Accounts.set_org_state_machine_inactive!(org, actor: actor)
-    Events.replay_events_state_machine!([])
+    AshEvents.EventLogs.replay_events_state_machine!([])
   end
 
   test "default initial state should not be overridden when conditional state transition condition is not met" do

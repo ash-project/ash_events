@@ -11,7 +11,7 @@ defmodule AshEvents.Accounts.RoutedUser do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLog
+    event_log AshEvents.EventLogs.EventLog
     ignore_actions [:routed_create]
   end
 
@@ -19,7 +19,7 @@ defmodule AshEvents.Accounts.RoutedUser do
     defaults [:read]
 
     create :routed_create do
-      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name]
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name, :hashed_password]
       argument :role, :string, default: "user"
     end
 
@@ -58,6 +58,11 @@ defmodule AshEvents.Accounts.RoutedUser do
     attribute :family_name, :string do
       allow_nil? false
       public? true
+    end
+
+    attribute :hashed_password, :string do
+      allow_nil? false
+      sensitive? true
     end
   end
 end

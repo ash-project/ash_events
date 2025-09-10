@@ -1,10 +1,10 @@
 defmodule AshEvents.TimestampTest do
   alias AshEvents.Accounts.Org
   alias AshEvents.Accounts.User
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
   alias AshEvents.Accounts
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -15,7 +15,8 @@ defmodule AshEvents.TimestampTest do
           %{
             email: "user@example.com",
             given_name: "John",
-            family_name: "Doe"
+            family_name: "Doe",
+            hashed_password: "hashed_password_123"
           },
           actor: %SystemActor{name: "test_runner"}
         )
@@ -37,7 +38,8 @@ defmodule AshEvents.TimestampTest do
           %{
             email: "user@example.com",
             given_name: "John",
-            family_name: "Doe"
+            family_name: "Doe",
+            hashed_password: "hashed_password_123"
           },
           actor: %SystemActor{name: "test_runner"}
         )

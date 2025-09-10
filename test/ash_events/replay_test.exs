@@ -1,11 +1,11 @@
 defmodule AshEvents.ReplayTest do
   use AshEvents.RepoCase, async: false
-  alias AshEvents.Test.Events.EventLogUuidV7
-  alias AshEvents.Test.Events.SystemActor
+  alias AshEvents.EventLogs.EventLogUuidV7
+  alias AshEvents.EventLogs.SystemActor
 
   alias AshEvents.Accounts
-  alias AshEvents.Events
-  alias AshEvents.Test.Events.EventLog
+  alias AshEvents.EventLogs
+  alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
 
@@ -14,7 +14,8 @@ defmodule AshEvents.ReplayTest do
       %{
         email: "user@example.com",
         given_name: "John",
-        family_name: "Doe"
+        family_name: "Doe",
+        hashed_password: "hashed_password_123"
       },
       context: %{ash_events_metadata: %{source: "Signup form"}},
       actor: %SystemActor{name: "test_runner"}
@@ -72,7 +73,7 @@ defmodule AshEvents.ReplayTest do
       _update_user_role_event
     ] = events
 
-    :ok = Events.replay_events!(%{last_event_id: update_user_event_1.id})
+    :ok = EventLogs.replay_events!(%{last_event_id: update_user_event_1.id})
 
     user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
@@ -81,7 +82,7 @@ defmodule AshEvents.ReplayTest do
     assert user.user_role.name == "user"
 
     :ok =
-      Events.replay_events!(%{
+      EventLogs.replay_events!(%{
         point_in_time: create_user_role_event.occurred_at
       })
 
@@ -92,7 +93,7 @@ defmodule AshEvents.ReplayTest do
     assert user.user_role.name == "user"
 
     :ok =
-      Events.replay_events!(%{
+      EventLogs.replay_events!(%{
         point_in_time: create_user_event.occurred_at
       })
 
@@ -102,7 +103,7 @@ defmodule AshEvents.ReplayTest do
     assert user.family_name == "Doe"
     assert user.user_role == nil
 
-    :ok = Events.replay_events!()
+    :ok = EventLogs.replay_events!()
 
     user = Accounts.get_user_by_id!(user.id, load: [:user_role], actor: user)
 
@@ -146,7 +147,7 @@ defmodule AshEvents.ReplayTest do
       _update_user_event_2
     ] = events
 
-    :ok = Events.replay_events_uuidv7!(%{last_event_id: update_user_event_1.id})
+    :ok = EventLogs.replay_events_uuidv7!(%{last_event_id: update_user_event_1.id})
 
     user = Accounts.get_user_uuidv7_by_id!(user.id, actor: user)
 
@@ -154,7 +155,7 @@ defmodule AshEvents.ReplayTest do
     assert user.family_name == "Smith"
 
     :ok =
-      Events.replay_events_uuidv7!(%{
+      EventLogs.replay_events_uuidv7!(%{
         point_in_time: create_user_event.occurred_at
       })
 
@@ -163,7 +164,7 @@ defmodule AshEvents.ReplayTest do
     assert user.given_name == "John"
     assert user.family_name == "Doe"
 
-    :ok = Events.replay_events_uuidv7!()
+    :ok = EventLogs.replay_events_uuidv7!()
 
     user = Accounts.get_user_uuidv7_by_id!(user.id, actor: user)
 

@@ -12,7 +12,7 @@ defmodule AshEvents.Accounts.UserUuidV7 do
   end
 
   events do
-    event_log AshEvents.Test.Events.EventLogUuidV7
+    event_log AshEvents.EventLogs.EventLogUuidV7
     current_action_versions create: 1
     create_timestamp :created_at
     update_timestamp :updated_at

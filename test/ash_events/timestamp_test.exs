@@ -1,9 +1,9 @@
 defmodule AshEvents.TimestampTest do
-  alias AshEvents.Test.Accounts.Org
-  alias AshEvents.Test.Accounts.User
+  alias AshEvents.Accounts.Org
+  alias AshEvents.Accounts.User
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
-  alias AshEvents.Test.Accounts
+  alias AshEvents.Accounts
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

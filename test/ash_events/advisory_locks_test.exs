@@ -1,7 +1,7 @@
 defmodule AshEvents.AdvisoryLocksTest do
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
+  alias AshEvents.Accounts
 
   test "advisory lock default value is used for resources without multitenancy" do
     Accounts.create_org!(%{name: "Test Org"})

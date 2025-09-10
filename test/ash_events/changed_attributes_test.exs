@@ -2,9 +2,9 @@ defmodule AshEvents.ChangedAttributesTest do
   @moduledoc false
   use ExUnit.Case, async: false
 
-  alias AshEvents.Test.Accounts.UserWithAutoAttrs
-  alias AshEvents.Test.Events
-  alias AshEvents.Test.Events.{EventLog, SystemActor}
+  alias AshEvents.Accounts.UserWithAutoAttrs
+  alias AshEvents.Events
+  alias AshEvents.Events.{EventLog, SystemActor}
 
   require Ash.Query
 

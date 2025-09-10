@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.UserRole do
+defmodule AshEvents.Accounts.UserRole do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
 
@@ -64,7 +64,7 @@ defmodule AshEvents.Test.Accounts.UserRole do
   end
 
   relationships do
-    belongs_to :user, AshEvents.Test.Accounts.User do
+    belongs_to :user, AshEvents.Accounts.User do
       allow_nil? false
     end
   end

@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.OrgDetails do
+defmodule AshEvents.Accounts.OrgDetails do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
 
@@ -62,7 +62,7 @@ defmodule AshEvents.Test.Accounts.OrgDetails do
   end
 
   relationships do
-    belongs_to :org, AshEvents.Test.Accounts.Org do
+    belongs_to :org, AshEvents.Accounts.Org do
       allow_nil? false
       public? true
     end

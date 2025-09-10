@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.UserEmbedded do
+defmodule AshEvents.Accounts.UserEmbedded do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
 
@@ -78,12 +78,12 @@ defmodule AshEvents.Test.Accounts.UserEmbedded do
       public? true
     end
 
-    attribute :address, AshEvents.Test.Accounts.Address do
+    attribute :address, AshEvents.Accounts.Address do
       allow_nil? true
       public? true
     end
 
-    attribute :other_addresses, {:array, AshEvents.Test.Accounts.Address} do
+    attribute :other_addresses, {:array, AshEvents.Accounts.Address} do
       allow_nil? true
       public? true
     end

@@ -22,9 +22,10 @@ if Mix.env() == :test do
   config :ash_events,
     event_resource_primary_key_type: :uuid,
     ecto_repos: [AshEvents.TestRepo],
+    token_siging_secret: "AKb07o/7PVJ8OBLvKyS7XFkcZKy6ZfSj",
     ash_domains: [
       AshEvents.Test.Events,
-      AshEvents.Test.Accounts
+      AshEvents.Accounts
     ]
 
   config :ash_events, AshEvents.Test.Vault,

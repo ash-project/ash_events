@@ -3,8 +3,8 @@ defmodule AshEvents.ReplayTest do
   alias AshEvents.Test.Events.EventLogUuidV7
   alias AshEvents.Test.Events.SystemActor
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Events
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

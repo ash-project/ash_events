@@ -1,8 +1,8 @@
 defmodule AshEvents.EncryptionTest do
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Events
 
   test "cloaked event logs encrypt data and metadata" do
     Accounts.create_org_cloaked!(%{name: "Cloaked name"},
@@ -14,13 +14,13 @@ defmodule AshEvents.EncryptionTest do
     decrypted_data =
       event.encrypted_data
       |> Base.decode64!()
-      |> AshEvents.Test.Vault.decrypt!()
+      |> AshEvents.Vault.decrypt!()
       |> Jason.decode!()
 
     decrypted_metadata =
       event.encrypted_metadata
       |> Base.decode64!()
-      |> AshEvents.Test.Vault.decrypt!()
+      |> AshEvents.Vault.decrypt!()
       |> Jason.decode!()
 
     assert decrypted_data["name"] == "Cloaked name"

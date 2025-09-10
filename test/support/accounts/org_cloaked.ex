@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.OrgCloaked do
+defmodule AshEvents.Accounts.OrgCloaked do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events, AshCloak]
 
@@ -11,7 +11,7 @@ defmodule AshEvents.Test.Accounts.OrgCloaked do
   end
 
   cloak do
-    vault(AshEvents.Test.Vault)
+    vault(AshEvents.Vault)
     attributes([:name])
   end
 

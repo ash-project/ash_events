@@ -1,10 +1,10 @@
 defmodule AshEvents.EventCreationTest do
-  alias AshEvents.Test.Accounts.User
-  alias AshEvents.Test.Accounts.UserRole
+  alias AshEvents.Accounts.User
+  alias AshEvents.Accounts.UserRole
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
+  alias AshEvents.Accounts
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.UserWithAutoAttrs do
+defmodule AshEvents.Accounts.UserWithAutoAttrs do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
 

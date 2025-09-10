@@ -2,8 +2,8 @@ defmodule AshEvents.StateMachineTest do
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Events
 
   test "handles ash_state_machine validations" do
     actor = %SystemActor{name: "system"}

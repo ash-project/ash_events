@@ -1,14 +1,34 @@
-defmodule AshEvents.Test.Accounts.User do
+defmodule AshEvents.Accounts.User do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshEvents.Events]
+    extensions: [AshEvents.Events, AshAuthentication]
 
   postgres do
     table "users"
     repo AshEvents.TestRepo
+  end
+
+  authentication do
+    tokens do
+      enabled? true
+      token_resource AshEvents.Accounts.Token
+      store_all_tokens? true
+      require_token_presence_for_authentication? true
+
+      signing_secret fn _, _ ->
+        # This is a secret key used to sign tokens. See the note below on secrets management
+        Application.fetch_env(:ash_events, :token_signing_secret)
+      end
+    end
+
+    add_ons do
+      log_out_everywhere do
+        apply_on_password_change? true
+      end
+    end
   end
 
   events do
@@ -83,11 +103,19 @@ defmodule AshEvents.Test.Accounts.User do
       upsert? true
       upsert_identity :unique_email
     end
+
+    read :get_by_subject do
+      description "Get a user by the subject claim in a JWT"
+      argument :subject, :string, allow_nil?: false
+      get? true
+      prepare AshAuthentication.Preparations.FilterBySubject
+    end
   end
 
   policies do
     bypass always() do
       authorize_if AshEvents.Checks.TestCheck
+      authorize_if AshAuthentication.Checks.AshAuthenticationInteraction
     end
   end
 
@@ -129,7 +157,7 @@ defmodule AshEvents.Test.Accounts.User do
   end
 
   relationships do
-    has_one :user_role, AshEvents.Test.Accounts.UserRole do
+    has_one :user_role, AshEvents.Accounts.UserRole do
       public? true
     end
   end

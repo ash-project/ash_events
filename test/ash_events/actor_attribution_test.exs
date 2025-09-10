@@ -2,8 +2,8 @@ defmodule AshEvents.ActorAttributionTest do
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Accounts.User
+  alias AshEvents.Accounts
+  alias AshEvents.Accounts.User
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

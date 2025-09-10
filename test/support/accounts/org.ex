@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.Org do
+defmodule AshEvents.Accounts.Org do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
 

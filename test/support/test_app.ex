@@ -3,7 +3,8 @@ defmodule AshEvents.TestApp do
   def start(_type, _args) do
     children = [
       AshEvents.TestRepo,
-      AshEvents.Test.Vault
+      AshEvents.Vault,
+      {AshAuthentication.Supervisor, otp_app: :ash_events}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

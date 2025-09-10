@@ -2,7 +2,7 @@ defmodule AshEvents.FormsTest do
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
+  alias AshEvents.Accounts
 
   test "handles ash phoenix forms correctly" do
     form_params = %{

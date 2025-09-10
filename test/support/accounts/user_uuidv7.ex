@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.UserUuidV7 do
+defmodule AshEvents.Accounts.UserUuidV7 do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
     extensions: [AshEvents.Events]

@@ -2,9 +2,9 @@ defmodule AshEvents.UpsertTest do
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Accounts.User
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Accounts.User
+  alias AshEvents.Events
   alias AshEvents.Test.Events.EventLog
 
   require Ash.Query

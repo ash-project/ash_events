@@ -1,6 +1,6 @@
-defmodule AshEvents.Test.Accounts.User.CreateUserRole do
+defmodule AshEvents.Accounts.User.CreateUserRole do
   @moduledoc false
-  alias AshEvents.Test.Accounts
+  alias AshEvents.Accounts
   use Ash.Resource.Change
 
   def change(changeset, _opts, ctx) do

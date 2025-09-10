@@ -1,8 +1,8 @@
 defmodule AshEvents.EmbeddedResourcesTest do
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Events
 
   test "handles embedded resources" do
     user =
@@ -10,20 +10,20 @@ defmodule AshEvents.EmbeddedResourcesTest do
         given_name: "Embedded User",
         family_name: "Embedded Family",
         email: "embedded@example.com",
-        address: %AshEvents.Test.Accounts.Address{
+        address: %AshEvents.Accounts.Address{
           street: "Embedded Street",
           city: "Embedded City",
           state: "Embedded State",
           zip_code: "Embedded Zip"
         },
         other_addresses: [
-          %AshEvents.Test.Accounts.Address{
+          %AshEvents.Accounts.Address{
             street: "Other Embedded Street",
             city: "Other Embedded City",
             state: "Other Embedded State",
             zip_code: "Other Embedded Zip"
           },
-          %AshEvents.Test.Accounts.Address{
+          %AshEvents.Accounts.Address{
             street: "Another Embedded Street",
             city: "Another Embedded City",
             state: "Another Embedded State",

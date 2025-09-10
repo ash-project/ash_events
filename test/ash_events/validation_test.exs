@@ -2,8 +2,8 @@ defmodule AshEvents.ValidationTest do
   alias AshEvents.Test.Events.SystemActor
   use AshEvents.RepoCase, async: false
 
-  alias AshEvents.Test.Accounts
-  alias AshEvents.Test.Events
+  alias AshEvents.Accounts
+  alias AshEvents.Events
 
   def create_user do
     Accounts.create_user!(

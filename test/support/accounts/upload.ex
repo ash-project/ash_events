@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.Upload do
+defmodule AshEvents.Accounts.Upload do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events, AshStateMachine],
     authorizers: [Ash.Policy.Authorizer]

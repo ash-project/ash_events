@@ -1,7 +1,7 @@
-defmodule AshEvents.Test.Accounts.OrgStateMachine do
+defmodule AshEvents.Accounts.OrgStateMachine do
   @moduledoc false
   use Ash.Resource,
-    domain: AshEvents.Test.Accounts,
+    domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events, AshStateMachine],
     authorizers: [Ash.Policy.Authorizer]

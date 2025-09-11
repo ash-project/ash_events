@@ -7,9 +7,9 @@ defmodule AshEvents.AshAuthenticationMagicLinkTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts.User
+  alias AshEvents.EventLogs
   alias AshEvents.EventLogs.EventLog
   alias AshEvents.EventLogs.SystemActor
-  alias AshEvents.EventLogs
 
   require Ash.Query
 

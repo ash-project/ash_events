@@ -124,6 +124,11 @@ defmodule AshEvents.EventLog do
         doc:
           "The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid.",
         default: :uuid
+      ],
+      public_fields: [
+        type: {:or, [{:list, :atom}, {:in, [:all]}]},
+        doc: "A list of field names to make public, or the atom :all to make all fields public.",
+        default: []
       ]
     ],
     entities: [@persist_actor_primary_key],
@@ -152,6 +157,7 @@ defmodule AshEvents.EventLog do
       AshEvents.EventLog.Verifiers.VerifyCloakVault,
       AshEvents.EventLog.Verifiers.VerifyPersistActorPrimaryKey,
       AshEvents.EventLog.Verifiers.VerifyPrimaryKeyType,
+      AshEvents.EventLog.Verifiers.VerifyPublicAttributes,
       AshEvents.EventLog.Verifiers.VerifyRecordIdType,
       AshEvents.EventLog.Verifiers.VerifyReplayOverrides
     ]

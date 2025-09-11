@@ -15,6 +15,8 @@ defmodule AshEvents.EventLogs.EventLogMissingClear do
 
     persist_actor_primary_key :system_actor, AshEvents.EventLogs.SystemActor,
       attribute_type: :string
+
+    public_fields([:id, :version])
   end
 
   replay_overrides do

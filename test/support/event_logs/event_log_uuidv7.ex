@@ -14,6 +14,7 @@ defmodule AshEvents.EventLogs.EventLogUuidV7 do
     primary_key_type Ash.Type.UUIDv7
     clear_records_for_replay AshEvents.EventLogs.ClearRecordsUuidV7
     persist_actor_primary_key :user_id, AshEvents.Accounts.User
+    public_fields(:all)
 
     persist_actor_primary_key :system_actor, AshEvents.EventLogs.SystemActor,
       attribute_type: :string

@@ -17,7 +17,7 @@ defmodule AshEvents.EventLogs.EventLogCloaked do
     persist_actor_primary_key :system_actor, AshEvents.EventLogs.SystemActor,
       attribute_type: :string
 
-    cloak_vault(AshEvents.Vault)
+    cloak_vault AshEvents.Vault
   end
 
   replay_overrides do

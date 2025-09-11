@@ -52,6 +52,14 @@ defmodule AshEvents.Accounts.User do
           request_password_reset_action_name :request_password_reset_token
         end
       end
+
+      magic_link do
+        identity_field :email
+        registration_enabled? true
+        require_interaction? true
+
+        sender AshEvents.Accounts.User.Senders.SendMagicLinkEmail
+      end
     end
   end
 
@@ -216,6 +224,8 @@ defmodule AshEvents.Accounts.User do
     create :register_with_password do
       description "Register a new user with a email and password."
 
+      accept [:id, :given_name, :family_name]
+
       argument :email, :ci_string do
         allow_nil? false
       end
@@ -249,6 +259,27 @@ defmodule AshEvents.Accounts.User do
         description "A JWT that can be used to authenticate the user."
         allow_nil? false
       end
+    end
+
+    create :register_with_password_replay do
+      accept [:id, :given_name, :family_name, :email, :hashed_password]
+      skip_unknown_inputs :*
+    end
+
+    update :change_password_replay do
+      accept [:hashed_password]
+      skip_unknown_inputs :*
+    end
+
+    create :sign_in_with_magic_link_replay do
+      upsert? true
+      accept [:id, :email]
+      skip_unknown_inputs :*
+    end
+
+    update :confirm_replay do
+      accept [:confirmed_at, :updated_at, :email]
+      skip_unknown_inputs :*
     end
 
     action :request_password_reset_token do
@@ -308,8 +339,8 @@ defmodule AshEvents.Accounts.User do
 
   policies do
     bypass always() do
-      authorize_if AshEvents.Checks.TestCheck
       authorize_if AshAuthentication.Checks.AshAuthenticationInteraction
+      authorize_if actor_attribute_equals(:is_system_actor, true)
     end
 
     policy action_type([:read, :update, :destroy]) do
@@ -340,17 +371,16 @@ defmodule AshEvents.Accounts.User do
     end
 
     attribute :given_name, :string do
-      allow_nil? false
+      allow_nil? true
       public? true
     end
 
     attribute :family_name, :string do
-      allow_nil? false
+      allow_nil? true
       public? true
     end
 
     attribute :hashed_password, :string do
-      allow_nil? false
       sensitive? true
     end
 

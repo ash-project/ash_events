@@ -61,8 +61,7 @@ defmodule AshEvents.Accounts.RoutedUser do
     end
 
     attribute :hashed_password, :string do
-      allow_nil? false
-      sensitive? true
+      allow_nil? true
     end
   end
 end

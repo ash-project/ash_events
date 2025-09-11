@@ -58,6 +58,8 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
       end
     end
 
+    event_log_resource = module_opts[:event_log]
+
     params =
       original_params
       |> Enum.reduce(%{}, fn {key, value}, acc ->
@@ -74,17 +76,24 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
         cond do
           attr = Ash.Resource.Info.attribute(changeset.resource, key) ->
-            Map.put(acc, key, cast_and_dump_value(value, attr))
+            if not attr.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+              Map.put(acc, key, cast_and_dump_value(value, attr))
+            else
+              Map.put(acc, key, nil)
+            end
 
           arg = Enum.find(changeset.action.arguments, &(&1.name == key)) ->
-            Map.put(acc, key, cast_and_dump_value(value, arg))
+            if not arg.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+              Map.put(acc, key, cast_and_dump_value(value, arg))
+            else
+              Map.put(acc, key, nil)
+            end
 
           true ->
             acc
         end
       end)
 
-    event_log_resource = module_opts[:event_log]
     [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(event_log_resource)
     actor = opts[:actor]
@@ -141,7 +150,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     has_atomics? = not Enum.empty?(changeset.atomics)
 
     event_log_resource
-    |> Ash.Changeset.for_create(:create, event_params, opts)
+    |> Ash.Changeset.for_create(:create, event_params, opts ++ [authorize?: false])
     |> then(fn cs ->
       if has_atomics? do
         Ash.Changeset.add_error(
@@ -154,6 +163,6 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         cs
       end
     end)
-    |> Ash.create!()
+    |> Ash.create!(authorize?: false)
   end
 end

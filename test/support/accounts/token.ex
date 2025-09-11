@@ -11,6 +11,10 @@ defmodule AshEvents.Accounts.Token do
     repo AshEvents.TestRepo
   end
 
+  # events do
+  #  event_log AshEvents.EventLogs.EventLog
+  # end
+
   actions do
     defaults [:read]
   end

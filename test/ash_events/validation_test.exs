@@ -116,8 +116,6 @@ defmodule AshEvents.ValidationTest do
       end)
 
     assert validation_error != nil
-    # This should be our custom message: "Organization is already active"
-    # But due to the bug, it will be the default message: "Invalid value provided for active: must equal false."
     assert validation_error.message == "Organization is already active"
   end
 end

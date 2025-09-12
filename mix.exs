@@ -1,7 +1,7 @@
 defmodule AshEvents.MixProject do
   use Mix.Project
 
-  @version "0.4.4"
+  @version "0.5.0"
 
   @description """
   The extension for tracking changes to your resources via a centralized event log, with replay functionality.
@@ -128,7 +128,7 @@ defmodule AshEvents.MixProject do
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0", only: [:dev, :test]},
-      {:ash_authentication, path: "../ash_authentication", only: [:dev, :test]},
+      {:ash_authentication, "~> 4.0", only: [:dev, :test]},
       {:faker, "~> 0.18", only: :test},
       {:ex_check, "~> 0.12", only: [:dev, :test]},
       {:credo, ">= 0.0.0", only: [:dev, :test], runtime: false},

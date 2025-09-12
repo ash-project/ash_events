@@ -108,7 +108,17 @@ iex -S mix
 > MyResource.__ash_extension_config__()
 > MyResource.__ash_events_config__()
 
-# 3. Test DSL options manually in IEx
+# 3. Check EventLog public_fields configuration
+iex -S mix
+> AshEvents.EventLog.Info.event_log_public_fields!(MyApp.EventLog)
+> # Returns: :all, [:id, :version], or []
+
+# 4. Verify field visibility
+iex -S mix  
+> attrs = Ash.Resource.Info.attributes(MyApp.EventLog)
+> Enum.filter(attrs, & &1.public?)
+
+# 5. Test DSL options manually in IEx
 ```
 
 ### 🏗️ Debug Build/Compilation Issues

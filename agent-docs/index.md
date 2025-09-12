@@ -20,7 +20,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 ### Core Extension Development
 | Task | Primary Documentation | Key Files |
 |------|----------------------|-----------|
-| **Modify EventLog DSL** | [AGENTS.md](../AGENTS.md) + [lib/event_log/event_log.ex](../lib/event_log/event_log.ex) | [lib/event_log/transformers/](../lib/event_log/transformers/) |
+| **Modify EventLog DSL** | [AGENTS.md](../AGENTS.md) + [lib/event_log/event_log.ex](../lib/event_log/event_log.ex) | [lib/event_log/transformers/](../lib/event_log/transformers/) - includes public_fields config |
 | **Modify Events DSL** | [AGENTS.md](../AGENTS.md) + [lib/events/events.ex](../lib/events/events.ex) | [lib/events/transformers/](../lib/events/transformers/) |
 | **Add DSL Options** | [documentation/dsls/](../documentation/dsls/) | [lib/event_log/](../lib/event_log/), [lib/events/](../lib/events/) |
 | **Work with Transformers** | [lib/event_log/transformers/](../lib/event_log/transformers/) | [lib/events/transformers/](../lib/events/transformers/) |
@@ -60,7 +60,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 
 ### Small Files (< 300 lines) - Efficient for Agents
 - [quick-reference.md](quick-reference.md) (~200 lines)
-- [validation-safety.md](validation-safety.md) (~250 lines)  
+- [validation-safety.md](validation-safety.md) (~250 lines)
 - [changelog.md](changelog.md) (~300 lines)
 - [lib/events/action_wrapper_helpers.ex](../lib/events/action_wrapper_helpers.ex) (~150 lines)
 - [lib/events/replay_validation_wrapper.ex](../lib/events/replay_validation_wrapper.ex) (~140 lines)
@@ -74,7 +74,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 
 ### Large Files (> 600 lines) - Use Sparingly
 ⚠️ **Context Window Warning**: These files consume significant context space
-- [usage-rules.md](../usage-rules.md) (~1000 lines) - **Consumer documentation, not internal**
+- [usage-rules.md](../usage-rules.md) (~1020 lines) - **Consumer documentation, not internal**
 - [mix.exs](../mix.exs) (~150 lines) - **Small but comprehensive**
 
 ## Internal Development Patterns
@@ -90,7 +90,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 3. [validation-safety.md](validation-safety.md) - Testing procedures
 4. [test/support/](../test/support/) - Test resource patterns
 
-### For Debugging AshEvents Issues  
+### For Debugging AshEvents Issues
 1. [quick-reference.md](quick-reference.md) - Emergency commands
 2. [validation-safety.md](validation-safety.md) - Systematic debugging
 3. Relevant test files for reproduction
@@ -106,7 +106,7 @@ This index helps agents quickly find relevant documentation for **developing Ash
 
 **Required Reading Order**:
 1. [AGENTS.md](../AGENTS.md) - Critical development rules
-2. [lib/event_log/event_log.ex](../lib/event_log/event_log.ex) - Current DSL structure  
+2. [lib/event_log/event_log.ex](../lib/event_log/event_log.ex) - Current DSL structure
 3. [lib/event_log/transformers/](../lib/event_log/transformers/) - Implementation patterns
 
 **Implementation Steps**:
@@ -167,6 +167,6 @@ This index helps agents quickly find relevant documentation for **developing Ash
 
 ---
 
-**Last Updated**: 2025-01-25  
-**Focus**: Internal AshEvents development (not consumer usage)  
+**Last Updated**: 2025-01-25
+**Focus**: Internal AshEvents development (not consumer usage)
 **Documentation Structure**: Following Scaffolding Framework v1.0

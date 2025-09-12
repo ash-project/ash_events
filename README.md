@@ -83,6 +83,9 @@ defmodule MyApp.Events.Event do
     # Store primary key of actors running the actions
     persist_actor_primary_key :user_id, MyApp.Accounts.User
     persist_actor_primary_key :system_actor, MyApp.SystemActor, attribute_type: :string
+
+    # Optional: Control field visibility for public interfaces
+    public_fields :all  # or [:id, :resource, :action, :occurred_at], or [] (default)
   end
 
   # Optional: Configure replay overrides for version handling
@@ -538,6 +541,32 @@ replay_overrides do
   end
 end
 ```
+
+### Public Field Configuration
+
+Control which event log fields are visible in public interfaces like GraphQL or JSON API:
+
+```elixir
+event_log do
+  # Make all AshEvents fields public
+  public_fields :all
+  
+  # Or specify only certain fields
+  public_fields [:id, :resource, :action, :occurred_at]
+  
+  # Default: all fields are private
+  public_fields []
+end
+```
+
+**Valid field names** include all canonical AshEvents fields:
+- `:id`, `:record_id`, `:version`, `:occurred_at`
+- `:resource`, `:action`, `:action_type`
+- `:metadata`, `:data`, `:changed_attributes`
+- `:encrypted_metadata`, `:encrypted_data`, `:encrypted_changed_attributes` (when using encryption)
+- Actor attribution fields from `persist_actor_primary_key` (e.g., `:user_id`, `:system_actor`)
+
+**Important**: Only AshEvents-managed fields can be made public. User-added custom fields are not affected by this configuration.
 
 ### Multiple Actor Types
 

@@ -519,6 +519,32 @@ event_log do
 end
 ```
 
+### Public Field Configuration
+
+**Control visibility of event log fields** for GraphQL, JSON API, or other public interfaces:
+
+```elixir
+event_log do
+  # Make all AshEvents fields public
+  public_fields :all
+  
+  # Or specify only certain fields
+  public_fields [:id, :resource, :action, :occurred_at]
+  
+  # Default: all fields are private
+  public_fields []
+end
+```
+
+**Valid field names** include all canonical AshEvents fields:
+- `:id`, `:record_id`, `:version`, `:occurred_at`
+- `:resource`, `:action`, `:action_type`
+- `:metadata`, `:data`, `:changed_attributes`
+- `:encrypted_metadata`, `:encrypted_data`, `:encrypted_changed_attributes` (when using encryption)
+- Actor attribution fields from `persist_actor_primary_key` (e.g., `:user_id`, `:system_actor`)
+
+**Important**: Only AshEvents-managed fields can be made public. User-added custom fields are not affected by this configuration.
+
 ### Timestamp Tracking
 
 **Configure timestamp tracking** if your resources have custom timestamp fields:

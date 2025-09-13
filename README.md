@@ -25,7 +25,7 @@ Add `ash_events` to your dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:ash_events, "~> 0.4.4"}
+    {:ash_events, "~> 0.5.0"}
     # ... other deps
   ]
 end
@@ -550,10 +550,10 @@ Control which event log fields are visible in public interfaces like GraphQL or 
 event_log do
   # Make all AshEvents fields public
   public_fields :all
-  
+
   # Or specify only certain fields
   public_fields [:id, :resource, :action, :occurred_at]
-  
+
   # Default: all fields are private
   public_fields []
 end

@@ -5,6 +5,28 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.5.0 (2025-09-12)
+
+
+
+### Features:
+
+* Properly distinguish between action input and changed attributes when storing events. by Torkild Kjevik
+
+* Add public_fields-DSL in order to set fields in event logs as public. by Torkild Kjevik.
+
+* Add verifiers for most DSL settings. by Torkild Kjevik.
+
+### Bug Fixes:
+
+* Ensure where-clauses in wrapped changes are respected. by Torkild Kjevik
+
+* add replay validation wrapper to preserve validation messages. by Torkild Kjevik
+
+* Ensure occurred_at is identical to create & update timestamps, add  to enable tracking of changed attributes not in action input. by Torkild Kjevik
+
+* Respect update_default values for attributes when running update actions. by Torkild Kjevik
+
 ## v0.4.4 (2025-08-21)
 
 

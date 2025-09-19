@@ -21,7 +21,7 @@ Before making any agent documentation changes, you MUST:
 
 ### 1. Planning Phase
 
-Use TodoWrite to create an update plan with these steps:
+Create a systematic update plan with these steps:
 - Read `agent-docs/index.md` to understand current documentation structure
 - Identify specific agent documentation files to update/create/remove
 - Check cross-references and dependencies
@@ -99,7 +99,7 @@ For significant changes, update `agent-docs/changelog.md`:
 - Command examples tested and functional
 - Technical depth appropriate for agent implementation
 - Consistent tone and style
-- TodoWrite examples functional
+- Task planning examples functional
 
 **Structure Quality:**
 - Follows established formatting patterns
@@ -119,7 +119,7 @@ For significant changes, update `agent-docs/changelog.md`:
 - Include task-to-documentation mappings
 - Reference file sizes for context window optimization
 - Maintain mandatory documentation reading workflow
-- Include TodoWrite examples and patterns
+- Include task planning examples and patterns
 - Specify correct command usage (e.g., `mix test.reset`)
 
 **Troubleshooting Documentation:**

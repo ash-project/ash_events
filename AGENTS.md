@@ -45,11 +45,10 @@
 
 For ANY complex task (3+ steps or affecting core functionality), you MUST:
 
-1. **Create a TodoWrite list** where the FIRST items are documentation reading
-2. **Mark documentation todos as `in_progress`** before reading
-3. **Mark documentation todos as `completed`** after reading
-4. **Only then** proceed with implementation todos
-5. **Update changelog** with significant changes and their context
+1. **Plan the task** with documentation reading as the FIRST steps
+2. **Read all relevant documentation** before starting implementation
+3. **Only then** proceed with implementation work
+4. **Update changelog** with significant changes and their context
 
 ### Task-to-Documentation Mapping (REQUIRED READING)
 
@@ -71,14 +70,14 @@ For ANY complex task (3+ steps or affecting core functionality), you MUST:
 User: "Add event tracking to a new User resource"
 
 CORRECT Approach:
-1. Use TodoWrite to create todos:
-   - Read relevant core files (lib/events/events.ex, etc.) (in_progress → completed)
-   - Study test patterns in test/support/accounts/user.ex (in_progress → completed)
-   - Check generated DSL docs in documentation/dsls/ if needed (in_progress → completed)
-   - Create User resource with AshEvents.Events extension (pending → in_progress)
-   - Configure event_log reference (pending)
-   - Add actor attribution to actions (pending)
-   - Test event creation (pending)
+1. Plan the implementation steps:
+   - Read relevant core files (lib/events/events.ex, etc.)
+   - Study test patterns in test/support/accounts/user.ex
+   - Check generated DSL docs in documentation/dsls/ if needed
+   - Create User resource with AshEvents.Events extension
+   - Configure event_log reference
+   - Add actor attribution to actions
+   - Test event creation
 
 INCORRECT Approach:
 - Jumping straight to editing User resource
@@ -105,7 +104,7 @@ INCORRECT Approach:
 - ✅ Handle side effects correctly to prevent replay issues
 - ✅ Use optimal configurations for performance
 
-**Enforcement**: You MUST use TodoWrite for documentation reading. This is not optional.
+**Enforcement**: You MUST read documentation before implementation. This is not optional.
 
 ### Quick Reference: When to Read What
 
@@ -155,15 +154,11 @@ mix test.migrate                         # Run migrations
 mix test.generate_migrations             # Generate migrations
 
 # Testing commands
-mix test                                 # Run all tests (41 tests, ~1 second)
+mix test                                 # Run all tests
 mix test --trace                         # Run tests with detailed output
 
 # Quality checks
-mix format                               # Format code
-mix credo --strict                       # Linting with strict rules
-mix dialyzer                             # Type checking
-mix docs                                 # Generate documentation
-mix spark.cheat_sheets                   # Generate DSL documentation (auto-updates documentation/dsls/)
+mix check                               # Runs all quality checks
 ```
 
 ### Event Log Resource Setup
@@ -296,7 +291,8 @@ iex -S mix
 ### Agent-Specific Documentation (see agent-docs/ folder)
 - **[agent-docs/quick-reference.md](agent-docs/quick-reference.md)** - **EMERGENCY REFERENCE** - Quick commands, patterns, and critical reminders for immediate help
 - **[agent-docs/changelog.md](agent-docs/changelog.md)** - **CONTEXT AND EVOLUTION** - Understanding why current patterns exist and the reasoning behind architectural decisions
-- **[agent-docs/documentation-update-guide.md](agent-docs/documentation-update-guide.md)** - **MANDATORY FOR DOCS UPDATES** - Complete guide for updating agent documentation with established patterns and workflows
+- **[agent-docs/documentation-update-guide.md](agent-docs/documentation-update-guide.md)** - **MANDATORY FOR DOCS UPDATES** - Complete guide for updating internal agent documentation with established patterns and workflows
+- **[agent-docs/usage-rules-update-guide.md](agent-docs/usage-rules-update-guide.md)** - **USAGE RULES UPDATES** - Guide for updating usage-rules.md (external user documentation)
 
 ### File Size Reference (Context Window Planning)
 

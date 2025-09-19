@@ -135,9 +135,9 @@ When creating usage rules for your project, focus on:
 
 ## Writing Process
 
-### 1. Planning Phase (Use TodoWrite)
+### 1. Planning Phase
 
-Create a comprehensive plan with these todos:
+Create a comprehensive plan with these steps:
 - Research package documentation and README
 - Analyze package configuration patterns
 - Identify common usage workflows

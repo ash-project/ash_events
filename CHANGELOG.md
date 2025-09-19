@@ -5,6 +5,19 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## v0.5.1 (2025-09-19)
+
+
+
+
+### Bug Fixes:
+
+* silence compile warnings when adding advisory xact lock by Torkild G. Kjevik
+
+### Improvements:
+
+* remove redundant verifier by Torkild G. Kjevik
+
 ## v0.5.0 (2025-09-19)
 
 

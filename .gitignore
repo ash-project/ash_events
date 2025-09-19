@@ -27,3 +27,5 @@ ash_events-*.tar
 
 /test/test.db
 reset-db
+
+.elixir_ls

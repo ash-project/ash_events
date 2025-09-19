@@ -18,7 +18,7 @@ Each entry includes:
 
 ---
 
-## 2025-01-25
+## 2025-09-19
 
 ### Agent Documentation Structure Scaffolding
 **Change**: Created comprehensive agent documentation structure following scaffolding framework
@@ -27,7 +27,7 @@ Each entry includes:
 **Impact**: Agents now have proper guidance for working ON AshEvents development vs using AshEvents as dependency
 **Key Insights**: Clear separation between consumer docs (usage-rules.md) and developer docs (agent-docs/) significantly improves development workflow
 
-### Documentation Focus Clarification  
+### Documentation Focus Clarification
 **Change**: Clarified that usage-rules.md is consumer documentation, not internal development guidance
 **Context**: Previous AGENTS.md incorrectly referenced usage-rules.md for internal development tasks
 **Files**: `agent-docs/index.md`, updated understanding of documentation structure
@@ -36,12 +36,12 @@ Each entry includes:
 
 ---
 
-## 2025-01-25 (Continued)
+## 2025-09-19 (Continued)
 
 ### Changed Attributes Tracking Implementation
 **Change**: Added comprehensive changed attributes tracking and replay functionality to AshEvents core
 **Context**: Event replay was incomplete for resources with business logic that modified attributes beyond the original input parameters. Default values, auto-generated attributes (slugs, UUIDs, computed fields), and attributes modified by Ash changes/extensions were not being captured in events, causing incomplete state reconstruction during replay. This is a critical gap for real-world event sourcing applications where business logic transforms input data.
-**Files**: 
+**Files**:
 - `lib/event_log/transformers/add_attributes.ex` - Added `changed_attributes` field to event resources
 - `lib/events/events.ex` - Added `replay_non_input_attribute_changes` DSL option
 - `lib/events/changes/apply_changed_attributes.ex` - New change module for applying changed attributes during replay
@@ -49,7 +49,7 @@ Each entry includes:
 - `lib/event_log/replay.ex` - Enhanced to pass changed attributes context during replay
 - `test/ash_events/changed_attributes_test.exs` - Comprehensive test coverage
 **Impact**: AshEvents now supports complete state reconstruction for complex business logic scenarios. This enables proper event sourcing for applications with extensive attribute transformations, default value applications, and computed field generation. The two-strategy approach (`:force_change` vs `:as_arguments`) provides flexibility for different replay requirements.
-**Key Insights**: 
+**Key Insights**:
 - Event sourcing requires capturing not just input parameters but also all business logic transformations
 - Separating original input (`event.data`) from business logic changes (`event.changed_attributes`) provides clear audit trails
 - Context propagation in Ash action pipelines requires careful timing - changes must have context available from the start
@@ -126,7 +126,7 @@ Each entry includes:
 - Consistent actor attribution handling
 - Safe type casting and data serialization
 
-### Replay Functionality Architecture  
+### Replay Functionality Architecture
 **Current State**: Centralized replay in `lib/event_log/replay.ex` with sophisticated change handling
 **Key Patterns**:
 - Replay change wrapper for handling complex change modules
@@ -147,7 +147,7 @@ Each entry includes:
 **Key Patterns**:
 - DSL definitions in main extension files
 - Implementation logic in transformers
-- Validation in verifiers  
+- Validation in verifiers
 - Generated documentation from DSL definitions
 
 ---
@@ -185,6 +185,6 @@ Each entry includes:
 
 ---
 
-**Last Updated**: 2025-01-25  
-**Focus**: Internal development context and decisions  
+**Last Updated**: 2025-01-25
+**Focus**: Internal development context and decisions
 **Next Review**: After next major internal development milestone

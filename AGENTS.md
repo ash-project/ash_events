@@ -53,9 +53,17 @@ For ANY complex task (3+ steps or affecting core functionality), you MUST:
 
 ### Task-to-Documentation Mapping (REQUIRED READING)
 
-**PRIMARY RESOURCE**: Always start with [agent-docs/index.md](agent-docs/index.md) for comprehensive documentation guidance.
+**For internal AshEvents development:**
 
-The Agent Index provides task-specific documentation mapping, context window optimization, and file size references to help you efficiently find the right documentation for your needs.
+| Task Type | Primary Documentation | Key Files |
+|-----------|----------------------|-----------|
+| **Modify EventLog DSL** | [lib/event_log/event_log.ex](lib/event_log/event_log.ex) | [lib/event_log/transformers/](lib/event_log/transformers/) |
+| **Modify Events DSL** | [lib/events/events.ex](lib/events/events.ex) | [lib/events/transformers/](lib/events/transformers/) |
+| **Work with Action Wrappers** | [lib/events/action_wrapper_helpers.ex](lib/events/action_wrapper_helpers.ex) | [lib/events/*_action_wrapper.ex](lib/events/) |
+| **Event Replay Development** | [lib/event_log/replay.ex](lib/event_log/replay.ex) | [test/ash_events/replay_test.exs](test/ash_events/replay_test.exs) |
+| **Add Feature Tests** | [test/ash_events/](test/ash_events/) patterns | [test/support/](test/support/) for setup examples |
+
+**⚠️ IMPORTANT**: DSL documentation in `documentation/dsls/` is **automatically generated** by `mix spark.cheat_sheets`. Never edit these files manually - they will be overwritten.
 
 ### Example Mandatory Workflow
 
@@ -64,9 +72,9 @@ User: "Add event tracking to a new User resource"
 
 CORRECT Approach:
 1. Use TodoWrite to create todos:
-   - Read agent-docs/index.md to find relevant documentation (in_progress → completed)
-   - Read usage-rules.md sections on Events extension (in_progress → completed)
-   - Read test examples in test/support/accounts/user.ex (in_progress → completed)
+   - Read relevant core files (lib/events/events.ex, etc.) (in_progress → completed)
+   - Study test patterns in test/support/accounts/user.ex (in_progress → completed)
+   - Check generated DSL docs in documentation/dsls/ if needed (in_progress → completed)
    - Create User resource with AshEvents.Events extension (pending → in_progress)
    - Configure event_log reference (pending)
    - Add actor attribution to actions (pending)
@@ -101,9 +109,14 @@ INCORRECT Approach:
 
 ### Quick Reference: When to Read What
 
-**For any task** → Start with [agent-docs/index.md](agent-docs/index.md) to find the most relevant documentation
+**For internal development tasks:**
 
-The Agent Index provides task-specific guidance, context window optimization, and direct links to the appropriate documentation based on your specific needs.
+**DSL Development** → [lib/event_log/event_log.ex](lib/event_log/event_log.ex) or [lib/events/events.ex](lib/events/events.ex) + transformers
+**Action Wrapper Changes** → [lib/events/action_wrapper_helpers.ex](lib/events/action_wrapper_helpers.ex) + specific wrapper files
+**Event Replay Issues** → [lib/event_log/replay.ex](lib/event_log/replay.ex) + replay tests
+**Testing Patterns** → [test/support/](test/support/) for examples + [test/ash_events/](test/ash_events/) for patterns
+**Emergency Commands** → [agent-docs/quick-reference.md](agent-docs/quick-reference.md)
+**Context & Evolution** → [agent-docs/changelog.md](agent-docs/changelog.md)
 
 ## Codebase Navigation
 
@@ -118,15 +131,15 @@ The Agent Index provides task-specific guidance, context window optimization, an
 - `lib/event_log/replay.ex` - Event replay functionality
 
 **Test Resources (`test/support/`):**
-- `test/support/events/event_log.ex` - Example event log resource
-- `test/support/events/clear_records.ex` - Clear records implementation
+- `test/support/event_logs/event_log.ex` - Example event log resource
+- `test/support/event_logs/clear_records.ex` - Clear records implementation
 - `test/support/accounts/user.ex` - Example resource with events
 - `test/support/accounts/org.ex` - Example organization resource
 - `test/support/test_repo.ex` - Test database configuration
 
 **Generated Documentation (`doc/`):**
 - `doc/` - Generated ExDoc documentation
-- `documentation/dsls/` - DSL documentation files
+- `documentation/dsls/` - **AUTO-GENERATED** DSL documentation (via `mix spark.cheat_sheets`)
 
 ## Essential Workflows
 
@@ -150,6 +163,7 @@ mix format                               # Format code
 mix credo --strict                       # Linting with strict rules
 mix dialyzer                             # Type checking
 mix docs                                 # Generate documentation
+mix spark.cheat_sheets                   # Generate DSL documentation (auto-updates documentation/dsls/)
 ```
 
 ### Event Log Resource Setup
@@ -271,27 +285,35 @@ iex -S mix
 ### User Documentation
 - **[README.md](README.md)** - Project overview and installation
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
-- **[usage-rules.md](usage-rules.md)** - Comprehensive usage patterns and rules
 
 ### Developer Documentation
-- **[documentation/dsls/DSL-AshEvents.EventLog.md](documentation/dsls/DSL-AshEvents.EventLog.md)** - EventLog DSL reference
-- **[documentation/dsls/DSL-AshEvents.Events.md](documentation/dsls/DSL-AshEvents.Events.md)** - Events DSL reference
+- **[documentation/dsls/DSL-AshEvents.EventLog.md](documentation/dsls/DSL-AshEvents.EventLog.md)** - EventLog DSL reference (**AUTO-GENERATED**)
+- **[documentation/dsls/DSL-AshEvents.Events.md](documentation/dsls/DSL-AshEvents.Events.md)** - Events DSL reference (**AUTO-GENERATED**)
 
 ### API Reference
 - **[doc/](doc/)** - Generated ExDoc API documentation
 
 ### Agent-Specific Documentation (see agent-docs/ folder)
-- **[agent-docs/index.md](agent-docs/index.md)** - **START HERE** - Comprehensive documentation index with task-specific guidance, context window optimization, and direct links to relevant files
 - **[agent-docs/quick-reference.md](agent-docs/quick-reference.md)** - **EMERGENCY REFERENCE** - Quick commands, patterns, and critical reminders for immediate help
 - **[agent-docs/changelog.md](agent-docs/changelog.md)** - **CONTEXT AND EVOLUTION** - Understanding why current patterns exist and the reasoning behind architectural decisions
 - **[agent-docs/documentation-update-guide.md](agent-docs/documentation-update-guide.md)** - **MANDATORY FOR DOCS UPDATES** - Complete guide for updating agent documentation with established patterns and workflows
+
+### File Size Reference (Context Window Planning)
+
+**Small Files (< 200 lines) - Efficient for agents:**
+- Core lib files: [lib/event_log/event_log.ex](lib/event_log/event_log.ex) (177 lines), [lib/events/events.ex](lib/events/events.ex) (89 lines)
+- Agent docs: [agent-docs/quick-reference.md](agent-docs/quick-reference.md) (175 lines), [agent-docs/changelog.md](agent-docs/changelog.md) (189 lines)
+
+**Medium Files (200-600 lines) - Manageable:**
+- Documentation: [README.md](README.md) (590 lines)
+- Code: [lib/event_log/replay.ex](lib/event_log/replay.ex) (209 lines)
 
 ## Quick Reference for AI Assistants
 
 ### 🚨 CRITICAL REMINDER: ACTOR ATTRIBUTION IS MANDATORY
 
 **ALWAYS use actor attribution - NEVER perform actions without setting actor**
-**ALWAYS read usage-rules.md before implementing - NEVER skip documentation**
+**ALWAYS read relevant core files before implementing - NEVER skip documentation**
 
 ### Complete Command Reference
 

@@ -4,6 +4,7 @@ defmodule AshEvents.Events.Transformers.WrapActions do
 
   def after?(_), do: true
 
+  # sobelow_skip ["DOS.BinToAtom"]
   def transform(dsl) do
     event_log_resource = AshEvents.Events.Info.events_event_log!(dsl)
 
@@ -152,7 +153,6 @@ defmodule AshEvents.Events.Transformers.WrapActions do
          )}
 
       if action.type == :create and action.upsert? do
-        # sobelow_skip ["BinToAtom"]
         replay_update_action_name = :"ash_events_replay_#{action.name}_update"
 
         replay_update_action = %Ash.Resource.Actions.Update{

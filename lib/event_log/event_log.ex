@@ -156,7 +156,6 @@ defmodule AshEvents.EventLog do
       AshEvents.EventLog.Verifiers.VerifyClearRecordsForReplay,
       AshEvents.EventLog.Verifiers.VerifyCloakVault,
       AshEvents.EventLog.Verifiers.VerifyPersistActorPrimaryKey,
-      AshEvents.EventLog.Verifiers.VerifyPrimaryKeyType,
       AshEvents.EventLog.Verifiers.VerifyPublicAttributes,
       AshEvents.EventLog.Verifiers.VerifyRecordIdType,
       AshEvents.EventLog.Verifiers.VerifyReplayOverrides

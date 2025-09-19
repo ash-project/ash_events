@@ -96,16 +96,6 @@ defmodule AshEvents.EventLog.Verifiers.VerifyAdvisoryLockConfig do
     end
   end
 
-  defp verify_advisory_lock_key_default(lock_key, resource) do
-    {:error,
-     Spark.Error.DslError.exception(
-       message:
-         "advisory_lock_key_default must be an integer or a list of two integers, got #{inspect(lock_key)}",
-       path: [:event_log, :advisory_lock_key_default],
-       module: resource
-     )}
-  end
-
   defp valid_32bit_integer?(value) when is_integer(value) do
     value >= -2_147_483_648 and value <= 2_147_483_647
   end

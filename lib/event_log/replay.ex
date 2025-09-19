@@ -57,7 +57,7 @@ defmodule AshEvents.EventLog.Actions.Replay do
   end
 
   defp replay_upsert_as_update(event, resource, existing_record, opts) do
-    replay_action_name = :"ash_events_replay_#{event.action}_update"
+    replay_action_name = String.to_existing_atom("ash_events_replay_#{event.action}_update")
     actions = Ash.Resource.Info.actions(resource)
 
     update_action =

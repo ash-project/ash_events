@@ -174,9 +174,6 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
       list when is_list(list) ->
         # Only allow specific canonical AshEvents fields
         Enum.member?(@ash_events_fields, attribute_name) and Enum.member?(list, attribute_name)
-
-      _ ->
-        false
     end
   end
 
@@ -191,9 +188,6 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
 
       list when is_list(list) ->
         Enum.member?(all_ash_events_fields, attribute_name) and Enum.member?(list, attribute_name)
-
-      _ ->
-        false
     end
   end
 end

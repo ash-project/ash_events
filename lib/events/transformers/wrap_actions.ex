@@ -152,6 +152,7 @@ defmodule AshEvents.Events.Transformers.WrapActions do
          )}
 
       if action.type == :create and action.upsert? do
+        # sobelow_skip ["BinToAtom"]
         replay_update_action_name = :"ash_events_replay_#{action.name}_update"
 
         replay_update_action = %Ash.Resource.Actions.Update{

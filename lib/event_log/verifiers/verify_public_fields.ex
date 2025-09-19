@@ -43,14 +43,6 @@ defmodule AshEvents.EventLog.Verifiers.VerifyPublicAttributes do
              module: resource
            )}
         end
-
-      other ->
-        {:error,
-         Spark.Error.DslError.exception(
-           message: "public_fields must be either :all or a list of atoms, got #{inspect(other)}",
-           path: [:event_log, :public_fields],
-           module: resource
-         )}
     end
   end
 end

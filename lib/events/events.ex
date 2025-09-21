@@ -18,7 +18,7 @@ defmodule AshEvents.Events do
         only_actions [:create, :update, :destroy]
         current_action_versions create: 2, update: 3, destroy: 2
         replay_non_input_attribute_changes [create_v1: :as_arguments, update_v2: :force_change]
-        store_sensitive_attributes [:hashed_password, :api_key]
+        store_sensitive_attributes [:hashed_password]
       end
       """
     ],

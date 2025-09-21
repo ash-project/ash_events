@@ -1,7 +1,7 @@
 # AshEvents Emergency Debugging Reference
 
 > **Purpose**: Rapid debugging assistance and validation checklists for active development
-> **For basic commands and workflows**: See [../CLAUDE.md](../CLAUDE.md)
+> **For basic commands and workflows**: See [../AGENTS.md](../AGENTS.md)
 
 ## 🚨 Common Error Patterns & Solutions
 
@@ -15,14 +15,14 @@ mix test --trace        # Verify tests pass with detailed output
 ```
 **Prevention**: Always use `mix test.reset` before debugging, never `mix ecto.reset`
 
-### Event Creation Failures  
+### Event Creation Failures
 **Symptoms**: Events not being created, `nil` event_id, actor attribution missing
 **Root Causes**: Missing actor in action calls, action wrapper not applied, event log misconfiguration
 **Solution**: Run full test suite and check actor attribution
 ```bash
 mix test.reset && mix test    # Reset and run all tests
 ```
-**Debug Pattern**: 
+**Debug Pattern**:
 1. Check action call has `actor: user` parameter
 2. Verify resource has `AshEvents.Events` extension
 3. Confirm event_log reference is correct
@@ -39,7 +39,7 @@ mix test.reset && mix test    # Reset and run all tests
 2. Check event chronological ordering
 3. Test replay manually with `iex -S mix`
 
-### Validation Message Issues  
+### Validation Message Issues
 **Symptoms**: Custom validation messages disappearing during replay, default messages shown instead
 **Root Cause**: Using `ReplayChangeWrapper` instead of `ReplayValidationWrapper`
 **Solution**: Run tests to identify validation issues
@@ -98,7 +98,7 @@ iex -S mix
 # Clear -> Create one event -> Replay -> Verify state
 ```
 
-### 🔧 Debug DSL Configuration Issues  
+### 🔧 Debug DSL Configuration Issues
 ```bash
 # 1. Check DSL compilation
 mix compile --force --warnings-as-errors
@@ -114,7 +114,7 @@ iex -S mix
 > # Returns: :all, [:id, :version], or []
 
 # 4. Verify field visibility
-iex -S mix  
+iex -S mix
 > attrs = Ash.Resource.Info.attributes(MyApp.EventLog)
 > Enum.filter(attrs, & &1.public?)
 
@@ -139,7 +139,7 @@ mix test
 - [ ] **Database Reset**: `mix test.reset` - Clean test state
 - [ ] **All Tests Pass**: `mix test` - Full test suite passes (41 tests, ~1 second)
 - [ ] **Code Quality**: `mix format && mix credo --strict` - Format and lint
-- [ ] **Type Check**: `mix dialyzer` - No type specification errors  
+- [ ] **Type Check**: `mix dialyzer` - No type specification errors
 - [ ] **Documentation**: `mix docs` - Documentation builds without warnings
 - [ ] **Manual Testing**: Test your changes in `iex -S mix` if needed
 
@@ -150,7 +150,7 @@ mix test
 Action Called → Action Wrapper → Event Created → Actor Attributed → Original Action Proceeds
 ```
 
-### Event Replay Flow  
+### Event Replay Flow
 ```
 Clear Records → Fetch Events (chronological) → Replay Actions → Reconstruct State
 ```
@@ -162,15 +162,15 @@ DSL Definition → Transformers Apply Logic → Verifiers Validate → Documenta
 
 ### Critical Extension Points
 - **Action Wrappers**: Intercept and wrap resource actions
-- **Transformers**: Implement DSL logic during compilation  
+- **Transformers**: Implement DSL logic during compilation
 - **Verifiers**: Validate DSL configuration and usage
 - **Replay Logic**: Reconstruct state from event history
 
 ---
 
-**🆘 When This Reference Fails**: Check [../CLAUDE.md](../CLAUDE.md) for comprehensive project guidance  
-**⚡ For Basic Commands**: See [../CLAUDE.md](../CLAUDE.md) command reference section  
-**📚 For Understanding Context**: See [../agent-docs/index.md](index.md) for complete documentation map  
+**🆘 When This Reference Fails**: Check [../AGENTS.md](../AGENTS.md) for comprehensive project guidance
+**⚡ For Basic Commands**: See [../AGENTS.md](../AGENTS.md) command reference section
+**📚 For Understanding Context**: See [../agent-docs/index.md](index.md) for complete documentation map
 
-**Last Updated**: 2025-01-25  
+**Last Updated**: 2025-01-25
 **Focus**: Emergency debugging, error resolution, and validation workflows

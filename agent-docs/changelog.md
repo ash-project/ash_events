@@ -18,21 +18,44 @@ Each entry includes:
 
 ---
 
+## 2025-09-21
+
+### Array Binary Attribute Support Implementation
+**Change**: Enhanced binary attribute encoding system to support arrays of binary values (`{:array, :binary}`)
+**Context**: The existing binary attribute encoding only handled single binary values. Arrays of binary data (e.g., lists of cryptographic keys, binary tokens, or encoded data collections) were not properly encoded/decoded during event storage and replay. This enhancement extends the Base64 encoding system to handle array structures while maintaining the same encoding metadata approach.
+**Files**:
+- `lib/event_log/replay.ex` - Enhanced `decode_values_with_encoders()` to handle array binary decoding
+- `test/support/accounts/user.ex` - Added `binary_keys` array binary attribute and generator function
+- `test/ash_events/binary_attributes_test.exs` - Added comprehensive array binary encoding/decoding tests
+- `priv/test_repo/migrations/20250921142423_add_binary_keys_to_users.exs` - Migration for test infrastructure
+- `event_field_encoders.md` - Updated documentation to include array binary support
+**Impact**: AshEvents now provides complete binary attribute support for both single values and arrays. Agents can rely on array binary attributes working seamlessly with event storage and replay. The encoding metadata system scales naturally to array structures.
+**Key Insights**: The existing encoding metadata approach (`"base64"` for field encoding type) scales effectively to arrays by applying element-wise encoding while preserving array structure. The replay logic needed minimal changes - just handling list values in addition to binary values when decoding Base64 data.
+
+---
+
 ## 2025-09-19
 
 ### Agent Documentation Structure Scaffolding
 **Change**: Created comprehensive agent documentation structure following scaffolding framework
 **Context**: Needed proper internal development documentation separated from consumer documentation (usage-rules.md)
-**Files**: `agent-docs/index.md`, `agent-docs/changelog.md`, `agent-docs/` directory structure
+**Files**: `AGENTS.md`, `agent-docs/changelog.md`, `agent-docs/` directory structure
 **Impact**: Agents now have proper guidance for working ON AshEvents development vs using AshEvents as dependency
 **Key Insights**: Clear separation between consumer docs (usage-rules.md) and developer docs (agent-docs/) significantly improves development workflow
 
 ### Documentation Focus Clarification
 **Change**: Clarified that usage-rules.md is consumer documentation, not internal development guidance
-**Context**: Previous AGENTS.md incorrectly referenced usage-rules.md for internal development tasks
-**Files**: `agent-docs/index.md`, updated understanding of documentation structure
+**Context**: Previous documentation incorrectly referenced usage-rules.md for internal development tasks
+**Files**: `AGENTS.md`, updated understanding of documentation structure
 **Impact**: Agents now correctly understand the distinction between internal development and consumer usage
 **Key Insights**: Documentation scope must be clearly defined - internal vs external usage have completely different needs
+
+### Documentation Update Guide Correction
+**Change**: Fixed `agent-docs/documentation-update-guide.md` to reference existing `AGENTS.md` instead of non-existent `agent-docs/index.md`
+**Context**: The documentation update guide was referencing a file that no longer exists, making the workflow guidance incorrect for agents
+**Files**: `agent-docs/documentation-update-guide.md`
+**Impact**: Agents now have correct guidance for updating documentation with proper entry point references
+**Key Insights**: Documentation maintenance guides must stay current with actual file structure to remain useful
 
 ---
 

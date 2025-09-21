@@ -4,29 +4,31 @@
 
 When updating agent documentation, maintain established patterns and focus on creating a practical reference corpus. Documentation should provide agents with the context and knowledge needed to complete tasks efficiently and correctly.
 
+**Important File Structure Note For Claude Code Agents**: `CLAUDE.md` is a symlink to `AGENTS.md` to support developers using different AI tools. Always reference `AGENTS.md` as the canonical main agent guide in documentation, as it is the actual file that contains the content.
+
 ## Pre-Update Analysis (MANDATORY)
 
 Before making any agent documentation changes, you MUST:
 
-1. **Read the Agent Index First**: Start with `agent-docs/index.md` to understand current documentation structure and find related content
+1. **Read the Main Agent Guide First**: Start with `AGENTS.md` to understand current documentation structure and find related content
 2. **Identify Documentation Type**: Determine if you're updating:
    - Agent implementation guides (setup, patterns, workflows)
    - Agent troubleshooting documentation (error patterns, debugging guides)
    - Agent quick reference materials (command references, critical reminders)
    - Agent-specific architectural documentation (context optimization, task mapping)
 3. **Check Dependencies**: Identify other agent documentation files that reference the content you're updating
-4. **Assess Impact**: Determine if changes will affect the agent index, task-to-documentation mappings, or established workflows
+4. **Assess Impact**: Determine if changes will affect the main agent guide, task-to-documentation mappings, or established workflows
 
 ## Agent Documentation Update Workflow
 
 ### 1. Planning Phase
 
 Create a systematic update plan with these steps:
-- Read `agent-docs/index.md` to understand current documentation structure
+- Read `AGENTS.md` to understand current documentation structure and task mappings
 - Identify specific agent documentation files to update/create/remove
 - Check cross-references and dependencies
 - Plan updates to maintain workflow consistency
-- Update agent index task mappings if needed
+- Update main agent guide task mappings if needed
 - Plan changelog entry for significant changes
 
 ### 2. Content Standards
@@ -65,22 +67,22 @@ Create a systematic update plan with these steps:
 - Place in `agent-docs/` directory following established categorization
 - Use consistent naming conventions (kebab-case, descriptive)
 - Include proper documentation headers and structure
-- Immediately update `agent-docs/index.md` with new file reference
+- Immediately update `AGENTS.md` with new file reference in appropriate section
 
 **For Removing Documentation:**
 - Mark as deprecated first with clear migration path
 - Update all references to point to replacement documentation
-- Remove from `agent-docs/index.md` and update task mappings
+- Remove from `AGENTS.md` and update task mappings
 - Delete only after confirming no dependencies exist
 
-### 4. Agent Index Maintenance (CRITICAL)
+### 4. Main Agent Guide Maintenance (CRITICAL)
 
-Whenever you update agent documentation, update `agent-docs/index.md`:
+Whenever you update agent documentation, update `AGENTS.md`:
 - Add new documentation files to appropriate task categories
 - Update file descriptions and context window size references
-- Maintain task-to-documentation mapping
-- Update context window optimization notes
-- Keep "Quick Navigation" section current
+- Maintain task-to-documentation mapping in the "Documentation Reference Map" section
+- Update context window optimization notes if applicable
+- Keep navigation sections current
 
 ### 5. Changelog Maintenance (REQUIRED)
 
@@ -108,7 +110,7 @@ For significant changes, update `agent-docs/changelog.md`:
 - All links and references functional
 
 **Integration Quality:**
-- Agent index updated with content changes
+- Main agent guide (`AGENTS.md`) updated with content changes
 - Cross-references updated throughout documentation
 - Task-to-documentation mappings accurate
 - No broken internal links
@@ -139,7 +141,7 @@ For significant changes, update `agent-docs/changelog.md`:
 After completing documentation updates:
 1. **Test Examples**: Ensure workflow examples and commands work with current codebase
 2. **Check Links**: Verify all internal links are functional
-3. **Review Agent Index**: Confirm `agent-docs/index.md` accurately reflects changes
+3. **Review Main Agent Guide**: Confirm `AGENTS.md` accurately reflects changes
 4. **Update Changelog**: Add entry to `agent-docs/changelog.md` for significant changes
 5. **Cross-Reference Check**: Ensure other documentation referencing changes is accurate
 6. **Pattern Consistency**: Verify changes follow established patterns
@@ -148,7 +150,7 @@ After completing documentation updates:
 ## Error Prevention
 
 Common mistakes to avoid:
-- ❌ Creating documentation without updating agent index
+- ❌ Creating documentation without updating main agent guide (`AGENTS.md`)
 - ❌ Making significant changes without updating changelog
 - ❌ Changing established workflow patterns without updating related files
 - ❌ Removing documentation without checking dependencies

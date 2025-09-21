@@ -34,32 +34,30 @@ defmodule AshEvents.Events.Verifiers.VerifyStoreSensitiveAttributes do
         all_attribute_names = Enum.map(all_attributes, & &1.name)
 
         Enum.reduce_while(store_sensitive_attributes, :ok, fn attribute_name, acc ->
-          cond do
-            attribute_name not in all_attribute_names ->
+          if attribute_name in all_attribute_names do
+            attribute = Enum.find(all_attributes, &(&1.name == attribute_name))
+
+            if attribute.sensitive? do
+              {:cont, acc}
+            else
               {:halt,
                {:error,
                 Spark.Error.DslError.exception(
                   message:
-                    "Attribute #{inspect(attribute_name)} in store_sensitive_attributes does not exist on resource #{resource}",
+                    "Attribute #{inspect(attribute_name)} in store_sensitive_attributes is not marked as sensitive on resource #{resource}. Only sensitive attributes should be listed here.",
                   path: [:events, :store_sensitive_attributes],
                   module: resource
                 )}}
-
-            true ->
-              attribute = Enum.find(all_attributes, &(&1.name == attribute_name))
-
-              if not attribute.sensitive? do
-                {:halt,
-                 {:error,
-                  Spark.Error.DslError.exception(
-                    message:
-                      "Attribute #{inspect(attribute_name)} in store_sensitive_attributes is not marked as sensitive on resource #{resource}. Only sensitive attributes should be listed here.",
-                    path: [:events, :store_sensitive_attributes],
-                    module: resource
-                  )}}
-              else
-                {:cont, acc}
-              end
+            end
+          else
+            {:halt,
+             {:error,
+              Spark.Error.DslError.exception(
+                message:
+                  "Attribute #{inspect(attribute_name)} in store_sensitive_attributes does not exist on resource #{resource}",
+                path: [:events, :store_sensitive_attributes],
+                module: resource
+              )}}
           end
         end)
     end

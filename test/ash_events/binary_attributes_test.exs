@@ -73,10 +73,12 @@ defmodule AshEvents.BinaryAttributesTest do
       # Check that encoding metadata was recorded
       # No binary data in params for this test (all binary data is in changed_attributes)
       assert user_event.data_field_encoders == %{}
+
       expected_encoders = %{
         "api_key_hash" => "base64",
         "binary_keys" => "base64"
       }
+
       assert user_event.changed_attributes_field_encoders == expected_encoders
 
       # Verify that event replay would work with encoding metadata
@@ -113,6 +115,7 @@ defmodule AshEvents.BinaryAttributesTest do
         "api_key_hash" => "base64",
         "binary_keys" => "base64"
       }
+
       assert user_event.changed_attributes_field_encoders == expected_encoders
     end
 
@@ -147,6 +150,7 @@ defmodule AshEvents.BinaryAttributesTest do
         "api_key_hash" => "base64",
         "binary_keys" => "base64"
       }
+
       assert user_event.changed_attributes_field_encoders == expected_encoders
       assert user_event.changed_attributes["api_key_hash"] != nil
 
@@ -207,7 +211,13 @@ defmodule AshEvents.BinaryAttributesTest do
 
       # Verify events were created successfully
       events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create and &1.data["email"] == "array_test@example.com"))
+
+      user_event =
+        Enum.find(
+          events,
+          &(&1.resource == User and &1.action == :create and
+              &1.data["email"] == "array_test@example.com")
+        )
 
       assert user_event != nil
       assert user_event.changed_attributes != nil
@@ -243,14 +253,22 @@ defmodule AshEvents.BinaryAttributesTest do
 
       # Verify encoding metadata is stored in the event
       events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create and &1.data["email"] == "array_metadata@example.com"))
+
+      user_event =
+        Enum.find(
+          events,
+          &(&1.resource == User and &1.action == :create and
+              &1.data["email"] == "array_metadata@example.com")
+        )
 
       # Check that encoding metadata was recorded for both binary attributes
       assert user_event.data_field_encoders == %{}
+
       expected_encoders = %{
         "api_key_hash" => "base64",
         "binary_keys" => "base64"
       }
+
       assert user_event.changed_attributes_field_encoders == expected_encoders
 
       # Verify that array elements can be decoded using the encoding metadata
@@ -258,10 +276,11 @@ defmodule AshEvents.BinaryAttributesTest do
       assert is_list(encoded_keys)
 
       # Decode each element and verify they match the original
-      decoded_keys = Enum.map(encoded_keys, fn encoded ->
-        {:ok, decoded} = Base.decode64(encoded)
-        decoded
-      end)
+      decoded_keys =
+        Enum.map(encoded_keys, fn encoded ->
+          {:ok, decoded} = Base.decode64(encoded)
+          decoded
+        end)
 
       assert decoded_keys == user.binary_keys
     end
@@ -290,22 +309,31 @@ defmodule AshEvents.BinaryAttributesTest do
 
       # Verify events were created with proper encoding metadata
       events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create and &1.data["email"] == "array_replay@example.com"))
+
+      user_event =
+        Enum.find(
+          events,
+          &(&1.resource == User and &1.action == :create and
+              &1.data["email"] == "array_replay@example.com")
+        )
 
       expected_encoders = %{
         "api_key_hash" => "base64",
         "binary_keys" => "base64"
       }
+
       assert user_event.changed_attributes_field_encoders == expected_encoders
 
       # Verify the binary array is Base64 encoded in the event
       encoded_keys = user_event.changed_attributes["binary_keys"]
       assert is_list(encoded_keys)
 
-      decoded_from_event = Enum.map(encoded_keys, fn encoded ->
-        {:ok, decoded} = Base.decode64(encoded)
-        decoded
-      end)
+      decoded_from_event =
+        Enum.map(encoded_keys, fn encoded ->
+          {:ok, decoded} = Base.decode64(encoded)
+          decoded
+        end)
+
       assert decoded_from_event == original_binary_keys
 
       # Test replay - the replay action automatically clears records

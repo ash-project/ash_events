@@ -5,14 +5,14 @@ defmodule AshEvents.SensitiveAttributesTest do
   Tests the store_sensitive_attributes DSL option and ensures that
   sensitive attributes are properly protected unless explicitly allowed.
   """
-  alias AshEvents.Accounts.User
-  alias AshEvents.Accounts.OrgCloaked
-  alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false
-
   alias AshEvents.Accounts
+  alias AshEvents.Accounts.OrgCloaked
+  alias AshEvents.Accounts.User
+
   alias AshEvents.EventLogs.EventLog
   alias AshEvents.EventLogs.EventLogCloaked
+  alias AshEvents.EventLogs.SystemActor
 
   require Ash.Query
 

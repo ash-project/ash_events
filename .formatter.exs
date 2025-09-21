@@ -23,6 +23,7 @@ spark_locals_without_parens = [
   replay_override: 3,
   route_to: 2,
   route_to: 3,
+  store_sensitive_attributes: 1,
   update_timestamp: 1,
   versions: 1
 ]

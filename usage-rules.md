@@ -78,6 +78,9 @@ defmodule MyApp.Accounts.User do
       legacy_action: :force_change
     ]
 
+    # Optional: Allow storing specific sensitive attributes (by default, sensitive attributes are excluded)
+    store_sensitive_attributes [:hashed_password, :api_key]
+
     # Optional: Ignore specific actions (usually legacy versions)
     ignore_actions [:old_create_v1]
   end
@@ -315,6 +318,7 @@ form = User
 3. **Attributes appearing in both data and changed_attributes:**
    - This shouldn't happen - file a bug if you see this
    - Attributes are only in `changed_attributes` if not in original input
+
 
 ## Event Replay
 
@@ -653,6 +657,107 @@ events do
   ignore_actions [:internal_update, :system_sync]
 end
 ```
+
+### Sensitive Attribute Configuration
+
+**By default, sensitive attributes are excluded from events** for security. The `store_sensitive_attributes` DSL option provides fine-grained control over which sensitive attributes to include in events.
+
+**IMPORTANT**: `store_sensitive_attributes` is **only valid for resources using non-encrypted event logs**. Resources using cloaked (encrypted) event logs automatically store all sensitive attributes and **must not** configure this option.
+
+#### For Non-Encrypted Event Logs
+
+Use `store_sensitive_attributes` to explicitly allow specific sensitive attributes:
+
+```elixir
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.Event  # Non-encrypted event log
+    # Explicitly allow storing specific sensitive attributes
+    store_sensitive_attributes [:hashed_password, :api_key_hash]
+  end
+
+  attributes do
+    attribute :email, :string, public?: true
+    attribute :hashed_password, :string, sensitive?: true, public?: true
+    attribute :api_key_hash, :binary, sensitive?: true, public?: true
+    attribute :secret_token, :string, sensitive?: true, public?: true  # NOT stored in events
+  end
+end
+
+# Result: Only hashed_password and api_key_hash will be included in events
+# secret_token will be excluded for security
+```
+
+#### For Encrypted (Cloaked) Event Logs
+
+**Do NOT use `store_sensitive_attributes` with cloaked event logs** - it will result in a compilation error:
+
+```elixir
+# ❌ INVALID - This will cause a compilation error
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.CloakedEvent  # This is a cloaked event log
+    store_sensitive_attributes [:password]  # ❌ ERROR: Invalid with cloaked logs
+  end
+end
+```
+
+**Correct usage with cloaked event logs:**
+
+```elixir
+# ✅ CORRECT - No store_sensitive_attributes needed
+defmodule MyApp.Accounts.User do
+  use Ash.Resource,
+    extensions: [AshEvents.Events]
+
+  events do
+    event_log MyApp.Events.CloakedEvent  # Cloaked event log with encryption
+    # No store_sensitive_attributes - all sensitive data automatically stored
+  end
+
+  attributes do
+    attribute :email, :string, public?: true
+    attribute :hashed_password, :string, sensitive?: true, public?: true
+    attribute :api_key_hash, :binary, sensitive?: true, public?: true
+    attribute :secret_token, :string, sensitive?: true, public?: true
+  end
+end
+
+# Result: ALL sensitive attributes (hashed_password, api_key_hash, secret_token)
+# are automatically stored because they're encrypted by the cloaked event log
+```
+
+**Cloaked event log configuration:**
+
+```elixir
+defmodule MyApp.Events.CloakedEvent do
+  use Ash.Resource,
+    extensions: [AshEvents.EventLog]
+
+  event_log do
+    cloak_vault MyApp.Vault  # Enables encryption for all event data
+  end
+end
+```
+
+#### Summary
+
+| Event Log Type | Sensitive Attribute Behavior | `store_sensitive_attributes` Usage |
+|----------------|------------------------------|-------------------------------------|
+| **Non-encrypted** | Excluded by default | ✅ **Required** to store specific sensitive attributes |
+| **Cloaked (encrypted)** | All automatically stored | ❌ **Invalid** - will cause compilation error |
+
+**⚠️ Security considerations:**
+- **Non-encrypted event logs:** Only store sensitive attributes that are absolutely necessary for replay or audit purposes
+- **Encrypted event logs:** All sensitive attributes are safely stored because they're encrypted
+- Use encryption (`cloak_vault`) when you need comprehensive sensitive data storage in events
+- Never store sensitive attributes in non-encrypted logs unless specifically required for functionality
 
 ### Resource-Specific Event Handling
 

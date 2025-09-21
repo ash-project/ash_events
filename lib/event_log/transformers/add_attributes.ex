@@ -14,6 +14,8 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     :metadata,
     :data,
     :changed_attributes,
+    :data_field_encoders,
+    :changed_attributes_field_encoders,
     :encrypted_metadata,
     :encrypted_data,
     :encrypted_changed_attributes
@@ -29,11 +31,7 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     persist_actor_primary_keys = AshEvents.EventLog.Info.event_log(dsl)
     public_fields = AshEvents.EventLog.Info.event_log_public_fields!(dsl)
 
-    cloaked? =
-      case AshEvents.EventLog.Info.event_log_cloak_vault(dsl) do
-        :error -> false
-        {:ok, _} -> true
-      end
+    cloaked? = AshEvents.EventLog.Info.cloaked?(dsl)
 
     case AshEvents.EventLog.Info.event_log_primary_key_type!(dsl) do
       :integer ->
@@ -106,6 +104,20 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
           sensitive?: true,
           description: "Any relevant metadata you want to store with the event."
         )
+        |> Ash.Resource.Builder.add_attribute(:data_field_encoders, :map,
+          allow_nil?: false,
+          default: %{},
+          public?: public_field?(public_fields, :data_field_encoders),
+          description:
+            "Metadata tracking special encoding used for fields in data (e.g., base64 for binary fields)."
+        )
+        |> Ash.Resource.Builder.add_attribute(:changed_attributes_field_encoders, :map,
+          allow_nil?: false,
+          default: %{},
+          public?: public_field?(public_fields, :changed_attributes_field_encoders),
+          description:
+            "Metadata tracking special encoding used for fields in changed_attributes (e.g., base64 for binary fields)."
+        )
       else
         dsl
         |> Ash.Resource.Builder.add_attribute(:metadata, :map,
@@ -126,6 +138,20 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
           public?: public_field?(public_fields, :changed_attributes),
           description:
             "Attributes that were changed but not present in the original action input."
+        )
+        |> Ash.Resource.Builder.add_attribute(:data_field_encoders, :map,
+          allow_nil?: false,
+          default: %{},
+          public?: public_field?(public_fields, :data_field_encoders),
+          description:
+            "Metadata tracking special encoding used for fields in data (e.g., base64 for binary fields)."
+        )
+        |> Ash.Resource.Builder.add_attribute(:changed_attributes_field_encoders, :map,
+          allow_nil?: false,
+          default: %{},
+          public?: public_field?(public_fields, :changed_attributes_field_encoders),
+          description:
+            "Metadata tracking special encoding used for fields in changed_attributes (e.g., base64 for binary fields)."
         )
       end
     end)

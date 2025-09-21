@@ -18,6 +18,7 @@ defmodule AshEvents.Events do
         only_actions [:create, :update, :destroy]
         current_action_versions create: 2, update: 3, destroy: 2
         replay_non_input_attribute_changes [create_v1: :as_arguments, update_v2: :force_change]
+        store_sensitive_attributes [:hashed_password, :api_key]
       end
       """
     ],
@@ -64,6 +65,12 @@ defmodule AshEvents.Events do
         doc:
           "Configure how non-input attribute changes are handled during replay for each action. Options are :force_change (apply via force_change_attributes) or :as_arguments (merge into action input). Defaults to :force_change for all actions.",
         default: []
+      ],
+      store_sensitive_attributes: [
+        type: {:list, :atom},
+        doc:
+          "A list of sensitive attribute names that should be stored in events despite being marked as sensitive. By default, sensitive attributes are set to nil unless the event log is cloaked. This option allows specific sensitive attributes to be stored even when the event log is not cloaked.",
+        default: []
       ]
     ]
   }
@@ -74,7 +81,8 @@ defmodule AshEvents.Events do
       AshEvents.Events.Verifiers.VerifyEventLog,
       AshEvents.Events.Verifiers.VerifyActions,
       AshEvents.Events.Verifiers.VerifyTimestamps,
-      AshEvents.Events.Verifiers.VerifyReplayNonInputAttributeChanges
+      AshEvents.Events.Verifiers.VerifyReplayNonInputAttributeChanges,
+      AshEvents.Events.Verifiers.VerifyStoreSensitiveAttributes
     ],
     sections: [@events]
 end

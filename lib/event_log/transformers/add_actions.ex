@@ -24,7 +24,9 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
           :resource,
           :action,
           :action_type,
-          :occurred_at
+          :occurred_at,
+          :data_field_encoders,
+          :changed_attributes_field_encoders
         ]
       else
         [
@@ -36,7 +38,9 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
           :resource,
           :action,
           :action_type,
-          :occurred_at
+          :occurred_at,
+          :data_field_encoders,
+          :changed_attributes_field_encoders
         ]
       end
 

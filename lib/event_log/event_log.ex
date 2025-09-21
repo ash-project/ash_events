@@ -169,7 +169,7 @@ defmodule AshEvents.EventLog.Info do
     sections: [:event_log, :replay_overrides]
 
   def cloaked?(event_log_resource) do
-    case __MODULE__.event_log_cloak_vault(event_log_resource) do
+    case AshEvents.EventLog.Info.event_log_cloak_vault(event_log_resource) do
       {:ok, _} -> true
       :error -> false
     end

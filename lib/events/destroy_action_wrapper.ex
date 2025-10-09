@@ -33,4 +33,7 @@ defmodule AshEvents.DestroyActionWrapper do
       {:ok, changeset.data}
     end
   end
+
+  def update(changeset, module_opts, ctx),
+    do: AshEvents.UpdateActionWrapper.update(changeset, module_opts, ctx)
 end

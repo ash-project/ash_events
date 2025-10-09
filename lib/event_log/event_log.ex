@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog do
   @moduledoc """
   Extension to use on the Ash.Resource that will persist events.

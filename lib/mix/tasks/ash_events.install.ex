@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 if Code.ensure_loaded?(Igniter) do
   defmodule Mix.Tasks.AshEvents.Install do
     @shortdoc "Installs AshEvents into a project. Should be called with `mix igniter.install ash_events`"

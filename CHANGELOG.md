@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+
+SPDX-License-Identifier: MIT
+-->
+
 # Change Log
 
 All notable changes to this project will be documented in this file.

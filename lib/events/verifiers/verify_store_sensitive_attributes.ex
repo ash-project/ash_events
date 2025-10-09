@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Verifiers.VerifyStoreSensitiveAttributes do
   @moduledoc """
   Verifies that store_sensitive_attributes configuration is valid.

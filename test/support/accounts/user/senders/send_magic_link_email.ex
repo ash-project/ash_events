@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Accounts.User.Senders.SendMagicLinkEmail do
   @moduledoc """
   Mock sender for magic link emails in tests.

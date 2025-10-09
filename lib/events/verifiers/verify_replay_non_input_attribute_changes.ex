@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Verifiers.VerifyReplayNonInputAttributeChanges do
   @moduledoc """
   Verifies that replay_non_input_attribute_changes configuration is valid.

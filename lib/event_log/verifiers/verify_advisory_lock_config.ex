@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyAdvisoryLockConfig do
   @moduledoc """
   Verifies that advisory lock configuration is valid.

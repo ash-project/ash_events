@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.PersistActorPrimaryKey do
   @moduledoc """
     Adds a field (not relationship) on the event log resource that will be used to persist the actor primary key.

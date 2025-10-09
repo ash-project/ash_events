@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+
+SPDX-License-Identifier: MIT
+-->
+
 # Rules for working with AshEvents
 
 ## Understanding AshEvents

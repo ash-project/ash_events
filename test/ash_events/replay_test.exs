@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.ReplayTest do
   use AshEvents.RepoCase, async: false
   alias AshEvents.EventLogs.EventLogUuidV7

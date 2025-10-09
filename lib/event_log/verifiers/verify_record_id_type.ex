@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyRecordIdType do
   @moduledoc """
   Verifies that record_id_type configuration is valid.

@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+
+SPDX-License-Identifier: MIT
+-->
+
 # AshEvents Emergency Debugging Reference
 
 > **Purpose**: Rapid debugging assistance and validation checklists for active development

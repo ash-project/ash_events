@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyClearRecordsForReplay do
   @moduledoc """
   Verifies that the clear_records_for_replay configuration is valid.

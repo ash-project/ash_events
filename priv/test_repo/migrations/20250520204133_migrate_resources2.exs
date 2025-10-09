@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.TestRepo.Migrations.MigrateResources2 do
   @moduledoc """
   Updates resources based on their most recent snapshots.

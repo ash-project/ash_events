@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.BinaryAttributesTest do
   @moduledoc """
   Test for binary attributes to reproduce and fix the Jason.EncodeError issue.

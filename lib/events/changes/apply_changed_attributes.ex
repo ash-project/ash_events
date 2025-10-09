@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Changes.ApplyChangedAttributes do
   @moduledoc false
   use Ash.Resource.Change

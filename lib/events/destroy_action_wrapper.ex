@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.DestroyActionWrapper do
   @moduledoc """
   Wrapper for destroy actions that enables event tracking.

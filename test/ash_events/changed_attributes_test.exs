@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.ChangedAttributesTest do
   @moduledoc false
   use ExUnit.Case, async: false

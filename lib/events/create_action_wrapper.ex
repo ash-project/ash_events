@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.CreateActionWrapper do
   @moduledoc """
   Wrapper for create actions that enables event tracking.

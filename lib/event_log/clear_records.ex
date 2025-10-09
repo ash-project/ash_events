@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.ClearRecordsForReplay do
   @moduledoc """
   Behaviour for clearing records from the event log.

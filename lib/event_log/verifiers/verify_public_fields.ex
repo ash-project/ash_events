@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyPublicAttributes do
   @moduledoc """
   Verifies that public_fields configuration contains valid attribute names.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.AshAuthenticationPasswordTest do
   @moduledoc """
   Comprehensive tests for AshEvents compatibility with AshAuthentication password strategies.

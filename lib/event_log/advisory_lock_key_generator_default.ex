@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.AdvisoryLockKeyGenerator.Default do
   @moduledoc """
   Default implementation of the `AshEvents.AdvisoryLockKeyGenerator` behaviour.

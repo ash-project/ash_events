@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyCloakVault do
   @moduledoc """
   Verifies that cloak_vault configuration is valid.

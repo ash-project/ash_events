@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Verifiers.VerifyActions do
   @moduledoc """
   Verifies that action-related configuration is valid.

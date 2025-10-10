@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+
+SPDX-License-Identifier: MIT
+-->
+
 # Agent README Update Guide
 
 ## Overview

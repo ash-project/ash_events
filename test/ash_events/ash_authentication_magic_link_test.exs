@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.AshAuthenticationMagicLinkTest do
   @moduledoc """
   Comprehensive tests for AshEvents compatibility with AshAuthentication magic link strategies.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventCreationTest do
   alias AshEvents.Accounts.User
   alias AshEvents.Accounts.UserRole

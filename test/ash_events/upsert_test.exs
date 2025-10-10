@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.UpsertTest do
   alias AshEvents.EventLogs.SystemActor
   use AshEvents.RepoCase, async: false

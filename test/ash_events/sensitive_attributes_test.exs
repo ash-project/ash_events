@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.SensitiveAttributesTest do
   @moduledoc """
   Test for sensitive attribute protection in events.

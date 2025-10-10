@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 [
   ## all available options with default values (see `mix check` docs for description)
   # parallel: true,
@@ -13,6 +17,7 @@
 
     {:check_cheat_sheets, command: "mix spark.cheat_sheets --check"},
     {:check_formatter, command: "mix spark.formatter --check"},
-    {:doctor, false}
+    {:doctor, false},
+    {:reuse, command: ["pipx", "run", "reuse", "lint", "-q"]}
   ]
 ]

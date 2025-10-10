@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyActorResources do
   @moduledoc """
   Verifies that persist_actor_primary_key entries reference valid Ash resources.

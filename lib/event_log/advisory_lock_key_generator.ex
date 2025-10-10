@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.AdvisoryLockKeyGenerator do
   @moduledoc """
     Behaviour for generating advisory lock keys when inserting events for a given Ash-changeset.

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Verifiers.VerifyTimestamps do
   @moduledoc """
   Verifies that timestamp configuration is valid.

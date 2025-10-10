@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.EventLog.Verifiers.VerifyPersistActorPrimaryKey do
   @moduledoc """
   Verifies that when multiple persist_actor_primary_key options are defined,

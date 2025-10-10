@@ -1,9 +1,17 @@
+<!--
+SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+
+SPDX-License-Identifier: MIT
+-->
+
 <img src="https://github.com/ash-project/ash_events/blob/main/logos/ash-events.png?raw=true" alt="Logo" width="300"/>
 
 ![Elixir CI](https://github.com/ash-project/ash_events/workflows/CI/badge.svg)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Hex version badge](https://img.shields.io/hexpm/v/ash_events.svg)](https://hex.pm/packages/ash_events)
 [![Hexdocs badge](https://img.shields.io/badge/docs-hexdocs-purple)](https://hexdocs.pm/ash_events)
+[![REUSE status](https://api.reuse.software/badge/github.com/ash-project/ash_events)](https://api.reuse.software/info/github.com/ash-project/ash_events)
+
 # AshEvents
 
 AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that provides event capabilities for Ash resources. It allows you to track and persist events when actions (create, update, destroy) are performed on your resources, providing a complete audit trail and enabling powerful replay functionality.

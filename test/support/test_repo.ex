@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.TestRepo do
   @moduledoc false
   use AshPostgres.Repo, otp_app: :ash_events

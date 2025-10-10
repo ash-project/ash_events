@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.MixProject do
   use Mix.Project
 
@@ -69,12 +73,19 @@ defmodule AshEvents.MixProject do
 
   defp package do
     [
-      name: :ash_events,
+      maintainers: [
+        "Torkild Kjevik <torkild.kjevik@boitano.no>"
+      ],
       licenses: ["MIT"],
       files: ~w(lib .formatter.exs mix.exs README*
         CHANGELOG* documentation usage-rules.md),
       links: %{
-        GitHub: "https://github.com/ash-project/ash_events"
+        "GitHub" => "https://github.com/ash-project/ash_events",
+        "Changelog" => "https://github.com/ash-project/ash_events/blob/main/CHANGELOG.md",
+        "Discord" => "https://discord.gg/HTHRaaVPUc",
+        "Website" => "https://ash-hq.org",
+        "Forum" => "https://elixirforum.com/c/elixir-framework-forums/ash-framework-forum",
+        "REUSE Compliance" => "https://api.reuse.software/info/github.com/ash-project/ash_events"
       }
     ]
   end

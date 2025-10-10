@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.ReplayValidationWrapper do
   @moduledoc """
   Specialized wrapper for validations that preserves custom messages during event tracking.

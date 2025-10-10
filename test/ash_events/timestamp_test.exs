@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.TimestampTest do
   alias AshEvents.Accounts.Org
   alias AshEvents.Accounts.User

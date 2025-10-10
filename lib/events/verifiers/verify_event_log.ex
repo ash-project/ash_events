@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.Verifiers.VerifyEventLog do
   @moduledoc """
   Verifies that the event_log configuration is valid.

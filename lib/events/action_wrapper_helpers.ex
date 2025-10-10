@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Torkild G. Kjevik
+#
+# SPDX-License-Identifier: MIT
+
 defmodule AshEvents.Events.ActionWrapperHelpers do
   @moduledoc """
   Helper functions used by the action wrappers.

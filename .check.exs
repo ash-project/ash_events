@@ -13,8 +13,8 @@
     # {:compiler, false},
 
     ## ...or adjusted (e.g. use one-line formatter for more compact credo output)
-    # {:credo, "mix credo --format oneline"},
-
+    {:format, "mix format --check-formatted"},
+    {:credo, "mix credo --strict"},
     {:check_cheat_sheets, command: "mix spark.cheat_sheets --check"},
     {:check_formatter, command: "mix spark.formatter --check"},
     {:doctor, false},

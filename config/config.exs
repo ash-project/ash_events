@@ -8,7 +8,8 @@ if Mix.env() == :test do
   config :ash,
     validate_domain_resource_inclusion?: false,
     validate_domain_config_inclusion?: false,
-    disable_async?: true
+    disable_async?: true,
+    missed_notifications: :raise
 
   config :ash_events, AshEvents.TestRepo,
     username: "postgres",

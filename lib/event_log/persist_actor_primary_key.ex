@@ -12,7 +12,8 @@ defmodule AshEvents.EventLog.PersistActorPrimaryKey do
     :attribute_type,
     :destination,
     :public?,
-    :name
+    :name,
+    __spark_metadata__: nil
   ]
 
   @type t :: %__MODULE__{

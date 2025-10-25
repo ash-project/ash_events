@@ -9,12 +9,12 @@ defmodule AshEvents.EventLog do
 
   defmodule ReplayOverride do
     @moduledoc false
-    defstruct [:event_resource, :event_action, :versions, :route_to]
+    defstruct [:event_resource, :event_action, :versions, :route_to, __spark_metadata__: nil]
   end
 
   defmodule RouteTo do
     @moduledoc false
-    defstruct [:resource, :action]
+    defstruct [:resource, :action, __spark_metadata__: nil]
   end
 
   @route_to %Spark.Dsl.Entity{

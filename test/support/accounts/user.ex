@@ -128,6 +128,12 @@ defmodule AshEvents.Accounts.User do
       change atomic_update(:given_name, expr(given_name + "should_fail"))
     end
 
+    update :update_with_map_arg do
+      require_atomic? false
+      accept [:given_name, :family_name]
+      argument :metadata, :map, allow_nil?: true
+    end
+
     destroy :destroy do
       require_atomic? false
       primary? true

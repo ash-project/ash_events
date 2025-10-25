@@ -121,4 +121,48 @@ defmodule AshEvents.BulkActionsTest do
 
     assert Enum.count(events) == 10
   end
+
+  test "bulk_create without return_notifications? should not generate missed notification warnings" do
+    result =
+      Ash.bulk_create!(
+        [
+          %{name: "Acme Corp"},
+          %{name: "Globex Inc"}
+        ],
+        Accounts.Org,
+        :create,
+        actor: %SystemActor{name: "system"},
+        return_errors?: true,
+        return_records?: true
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 2
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Accounts.Org)
+      |> Ash.Query.sort({:id, :asc})
+      |> Ash.read!()
+
+    assert Enum.count(events) == 2
+  end
+
+  test "single create without return_notifications? should work fine" do
+    org =
+      Accounts.Org
+      |> Ash.Changeset.for_create(:create, %{name: "Wayne Enterprises"})
+      |> Ash.create!(actor: %SystemActor{name: "system"})
+
+    assert org.id
+
+    # Verify events were created
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Accounts.Org)
+      |> Ash.Query.sort({:id, :asc})
+      |> Ash.read!(actor: %SystemActor{name: "system"})
+
+    assert Enum.count(events) == 1
+  end
 end

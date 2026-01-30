@@ -25,6 +25,14 @@ defmodule AshEvents.MixProject do
       description: @description,
       source_url: "https://github.com/ash-project/ash_events",
       homepage_url: "https://github.com/ash-project/ash_events",
+      dialyzer: [
+        plt_add_apps: [:mix]
+      ]
+    ]
+  end
+
+  def cli do
+    [
       preferred_cli_env: [
         "test.create": :test,
         "test.migrate": :test,
@@ -35,9 +43,6 @@ defmodule AshEvents.MixProject do
         "test.generate_migrations": :test,
         "test.reset": :test,
         tidewave: :test
-      ],
-      dialyzer: [
-        plt_add_apps: [:mix]
       ]
     ]
   end

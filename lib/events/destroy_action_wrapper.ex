@@ -8,6 +8,8 @@ defmodule AshEvents.DestroyActionWrapper do
   """
   use Ash.Resource.ManualDestroy
 
+  defdelegate update(changeset, module_opts, ctx), to: AshEvents.UpdateActionWrapper
+
   def destroy(changeset, module_opts, ctx) do
     merged_ctx = Map.get(ctx, :source_context) |> Map.merge(ctx)
 

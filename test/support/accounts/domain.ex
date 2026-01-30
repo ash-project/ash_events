@@ -74,5 +74,10 @@ defmodule AshEvents.Accounts do
       define :mark_upload_uploaded, action: :mark_uploaded
       define :mark_upload_skipped, action: :mark_skipped
     end
+
+    resource AshEvents.Accounts.SoftDeletableUser do
+      define :create_soft_deletable_user, action: :create
+      define :archive_soft_deletable_user, action: :archive
+    end
   end
 end

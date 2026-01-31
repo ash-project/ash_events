@@ -16,6 +16,8 @@ defmodule AshEvents.Accounts.RoutedUser do
 
   events do
     event_log AshEvents.EventLogs.EventLog
+    # routed_create is in ignore_actions - it's only used for backfilling
+    # during replay. It explicitly accepts the fields it needs.
     ignore_actions [:routed_create]
   end
 
@@ -23,8 +25,13 @@ defmodule AshEvents.Accounts.RoutedUser do
     defaults [:read]
 
     create :routed_create do
-      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name, :hashed_password]
+      # Backfill action: accepts fields needed from rerouted events
+      # Including :id to preserve the original record's identity
+      # skip_unknown_inputs allows ignoring fields from the original resource
+      # that don't exist on this resource (e.g., confirmed_at)
+      accept [:id, :email, :given_name, :family_name, :hashed_password]
       argument :role, :string, default: "user"
+      skip_unknown_inputs :*
     end
 
     read :get_by_id do
@@ -33,6 +40,7 @@ defmodule AshEvents.Accounts.RoutedUser do
   end
 
   attributes do
+    # writable? true because this resource receives id as input from rerouted events
     uuid_primary_key :id do
       writable? true
     end
@@ -40,13 +48,11 @@ defmodule AshEvents.Accounts.RoutedUser do
     create_timestamp :created_at do
       public? true
       allow_nil? false
-      writable? true
     end
 
     update_timestamp :updated_at do
       public? true
       allow_nil? false
-      writable? true
     end
 
     attribute :email, :string do

@@ -168,7 +168,8 @@ defmodule AshEvents.Events.Transformers.WrapActions do
           description: "Auto-generated update action for replaying #{action.name} upsert events",
           require_atomic?: false,
           manual: nil,
-          changes: [],
+          # Include ApplyChangedAttributes so upsert replay behaves like create replay
+          changes: [apply_changed_attributes],
           touches_resources: [],
           transaction?: nil,
           metadata: [],

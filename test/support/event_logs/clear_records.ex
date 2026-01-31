@@ -13,6 +13,11 @@ defmodule AshEvents.EventLogs.ClearRecords do
     {_, nil} = TestRepo.delete_all("routed_users")
     {_, nil} = TestRepo.delete_all("users_embedded")
     {_, nil} = TestRepo.delete_all("users_with_auto_attrs")
+    {_, nil} = TestRepo.delete_all("users_non_writable_id")
+    {_, nil} = TestRepo.delete_all("orgs")
+    {_, nil} = TestRepo.delete_all("uploads")
+    {_, nil} = TestRepo.delete_all("projects")
+    {_, nil} = TestRepo.delete_all("user_count_projections")
     :ok
   end
 end

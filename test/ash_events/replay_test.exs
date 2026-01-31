@@ -175,4 +175,246 @@ defmodule AshEvents.ReplayTest do
     assert user.given_name == "Jason"
     assert user.family_name == "Anderson"
   end
+
+  describe "replay idempotency" do
+    test "running replay multiple times produces consistent results" do
+      actor = %SystemActor{name: "idempotency_test"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create and update user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "Idempotent",
+          family_name: "User",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      {:ok, _} =
+        user
+        |> Ash.Changeset.for_update(:update, %{given_name: "Updated"})
+        |> Ash.update(actor: actor)
+
+      user_id = user.id
+
+      # First replay
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!()
+
+      {:ok, first_replay} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+      first_state = %{given_name: first_replay.given_name, family_name: first_replay.family_name}
+
+      # Second replay
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!()
+
+      {:ok, second_replay} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+
+      second_state = %{
+        given_name: second_replay.given_name,
+        family_name: second_replay.family_name
+      }
+
+      # Third replay
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!()
+
+      {:ok, third_replay} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+      third_state = %{given_name: third_replay.given_name, family_name: third_replay.family_name}
+
+      # All should match
+      assert first_state == second_state
+      assert second_state == third_state
+      assert first_state.given_name == "Updated"
+    end
+
+    test "replay is idempotent when run without clearing" do
+      actor = %SystemActor{name: "no_clear_idempotency"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "No Clear",
+          family_name: "Test",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      user_id = user.id
+
+      # Multiple replays without clearing should be safe
+      # (replay should handle existing records gracefully)
+      result1 = EventLogs.replay_events_uuidv7!()
+      result2 = EventLogs.replay_events_uuidv7!()
+
+      assert result1 == :ok
+      assert result2 == :ok
+
+      # User should still exist with correct state
+      {:ok, final_user} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+      assert final_user.given_name == "No Clear"
+    end
+  end
+
+  describe "point-in-time replay edge cases" do
+    test "replay to point before any events returns empty state" do
+      actor = %SystemActor{name: "before_events_test"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "Point In Time",
+          family_name: "User",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      user_id = user.id
+
+      # Get earliest event
+      events = EventLogUuidV7 |> Ash.Query.sort({:occurred_at, :asc}) |> Ash.read!()
+      earliest = hd(events)
+
+      # Replay to 1 second before earliest event
+      point_before = DateTime.add(earliest.occurred_at, -1, :second)
+
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!(%{point_in_time: point_before})
+
+      # User should not exist
+      assert {:error, _} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+    end
+
+    test "replay to exact event timestamp includes that event" do
+      actor = %SystemActor{name: "exact_timestamp_test"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "Exact",
+          family_name: "Timestamp",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      user_id = user.id
+
+      # Get create event timestamp
+      events = EventLogUuidV7 |> Ash.read!()
+      create_event = Enum.find(events, &(&1.record_id == user_id && &1.action_type == :create))
+
+      # Replay to exact timestamp
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!(%{point_in_time: create_event.occurred_at})
+
+      # User should exist
+      {:ok, restored} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+      assert restored.given_name == "Exact"
+    end
+
+    test "replay with both last_event_id and point_in_time uses last_event_id" do
+      actor = %SystemActor{name: "combined_params_test"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create and update user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "Combined",
+          family_name: "Test",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      # Add delay to ensure different timestamps
+      Process.sleep(10)
+
+      {:ok, updated} =
+        user
+        |> Ash.Changeset.for_update(:update, %{given_name: "Updated Combined"})
+        |> Ash.update(actor: actor)
+
+      user_id = updated.id
+
+      # Get events
+      events =
+        EventLogUuidV7
+        |> Ash.Query.sort({:occurred_at, :asc})
+        |> Ash.read!()
+        |> Enum.filter(&(&1.record_id == user_id))
+
+      [create_event, update_event] = events
+
+      # Replay with last_event_id pointing to create, but point_in_time after update
+      # last_event_id should take precedence
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      :ok =
+        EventLogs.replay_events_uuidv7!(%{
+          last_event_id: create_event.id,
+          point_in_time: DateTime.add(update_event.occurred_at, 1, :second)
+        })
+
+      {:ok, restored} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+
+      # Should have original name since we replayed up to create event only
+      assert restored.given_name == "Combined"
+    end
+  end
+
+  describe "empty event log replay" do
+    test "replay with no events succeeds" do
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Ensure no events
+      events = EventLogUuidV7 |> Ash.read!()
+      assert Enum.empty?(events)
+
+      # Replay should succeed
+      result = EventLogs.replay_events_uuidv7!()
+      assert result == :ok
+    end
+
+    test "replay with only destroyed records results in empty state" do
+      actor = %SystemActor{name: "destroyed_replay_test"}
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+
+      # Create and destroy user
+      {:ok, user} =
+        AshEvents.Accounts.UserUuidV7
+        |> Ash.Changeset.for_create(:create, %{
+          given_name: "To Destroy",
+          family_name: "User",
+          email: unique_email()
+        })
+        |> Ash.create(actor: actor)
+
+      user_id = user.id
+
+      {:ok, _} =
+        user
+        |> Ash.Changeset.for_destroy(:destroy)
+        |> Ash.destroy(actor: actor, return_destroyed?: true)
+
+      # Clear and replay
+      AshEvents.EventLogs.ClearRecordsUuidV7.clear_records!([])
+      :ok = EventLogs.replay_events_uuidv7!()
+
+      # User should not exist after replay
+      assert {:error, _} = Ash.get(AshEvents.Accounts.UserUuidV7, user_id, actor: actor)
+    end
+  end
+
+  # Helper functions
+
+  defp unique_email(prefix \\ "replay") do
+    "#{prefix}_#{System.unique_integer([:positive])}@example.com"
+  end
 end

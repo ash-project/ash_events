@@ -63,6 +63,12 @@ defmodule AshEvents.Accounts do
       define :set_org_state_machine_inactive, action: :set_inactive
     end
 
+    resource AshEvents.Accounts.UserNonWritableId do
+      define :create_user_non_writable_id, action: :create
+      define :update_user_non_writable_id, action: :update
+      define :destroy_user_non_writable_id, action: :destroy
+    end
+
     resource AshEvents.Accounts.UserWithAutoAttrs do
       define :create_user_with_auto_attrs, action: :create
       define :update_user_with_auto_attrs, action: :update
@@ -73,6 +79,19 @@ defmodule AshEvents.Accounts do
       define :create_upload, action: :create
       define :mark_upload_uploaded, action: :mark_uploaded
       define :mark_upload_skipped, action: :mark_skipped
+    end
+
+    resource AshEvents.Accounts.Project do
+      define :create_project, action: :create
+      define :create_or_update_project, action: :create_or_update
+      define :update_project, action: :update
+      define :change_project_status, action: :change_status
+      define :destroy_project, action: :destroy
+    end
+
+    resource AshEvents.Accounts.UserCountProjection do
+      define :track_user_create, action: :track_user_create
+      define :count_event, action: :count_event
     end
   end
 end

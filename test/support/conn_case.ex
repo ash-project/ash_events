@@ -16,7 +16,10 @@ defmodule AshEvents.RepoCase do
       import Ecto.Query
       import AshEvents.RepoCase
 
-      # and any other stuff
+      # Test helpers and assertions are available but must be explicitly imported
+      # to avoid conflicts with locally defined helper functions in existing tests.
+      # Usage: import AshEvents.Test.Helpers
+      # Usage: import AshEvents.Test.Assertions
     end
   end
 

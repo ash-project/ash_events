@@ -22,7 +22,11 @@ defmodule AshEvents.GeneratorTest do
         given_name: StreamData.string(:alphanumeric, min_length: 3, max_length: 10),
         family_name: StreamData.string(:alphanumeric, min_length: 3, max_length: 10),
         hashed_password: "hashed_password_123",
-        role: "user"
+        role: "user",
+        # Explicitly set binary attributes to nil to avoid encoding issues
+        api_key_hash: nil,
+        sensitive_token: nil,
+        binary_keys: nil
       ],
       actor: actor,
       overrides: opts

@@ -25,7 +25,15 @@ defmodule AshEvents.MixProject do
       description: @description,
       source_url: "https://github.com/ash-project/ash_events",
       homepage_url: "https://github.com/ash-project/ash_events",
-      preferred_cli_env: [
+      dialyzer: [
+        plt_add_apps: [:mix]
+      ]
+    ]
+  end
+
+  def cli do
+    [
+      preferred_envs: [
         "test.create": :test,
         "test.migrate": :test,
         "test.rollback": :test,
@@ -35,9 +43,6 @@ defmodule AshEvents.MixProject do
         "test.generate_migrations": :test,
         "test.reset": :test,
         tidewave: :test
-      ],
-      dialyzer: [
-        plt_add_apps: [:mix]
       ]
     ]
   end
@@ -169,7 +174,7 @@ defmodule AshEvents.MixProject do
       "test.reset": ["test.drop", "test.create", "test.migrate", "ash_postgres.migrate --tenants"],
       "test.drop": "ash_postgres.drop",
       tidewave:
-        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4002) end)'",
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4022) end)'",
       sobelow: "sobelow --skip -i Config.HTTPS",
       docs: [
         "spark.cheat_sheets",

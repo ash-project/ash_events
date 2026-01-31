@@ -14,7 +14,7 @@ defmodule AshEvents.EventLog do
 
   defmodule RouteTo do
     @moduledoc false
-    defstruct [:resource, :action, __spark_metadata__: nil]
+    defstruct [:resource, :action, :record_id, __spark_metadata__: nil]
   end
 
   @route_to %Spark.Dsl.Entity{
@@ -26,11 +26,31 @@ defmodule AshEvents.EventLog do
     schema: [
       resource: [
         type: :atom,
-        required: true
+        required: true,
+        doc: "The resource to route the event to."
       ],
       action: [
         type: :atom,
-        required: true
+        required: true,
+        doc: "The action to call on the resource."
+      ],
+      record_id: [
+        type: {:one_of, [:force_change_attribute, :as_argument, :ignore]},
+        default: :force_change_attribute,
+        doc: """
+        How to handle the event's record_id during replay.
+
+        - `:force_change_attribute` (default) - Force change the target resource's primary key
+          to the event's record_id. Use this when routing to the same resource or when you want
+          the target record to have the same id as the original.
+
+        - `:as_argument` - Pass the record_id as an argument named `record_id` to the action.
+          Use this when routing to a different resource that needs to reference the original
+          record but should have its own primary key.
+
+        - `:ignore` - Don't pass the record_id at all. Use this for projection resources
+          that don't need to track individual records (e.g., counters, aggregates).
+        """
       ]
     ],
     args: [:resource, :action]

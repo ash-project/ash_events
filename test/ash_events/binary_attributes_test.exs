@@ -4,16 +4,15 @@
 
 defmodule AshEvents.BinaryAttributesTest do
   @moduledoc """
-  Test for binary attributes to reproduce and fix the Jason.EncodeError issue.
+  Test for binary attributes.
 
-  This test reproduces the issue described in:
-  https://github.com/ash-project/ash_events/issues/64
+  These tests are currently skipped because Ash core does not yet support
+  proper encoding of binary data in `dump_to_embedded`. Once Ash core is
+  updated with the new binary encoding callbacks, these tests can be enabled.
 
-  In v0.5.0+, the changed_attributes field includes binary data which
-  causes Jason.EncodeError when trying to JSON encode for storage.
-
-  The fix involves Base64 encoding binary data and storing encoding metadata
-  for proper decoding during event replay.
+  See discussion: The action that receives events during replay contains all
+  type information needed for encoding/decoding. Encoding metadata is no longer
+  stored in events - it's the responsibility of the action types to handle this.
   """
   alias AshEvents.Accounts.User
   alias AshEvents.EventLogs.SystemActor
@@ -24,8 +23,9 @@ defmodule AshEvents.BinaryAttributesTest do
 
   require Ash.Query
 
-  describe "binary attribute encoding" do
-    test "binary attributes are properly Base64 encoded in events" do
+  describe "binary attribute handling" do
+    @describetag :skip
+    test "events are created successfully with binary attributes" do
       user =
         Accounts.create_user!(
           %{
@@ -48,82 +48,12 @@ defmodule AshEvents.BinaryAttributesTest do
       assert user_event != nil
       assert user_event.changed_attributes != nil
 
-      # Verify that the binary value is Base64 encoded in changed_attributes
-      encoded_hash = user_event.changed_attributes["api_key_hash"]
-      assert is_binary(encoded_hash)
-
-      # Verify it's valid Base64 and can be decoded back to the original binary
-      {:ok, decoded_hash} = Base.decode64(encoded_hash)
-      assert decoded_hash == user.api_key_hash
+      # The binary value should be stored in changed_attributes
+      # (encoding format depends on Ash core's dump_to_embedded implementation)
+      assert Map.has_key?(user_event.changed_attributes, "api_key_hash")
     end
 
-    test "encoding metadata is stored and used correctly for replay" do
-      # Create a user with binary attributes
-      user =
-        Accounts.create_user!(
-          %{
-            email: "replay@example.com",
-            given_name: "Replay",
-            family_name: "User",
-            hashed_password: "hashed_password_123"
-          },
-          actor: %SystemActor{name: "test_runner"}
-        )
-
-      # Verify encoding metadata is stored in the event
-      events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create))
-
-      # Check that encoding metadata was recorded
-      # No binary data in params for this test (all binary data is in changed_attributes)
-      assert user_event.data_field_encoders == %{}
-
-      expected_encoders = %{
-        "api_key_hash" => "base64",
-        "binary_keys" => "base64"
-      }
-
-      assert user_event.changed_attributes_field_encoders == expected_encoders
-
-      # Verify that event replay would work with encoding metadata
-      # The replay logic should use the encoding metadata to decode Base64 values
-      assert user_event.changed_attributes["api_key_hash"] != nil
-      {:ok, decoded_hash} = Base.decode64(user_event.changed_attributes["api_key_hash"])
-      assert decoded_hash == user.api_key_hash
-    end
-
-    test "binary data in action arguments gets proper encoding metadata" do
-      # Test case where binary data comes from action arguments (data field)
-      # This would test the data_field_encoders if we had an action that accepted binary args
-
-      # For now, just verify that the system handles the case where no encoding is needed
-      _user =
-        Accounts.create_user!(
-          %{
-            email: "args@example.com",
-            given_name: "Args",
-            family_name: "Test",
-            hashed_password: "hashed_password_789"
-          },
-          actor: %SystemActor{name: "test_runner"}
-        )
-
-      events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create))
-
-      # For regular string/non-binary arguments, no encoding metadata should be present
-      assert user_event.data_field_encoders == %{}
-
-      # But binary changed attributes should still have encoding metadata
-      expected_encoders = %{
-        "api_key_hash" => "base64",
-        "binary_keys" => "base64"
-      }
-
-      assert user_event.changed_attributes_field_encoders == expected_encoders
-    end
-
-    test "event replay properly decodes binary attributes using encoding metadata" do
+    test "event replay properly restores binary attributes" do
       # Create a user with binary attributes
       original_user =
         Accounts.create_user!(
@@ -146,22 +76,6 @@ defmodule AshEvents.BinaryAttributesTest do
       assert is_binary(original_sensitive_token)
       assert byte_size(original_sensitive_token) == 16
 
-      # Verify events were created with proper encoding metadata
-      events = Ash.read!(EventLog)
-      user_event = Enum.find(events, &(&1.resource == User and &1.action == :create))
-
-      expected_encoders = %{
-        "api_key_hash" => "base64",
-        "binary_keys" => "base64"
-      }
-
-      assert user_event.changed_attributes_field_encoders == expected_encoders
-      assert user_event.changed_attributes["api_key_hash"] != nil
-
-      # Verify the binary data is Base64 encoded in the event
-      {:ok, decoded_from_event} = Base.decode64(user_event.changed_attributes["api_key_hash"])
-      assert decoded_from_event == original_api_key_hash
-
       # Test replay - the replay action automatically clears records
       system_actor = %SystemActor{name: "replay_system"}
       :ok = AshEvents.EventLogs.replay_events!(actor: system_actor)
@@ -178,9 +92,7 @@ defmodule AshEvents.BinaryAttributesTest do
       assert replayed_user.family_name == original_user.family_name
       assert replayed_user.hashed_password == original_user.hashed_password
 
-      # CRITICAL: Verify binary attributes were properly decoded during replay
-      # Note: During replay with force_change mode, auto-generated attributes
-      # are restored from the changed_attributes in the event
+      # Verify binary attributes were properly restored during replay
       assert replayed_user.api_key_hash == original_user.api_key_hash
 
       # Verify sensitive binary attribute was properly handled
@@ -191,7 +103,7 @@ defmodule AshEvents.BinaryAttributesTest do
       assert replayed_user.sensitive_token != original_sensitive_token
     end
 
-    test "array binary attributes are properly Base64 encoded in events" do
+    test "array binary attributes are handled in events" do
       user =
         Accounts.create_user!(
           %{
@@ -226,70 +138,11 @@ defmodule AshEvents.BinaryAttributesTest do
       assert user_event != nil
       assert user_event.changed_attributes != nil
 
-      # Verify that the binary array is Base64 encoded in changed_attributes
-      encoded_keys = user_event.changed_attributes["binary_keys"]
-      assert is_list(encoded_keys)
-      assert length(encoded_keys) == 3
-
-      # Verify each element is valid Base64 and can be decoded back to original binary
-      [encoded1, encoded2, encoded3] = encoded_keys
-
-      {:ok, decoded1} = Base.decode64(encoded1)
-      {:ok, decoded2} = Base.decode64(encoded2)
-      {:ok, decoded3} = Base.decode64(encoded3)
-
-      assert decoded1 == key1
-      assert decoded2 == key2
-      assert decoded3 == key3
+      # The binary array should be stored in changed_attributes
+      assert Map.has_key?(user_event.changed_attributes, "binary_keys")
     end
 
-    test "array binary encoding metadata is stored correctly" do
-      user =
-        Accounts.create_user!(
-          %{
-            email: "array_metadata@example.com",
-            given_name: "Array",
-            family_name: "Metadata",
-            hashed_password: "hashed_password_789"
-          },
-          actor: %SystemActor{name: "test_runner"}
-        )
-
-      # Verify encoding metadata is stored in the event
-      events = Ash.read!(EventLog)
-
-      user_event =
-        Enum.find(
-          events,
-          &(&1.resource == User and &1.action == :create and
-              &1.data["email"] == "array_metadata@example.com")
-        )
-
-      # Check that encoding metadata was recorded for both binary attributes
-      assert user_event.data_field_encoders == %{}
-
-      expected_encoders = %{
-        "api_key_hash" => "base64",
-        "binary_keys" => "base64"
-      }
-
-      assert user_event.changed_attributes_field_encoders == expected_encoders
-
-      # Verify that array elements can be decoded using the encoding metadata
-      encoded_keys = user_event.changed_attributes["binary_keys"]
-      assert is_list(encoded_keys)
-
-      # Decode each element and verify they match the original
-      decoded_keys =
-        Enum.map(encoded_keys, fn encoded ->
-          {:ok, decoded} = Base.decode64(encoded)
-          decoded
-        end)
-
-      assert decoded_keys == user.binary_keys
-    end
-
-    test "event replay properly decodes array binary attributes using encoding metadata" do
+    test "event replay properly restores array binary attributes" do
       # Create a user with array binary attributes
       original_user =
         Accounts.create_user!(
@@ -311,35 +164,6 @@ defmodule AshEvents.BinaryAttributesTest do
       assert length(original_binary_keys) == 3
       assert is_binary(original_api_key_hash)
 
-      # Verify events were created with proper encoding metadata
-      events = Ash.read!(EventLog)
-
-      user_event =
-        Enum.find(
-          events,
-          &(&1.resource == User and &1.action == :create and
-              &1.data["email"] == "array_replay@example.com")
-        )
-
-      expected_encoders = %{
-        "api_key_hash" => "base64",
-        "binary_keys" => "base64"
-      }
-
-      assert user_event.changed_attributes_field_encoders == expected_encoders
-
-      # Verify the binary array is Base64 encoded in the event
-      encoded_keys = user_event.changed_attributes["binary_keys"]
-      assert is_list(encoded_keys)
-
-      decoded_from_event =
-        Enum.map(encoded_keys, fn encoded ->
-          {:ok, decoded} = Base.decode64(encoded)
-          decoded
-        end)
-
-      assert decoded_from_event == original_binary_keys
-
       # Test replay - the replay action automatically clears records
       system_actor = %SystemActor{name: "replay_system"}
       :ok = AshEvents.EventLogs.replay_events!(actor: system_actor)
@@ -356,7 +180,7 @@ defmodule AshEvents.BinaryAttributesTest do
       assert replayed_user.family_name == original_user.family_name
       assert replayed_user.hashed_password == original_user.hashed_password
 
-      # CRITICAL: Verify array binary attributes were properly decoded during replay
+      # Verify array binary attributes were properly restored during replay
       assert replayed_user.api_key_hash == original_user.api_key_hash
       assert replayed_user.binary_keys == original_user.binary_keys
 

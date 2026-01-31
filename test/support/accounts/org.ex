@@ -29,8 +29,29 @@ defmodule AshEvents.Accounts.Org do
       validate string_length(:name, min: 2, max: 100)
     end
 
+    # Upsert action for testing rerouted upsert replay
+    create :create_or_update do
+      accept [:id, :created_at, :updated_at, :name, :active]
+      upsert? true
+      upsert_identity :unique_name
+      upsert_fields [:name, :active, :updated_at]
+    end
+
+    # Replay action for rerouted upsert
+    # The upsert? true flag tells replay to check if record exists
+    # If exists: update only upsert_fields
+    # If not: create with all data
+    create :create_or_update_replay do
+      upsert? true
+      upsert_identity :unique_name
+      upsert_fields [:name, :active]
+      accept [:id, :name, :active]
+      skip_unknown_inputs [:*]
+    end
+
     update :update do
-      accept [:name, :updated_at]
+      accept [:name, :updated_at, :active]
+      require_atomic? false
 
       validate string_length(:name, min: 2, max: 100)
     end
@@ -69,5 +90,9 @@ defmodule AshEvents.Accounts.Org do
       allow_nil? false
       default true
     end
+  end
+
+  identities do
+    identity :unique_name, [:name]
   end
 end

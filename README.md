@@ -462,18 +462,13 @@ When events are recorded, they are stored in your event log resource with a stru
   user_id: "d7874250-4f50-4e72-b32c-ff779852c1bd", # if persist_actor_primary_key is configured
   data: %{
     "name" => "Jane Doe",
-    "email" => "jane@example.com",
-    "api_key_hash" => "dGVzdF9iaW5hcnlfZGF0YQ=="  # Base64 encoded binary
-  },
-  data_field_encoders: %{
-    "api_key_hash" => "base64"  # Tracks which fields are encoded
+    "email" => "jane@example.com"
   },
   changed_attributes: %{
     "status" => "active",      # Default value applied
     "slug" => "jane-doe",      # Auto-generated from name
     "uuid" => "550e8400-e29b-41d4-a716-446655440000"  # Auto-generated UUID
   },
-  changed_attributes_field_encoders: %{},  # No encoding needed for these fields
   metadata: %{
     "source" => "api",
     "request_id" => "req-abc123"
@@ -491,29 +486,10 @@ This structure captures all the essential information about each event:
 - **action_type**: The specific action that was performed (create, update, destroy)
 - **actor primary key**: Primary key of actor that ran the action (multiple actor types are supported)
 - **data**: Attributes and arguments that were provided to the action
-- **data_field_encoders**: Metadata tracking encoding used for fields in `data` (e.g., Base64 for binary data)
 - **changed_attributes**: Attributes modified during action execution (defaults, auto-generated values, business logic changes)
-- **changed_attributes_field_encoders**: Metadata tracking encoding used for fields in `changed_attributes`
 - **metadata**: Additional contextual information about the event
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
-
-### Binary Data Handling
-
-Binary attributes are automatically Base64 encoded for JSON storage and tracked in the encoder fields:
-
-```elixir
-# Original binary data
-user.api_key_hash = <<116, 101, 115, 116, 95, 98, 105, 110, 97, 114, 121, 95, 100, 97, 116, 97>>
-
-# Stored in event
-event.data["api_key_hash"] = "dGVzdF9iaW5hcnlfZGF0YQ=="
-event.data_field_encoders["api_key_hash"] = "base64"
-
-# During replay, automatically decoded back to original binary
-```
-
-The encoding metadata ensures events remain resilient to schema changes and can be properly decoded during replay regardless of current resource definitions.
 
 ## Advanced Configuration
 

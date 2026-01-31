@@ -31,6 +31,24 @@ defmodule AshEvents.Accounts.UserRole do
       change manage_relationship(:user_id, :user, type: :append)
     end
 
+    # Upsert action - if user already has a role, update it
+    create :create_or_update do
+      accept [:id, :created_at, :updated_at, :name, :user_id]
+      upsert? true
+      upsert_identity :unique_for_user
+      upsert_fields [:name, :updated_at]
+    end
+
+    # Replay action for rerouted upsert
+    # Tests upsert with relationship-based identity
+    create :create_or_update_replay do
+      upsert? true
+      upsert_identity :unique_for_user
+      upsert_fields [:name]
+      accept [:id, :name, :user_id]
+      skip_unknown_inputs [:*]
+    end
+
     update :update do
       primary? true
       require_atomic? false

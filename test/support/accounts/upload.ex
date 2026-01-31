@@ -21,6 +21,7 @@ defmodule AshEvents.Accounts.Upload do
 
     transitions do
       transition :create, from: :*, to: :*
+      transition :create_replay, from: :*, to: :*
       transition :mark_uploaded, from: :skipped, to: :uploaded
       transition :mark_skipped, from: :uploaded, to: :skipped
     end
@@ -41,6 +42,26 @@ defmodule AshEvents.Accounts.Upload do
       change transition_state(:uploaded) do
         where [attributes_present([:s3_key_formatted])]
       end
+    end
+
+    # Replay action for rerouted upsert
+    # Tests upsert with :replace_all upsert_fields
+    create :create_replay do
+      upsert? true
+      upsert_identity :unique_file_name
+      upsert_fields :replace_all
+      accept [:id, :file_name, :s3_key_formatted, :state]
+      skip_unknown_inputs [:*]
+
+      # Need to handle state machine during replay
+      change transition_state(:uploaded) do
+        where [attributes_present([:s3_key_formatted])]
+      end
+    end
+
+    update :update do
+      accept [:file_name, :s3_key_formatted]
+      require_atomic? false
     end
 
     update :mark_uploaded do

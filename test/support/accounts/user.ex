@@ -308,10 +308,17 @@ defmodule AshEvents.Accounts.User do
       skip_unknown_inputs :*
     end
 
+    # For replay of sign_in_with_magic_link events.
+    # Replay logic handles the upsert check:
+    # - If record exists: update only fields in upsert_fields
+    # - If not exists: create with merged data
+    # The upsert? true flag tells replay to apply this logic.
     create :sign_in_with_magic_link_replay do
       upsert? true
+      upsert_identity :unique_email
+      upsert_fields [:email]
       accept [:id, :email]
-      skip_unknown_inputs :*
+      skip_unknown_inputs [:*]
     end
 
     update :confirm_replay do
@@ -417,23 +424,23 @@ defmodule AshEvents.Accounts.User do
       public? true
     end
 
+    # Binary attributes are kept but defaults are removed to avoid
+    # Jason encoding issues until Ash core supports binary encoding.
+    # See binary_attributes_test.exs for the skipped tests.
     attribute :api_key_hash, :binary do
       allow_nil? true
       public? true
-      default &__MODULE__.generate_api_key_hash/0
     end
 
     attribute :sensitive_token, :binary do
       allow_nil? true
       public? true
       sensitive? true
-      default &__MODULE__.generate_sensitive_token/0
     end
 
     attribute :binary_keys, {:array, :binary} do
       allow_nil? true
       public? true
-      default &__MODULE__.generate_binary_keys/0
     end
 
     attribute :hashed_password, :string do

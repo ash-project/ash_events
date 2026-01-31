@@ -311,13 +311,14 @@ defmodule AshEvents.ChangedAttributesTest do
     user_id = Ash.UUID.generate()
 
     # Manually create events for testing - first a create event
+    # Note: The action wrappers store auto-generated attributes (including id) in changed_attributes
     create_event = %{
       action: :create,
       action_type: :create,
       resource: UserWithAutoAttrs,
       record_id: user_id,
       data: %{"email" => "test@example.com", "name" => "John Doe"},
-      changed_attributes: %{"status" => "active", "slug" => "john-doe"},
+      changed_attributes: %{"id" => user_id, "status" => "active", "slug" => "john-doe"},
       system_actor: "test",
       occurred_at: DateTime.utc_now()
     }
@@ -356,13 +357,14 @@ defmodule AshEvents.ChangedAttributesTest do
     user_id = Ash.UUID.generate()
 
     # First create a proper create event to establish the user
+    # Note: The action wrappers store auto-generated attributes (including id) in changed_attributes
     create_event = %{
       action: :create,
       action_type: :create,
       resource: UserWithAutoAttrs,
       record_id: user_id,
       data: %{"email" => "test@example.com", "name" => "John Doe"},
-      changed_attributes: %{"status" => "active", "slug" => "john-doe"},
+      changed_attributes: %{"id" => user_id, "status" => "active", "slug" => "john-doe"},
       system_actor: "test",
       occurred_at: DateTime.utc_now()
     }

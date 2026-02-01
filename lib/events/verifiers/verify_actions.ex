@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2023 ash_events contributors <https://github.com/ash-project/ash_events/graphs.contributors>
+# SPDX-FileCopyrightText: 2023 ash_events contributors <https://github.com/ash-project/ash_events/graphs/contributors>
 #
 # SPDX-License-Identifier: MIT
 
@@ -8,7 +8,7 @@ defmodule AshEvents.Events.Verifiers.VerifyActions do
 
   Checks that:
   - only_actions and ignore_actions are mutually exclusive
-  - All actions in only_actions, ignore_actions, current_action_versions, 
+  - All actions in only_actions, ignore_actions, current_action_versions,
     and allowed_change_modules reference existing actions on the resource
   - Versions in current_action_versions are positive integers
   - Change modules in allowed_change_modules exist and implement Ash.Resource.Change

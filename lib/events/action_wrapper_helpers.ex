@@ -7,40 +7,21 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
-  defp should_store_sensitive_attribute?(attribute_name, resource, event_log_resource) do
-    cloaked? = AshEvents.EventLog.Info.cloaked?(event_log_resource)
-    store_list = AshEvents.Events.Info.events_store_sensitive_attributes!(resource)
-
-    cloaked? or Enum.member?(store_list, attribute_name)
-  end
-
-  def dump_value(nil, _attribute), do: {nil, nil}
+  def dump_value(nil, _attribute), do: nil
 
   def dump_value(values, %{type: {:array, attr_type}} = attribute) do
     item_constraints = attribute.constraints[:items]
 
-    {dumped_values, encoding} =
-      Enum.map_reduce(values, nil, fn value, _acc ->
-        if attr_type == Ash.Type.Binary and is_binary(value) do
-          {Base.encode64(value), "base64"}
-        else
-          {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
-          {dumped_value, nil}
-        end
-      end)
-
-    {dumped_values, encoding}
+    # This is a work around for a bug in Ash.Type.dump_to_embedded/3
+    Enum.map(values, fn value ->
+      {:ok, dumped_value} = Ash.Type.dump_to_embedded(attr_type, value, item_constraints)
+      dumped_value
+    end)
   end
 
   def dump_value(value, attribute) do
-    if attribute.type == Ash.Type.Binary and is_binary(value) do
-      {Base.encode64(value), "base64"}
-    else
-      {:ok, dumped_value} =
-        Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
-
-      {dumped_value, nil}
-    end
+    {:ok, dumped_value} = Ash.Type.dump_to_embedded(attribute.type, value, attribute.constraints)
+    dumped_value
   end
 
   def get_occurred_at(changeset, timestamp_attr) do
@@ -55,11 +36,8 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
   defp cast_and_dump_value(value, attr_or_arg) do
     case Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
-      {:ok, cast_value} ->
-        dump_value(cast_value, attr_or_arg)
-
-      {:error, _} ->
-        dump_value(value, attr_or_arg)
+      {:ok, cast_value} -> dump_value(cast_value, attr_or_arg)
+      {:error, _} -> dump_value(value, attr_or_arg)
     end
   end
 
@@ -89,9 +67,9 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
     event_log_resource = module_opts[:event_log]
 
-    {params, data_field_encoders} =
+    params =
       original_params
-      |> Enum.reduce({%{}, %{}}, fn {key, value}, {params_acc, encoders_acc} ->
+      |> Enum.reduce(%{}, fn {key, value}, acc ->
         key =
           if is_binary(key) do
             try do
@@ -105,33 +83,21 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
         cond do
           attr = Ash.Resource.Info.attribute(changeset.resource, key) ->
-            if not attr.sensitive? or
-                 should_store_sensitive_attribute?(key, changeset.resource, event_log_resource) do
-              {dumped_value, encoding} = cast_and_dump_value(value, attr)
-
-              new_encoders_acc =
-                if encoding, do: Map.put(encoders_acc, key, encoding), else: encoders_acc
-
-              {Map.put(params_acc, key, dumped_value), new_encoders_acc}
+            if not attr.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+              Map.put(acc, key, cast_and_dump_value(value, attr))
             else
-              {Map.put(params_acc, key, nil), encoders_acc}
+              Map.put(acc, key, nil)
             end
 
           arg = Enum.find(changeset.action.arguments, &(&1.name == key)) ->
-            if not arg.sensitive? or
-                 should_store_sensitive_attribute?(key, changeset.resource, event_log_resource) do
-              {dumped_value, encoding} = cast_and_dump_value(value, arg)
-
-              new_encoders_acc =
-                if encoding, do: Map.put(encoders_acc, key, encoding), else: encoders_acc
-
-              {Map.put(params_acc, key, dumped_value), new_encoders_acc}
+            if not arg.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+              Map.put(acc, key, cast_and_dump_value(value, arg))
             else
-              {Map.put(params_acc, key, nil), encoders_acc}
+              Map.put(acc, key, nil)
             end
 
           true ->
-            {params_acc, encoders_acc}
+            acc
         end
       end)
 
@@ -152,33 +118,15 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     original_params = Map.get(changeset.context, :original_params, %{})
     original_param_keys = MapSet.new(Map.keys(original_params))
 
-    {changed_attributes, changed_attributes_field_encoders} =
-      Enum.reduce(changeset.attributes, {%{}, %{}}, fn {attr_name, value},
-                                                       {attrs_acc, encoders_acc} ->
+    changed_attributes =
+      Enum.reduce(changeset.attributes, %{}, fn {attr_name, value}, acc ->
         if MapSet.member?(original_param_keys, attr_name) or
              MapSet.member?(original_param_keys, to_string(attr_name)) do
-          {attrs_acc, encoders_acc}
+          acc
         else
           case Ash.Resource.Info.attribute(changeset.resource, attr_name) do
-            nil ->
-              {attrs_acc, encoders_acc}
-
-            attr ->
-              if not attr.sensitive? or
-                   should_store_sensitive_attribute?(
-                     attr_name,
-                     changeset.resource,
-                     event_log_resource
-                   ) do
-                {dumped_value, encoding} = dump_value(value, attr)
-
-                new_encoders_acc =
-                  if encoding, do: Map.put(encoders_acc, attr_name, encoding), else: encoders_acc
-
-                {Map.put(attrs_acc, attr_name, dumped_value), new_encoders_acc}
-              else
-                {Map.put(attrs_acc, attr_name, nil), encoders_acc}
-              end
+            nil -> acc
+            attr -> Map.put(acc, attr_name, dump_value(value, attr))
           end
         end
       end)
@@ -193,9 +141,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
         metadata: metadata,
         version: module_opts[:version],
         occurred_at: occurred_at,
-        changed_attributes: changed_attributes,
-        data_field_encoders: data_field_encoders,
-        changed_attributes_field_encoders: changed_attributes_field_encoders
+        changed_attributes: changed_attributes
       }
 
     event_params =

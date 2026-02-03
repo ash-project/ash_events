@@ -24,20 +24,16 @@ defmodule AshEvents.Accounts.OrgCloaked do
     allowed_change_modules create: [AshCloak.Changes.Encrypt], update: [AshCloak.Changes.Encrypt]
   end
 
-  def generate_api_token do
-    "token_" <> (:crypto.strong_rand_bytes(16) |> Base.encode16(case: :lower))
-  end
-
   actions do
     defaults [:read]
 
     create :create do
-      accept [:id, :created_at, :updated_at, :name, :secret_key]
+      accept [:id, :created_at, :updated_at, :name]
     end
 
     update :update do
       require_atomic? false
-      accept [:created_at, :updated_at, :name, :secret_key]
+      accept [:created_at, :updated_at, :name]
     end
   end
 
@@ -61,19 +57,6 @@ defmodule AshEvents.Accounts.OrgCloaked do
     attribute :name, :string do
       public? true
       allow_nil? false
-    end
-
-    attribute :secret_key, :string do
-      public? true
-      allow_nil? true
-      sensitive? true
-    end
-
-    attribute :api_token, :string do
-      public? true
-      allow_nil? true
-      sensitive? true
-      default &__MODULE__.generate_api_token/0
     end
   end
 end

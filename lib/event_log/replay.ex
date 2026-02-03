@@ -14,66 +14,25 @@ defmodule AshEvents.EventLog.Actions.Replay do
     Keyword.get(replay_config, action_name, :force_change)
   end
 
-  defp decode_values_with_encoders(data, encoders) when is_map(data) and is_map(encoders) do
-    Enum.reduce(data, %{}, fn {key, value}, acc ->
-      case Map.get(encoders, key) do
-        "base64" when is_binary(value) ->
-          case Base.decode64(value) do
-            {:ok, decoded} -> Map.put(acc, key, decoded)
-            :error -> raise "Invalid Base64 data for key #{key}"
-          end
-
-        "base64" when is_list(value) ->
-          decoded_array =
-            Enum.map(value, fn item ->
-              case Base.decode64(item) do
-                {:ok, decoded} -> decoded
-                :error -> raise "Invalid Base64 data in array for key #{key}"
-              end
-            end)
-
-          Map.put(acc, key, decoded_array)
-
-        _ ->
-          Map.put(acc, key, value)
-      end
-    end)
-  end
-
-  defp decode_values_with_encoders(data, _encoders), do: data
-
   defp prepare_replay_input(event, resource, action_name) do
     changed_attributes = Map.get(event, :changed_attributes, %{})
     replay_strategy = get_replay_strategy(resource, action_name)
 
-    data_encoders = Map.get(event, :data_field_encoders, %{})
-    changed_attributes_encoders = Map.get(event, :changed_attributes_field_encoders, %{})
-
-    decoded_data = decode_values_with_encoders(event.data, data_encoders)
-
-    decoded_changed_attributes =
-      decode_values_with_encoders(changed_attributes, changed_attributes_encoders)
-
     case replay_strategy do
       :as_arguments ->
-        Map.merge(decoded_data, decoded_changed_attributes)
+        Map.merge(event.data, changed_attributes)
 
       :force_change ->
-        decoded_data
+        event.data
     end
   end
 
   defp prepare_replay_context(event) do
     changed_attributes = Map.get(event, :changed_attributes, %{})
-    changed_attributes_encoders = Map.get(event, :changed_attributes_field_encoders, %{})
-
-    # Decode the changed_attributes using encoding metadata
-    decoded_changed_attributes =
-      decode_values_with_encoders(changed_attributes, changed_attributes_encoders)
 
     %{
       ash_events_replay?: true,
-      changed_attributes: decoded_changed_attributes
+      changed_attributes: changed_attributes
     }
   end
 

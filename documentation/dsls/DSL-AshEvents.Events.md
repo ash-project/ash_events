@@ -27,7 +27,6 @@ events do
   only_actions [:create, :update, :destroy]
   current_action_versions create: 2, update: 3, destroy: 2
   replay_non_input_attribute_changes [create_v1: :as_arguments, update_v2: :force_change]
-  store_sensitive_attributes [:hashed_password]
 end
 
 ```
@@ -47,7 +46,6 @@ end
 | [`create_timestamp`](#events-create_timestamp){: #events-create_timestamp } | `atom` |  | The name of the create timestamp attribute on the resource |
 | [`update_timestamp`](#events-update_timestamp){: #events-update_timestamp } | `atom` |  | The name of the update timestamp attribute on the resource |
 | [`replay_non_input_attribute_changes`](#events-replay_non_input_attribute_changes){: #events-replay_non_input_attribute_changes } | `keyword` | `[]` | Configure how non-input attribute changes are handled during replay for each action. Options are :force_change (apply via force_change_attributes) or :as_arguments (merge into action input). Defaults to :force_change for all actions. |
-| [`store_sensitive_attributes`](#events-store_sensitive_attributes){: #events-store_sensitive_attributes } | `list(atom)` | `[]` | A list of sensitive attribute names that should be stored in events despite being marked as sensitive. By default, sensitive attributes are set to nil unless the event log is cloaked. This option allows specific sensitive attributes to be stored even when the event log is not cloaked. |
 
 
 

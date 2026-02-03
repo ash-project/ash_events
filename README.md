@@ -24,7 +24,6 @@ AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that prov
 - **Event Replay**: Rebuild resource state by replaying events
 - **Version-specific Replay Routing**: Route events to different actions based on their version
 - **Changed Attributes Tracking**: Automatically captures and replays auto-generated attributes and business logic changes
-- **Security Controls**: Configurable sensitive attribute handling with optional encryption support
 - **Customizable Metadata**: Attach arbitrary metadata to events
 
 ## Installation
@@ -119,9 +118,6 @@ defmodule MyApp.Accounts.User do
 
     # Optionally specify version numbers for actions
     current_action_versions create: 2, update: 3, destroy: 2
-
-    # Optionally allow storing specific sensitive attributes (see Advanced Configuration)
-    store_sensitive_attributes [:hashed_password]
   end
 
   # Rest of your resource definition...
@@ -462,18 +458,13 @@ When events are recorded, they are stored in your event log resource with a stru
   user_id: "d7874250-4f50-4e72-b32c-ff779852c1bd", # if persist_actor_primary_key is configured
   data: %{
     "name" => "Jane Doe",
-    "email" => "jane@example.com",
-    "api_key_hash" => "dGVzdF9iaW5hcnlfZGF0YQ=="  # Base64 encoded binary
-  },
-  data_field_encoders: %{
-    "api_key_hash" => "base64"  # Tracks which fields are encoded
+    "email" => "jane@example.com"
   },
   changed_attributes: %{
     "status" => "active",      # Default value applied
     "slug" => "jane-doe",      # Auto-generated from name
     "uuid" => "550e8400-e29b-41d4-a716-446655440000"  # Auto-generated UUID
   },
-  changed_attributes_field_encoders: %{},  # No encoding needed for these fields
   metadata: %{
     "source" => "api",
     "request_id" => "req-abc123"
@@ -491,29 +482,10 @@ This structure captures all the essential information about each event:
 - **action_type**: The specific action that was performed (create, update, destroy)
 - **actor primary key**: Primary key of actor that ran the action (multiple actor types are supported)
 - **data**: Attributes and arguments that were provided to the action
-- **data_field_encoders**: Metadata tracking encoding used for fields in `data` (e.g., Base64 for binary data)
 - **changed_attributes**: Attributes modified during action execution (defaults, auto-generated values, business logic changes)
-- **changed_attributes_field_encoders**: Metadata tracking encoding used for fields in `changed_attributes`
 - **metadata**: Additional contextual information about the event
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
-
-### Binary Data Handling
-
-Binary attributes are automatically Base64 encoded for JSON storage and tracked in the encoder fields:
-
-```elixir
-# Original binary data
-user.api_key_hash = <<116, 101, 115, 116, 95, 98, 105, 110, 97, 114, 121, 95, 100, 97, 116, 97>>
-
-# Stored in event
-event.data["api_key_hash"] = "dGVzdF9iaW5hcnlfZGF0YQ=="
-event.data_field_encoders["api_key_hash"] = "base64"
-
-# During replay, automatically decoded back to original binary
-```
-
-The encoding metadata ensures events remain resilient to schema changes and can be properly decoded during replay regardless of current resource definitions.
 
 ## Advanced Configuration
 
@@ -557,63 +529,6 @@ replay_overrides do
   end
 end
 ```
-
-### Security and Sensitive Attributes
-
-**By default, sensitive attributes are excluded from events** for security. However, **if you are using a cloaked event log (with encryption), all sensitive attributes are always persisted** since they will be encrypted.
-
-#### Non-Encrypted Event Logs
-
-For non-encrypted event logs, use `store_sensitive_attributes` to explicitly allow specific sensitive attributes:
-
-```elixir
-defmodule MyApp.Accounts.User do
-  use Ash.Resource,
-    extensions: [AshEvents.Events]
-
-  events do
-    event_log MyApp.Events.Event
-    # Explicitly allow storing specific sensitive attributes
-    store_sensitive_attributes [:hashed_password, :api_key_hash]
-  end
-
-  attributes do
-    attribute :email, :string, public?: true
-    attribute :hashed_password, :string, sensitive?: true, public?: true
-    attribute :api_key_hash, :binary, sensitive?: true, public?: true
-    attribute :secret_token, :string, sensitive?: true, public?: true  # NOT stored in events
-  end
-end
-
-# Only hashed_password and api_key_hash will be included in events
-# secret_token will be excluded for security
-```
-
-#### Encrypted Event Logs
-
-When using a cloaked event log, all sensitive attributes are automatically persisted because they will be encrypted:
-
-```elixir
-defmodule MyApp.Events.Event do
-  use Ash.Resource,
-    extensions: [AshEvents.EventLog]
-
-  event_log do
-    cloak_vault MyApp.Vault  # Enables encryption
-  end
-end
-
-# When using a cloaked event log, ALL sensitive attributes are automatically
-# persisted because they will be encrypted. The store_sensitive_attributes
-# configuration is ignored for cloaked event logs.
-```
-
-#### Security Considerations
-
-- **Non-encrypted event logs:** Only store sensitive attributes that are necessary for replay or audit
-- **Encrypted event logs:** All sensitive attributes are stored since they're encrypted
-- Sensitive attributes like passwords, tokens, or keys should usually remain excluded from non-encrypted logs
-- Use encryption (`cloak_vault`) when you need to store sensitive data in events
 
 ### Public Field Configuration
 

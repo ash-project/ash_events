@@ -73,27 +73,13 @@ defmodule AshEvents.Accounts.User do
     current_action_versions create: 1, create_upsert: 1
     create_timestamp :created_at
     update_timestamp :updated_at
-    store_sensitive_attributes [:hashed_password]
-    replay_non_input_attribute_changes create_v1: :as_arguments
   end
 
   actions do
     defaults [:read]
 
     create :create do
-      accept [
-        :id,
-        :created_at,
-        :updated_at,
-        :email,
-        :given_name,
-        :family_name,
-        :hashed_password,
-        :api_key_hash,
-        :sensitive_token,
-        :binary_keys
-      ]
-
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name, :hashed_password]
       argument :role, :string, default: "user"
       change __MODULE__.CreateUserRole
       change set_attribute(:confirmed_at, &DateTime.utc_now/0)
@@ -152,22 +138,9 @@ defmodule AshEvents.Accounts.User do
     end
 
     create :create_v1 do
-      accept [
-        :id,
-        :created_at,
-        :updated_at,
-        :email,
-        :given_name,
-        :family_name,
-        :hashed_password,
-        :api_key_hash,
-        :sensitive_token,
-        :binary_keys,
-        :confirmed_at
-      ]
-
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name, :hashed_password]
       argument :role, :string, default: "user"
-      argument :sensitive_token, :string, sensitive?: true, allow_nil?: true
+      change set_attribute(:confirmed_at, &DateTime.utc_now/0)
     end
 
     create :create_upsert do
@@ -417,25 +390,6 @@ defmodule AshEvents.Accounts.User do
       public? true
     end
 
-    attribute :api_key_hash, :binary do
-      allow_nil? true
-      public? true
-      default &__MODULE__.generate_api_key_hash/0
-    end
-
-    attribute :sensitive_token, :binary do
-      allow_nil? true
-      public? true
-      sensitive? true
-      default &__MODULE__.generate_sensitive_token/0
-    end
-
-    attribute :binary_keys, {:array, :binary} do
-      allow_nil? true
-      public? true
-      default &__MODULE__.generate_binary_keys/0
-    end
-
     attribute :hashed_password, :string do
       sensitive? true
     end
@@ -451,25 +405,5 @@ defmodule AshEvents.Accounts.User do
     has_one :user_role, AshEvents.Accounts.UserRole do
       public? true
     end
-  end
-
-  def generate_api_key_hash do
-    # Generate a random binary hash to simulate API key hashes
-    # This will trigger the Jason.EncodeError when stored in changed_attributes
-    :crypto.strong_rand_bytes(32)
-  end
-
-  def generate_sensitive_token do
-    # Generate a sensitive binary token
-    :crypto.strong_rand_bytes(16)
-  end
-
-  def generate_binary_keys do
-    # Generate an array of binary keys to test {:array, :binary} encoding
-    [
-      :crypto.strong_rand_bytes(8),
-      :crypto.strong_rand_bytes(12),
-      :crypto.strong_rand_bytes(16)
-    ]
   end
 end

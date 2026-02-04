@@ -74,5 +74,14 @@ defmodule AshEvents.Accounts do
       define :mark_upload_uploaded, action: :mark_uploaded
       define :mark_upload_skipped, action: :mark_skipped
     end
+
+    resource AshEvents.Accounts.Article do
+      define :create_article, action: :create
+      define :update_article, action: :update
+      define :archive_article, action: :archive
+      define :unarchive_article, action: :unarchive
+      define :destroy_article, action: :destroy
+      define :soft_destroy_article, action: :soft_destroy
+    end
   end
 end

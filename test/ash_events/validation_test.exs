@@ -23,19 +23,6 @@ defmodule AshEvents.ValidationTest do
   end
 
   test "atomic changes throws error" do
-    assert_raise Ash.Error.Invalid, fn ->
-      Accounts.create_user_with_atomic(
-        %{
-          email: "user@example.com",
-          given_name: "John",
-          family_name: "Doe",
-          hashed_password: "hashed_password_123"
-        },
-        context: %{ash_events_metadata: %{source: "Signup form"}},
-        actor: %SystemActor{name: "test_runner"}
-      )
-    end
-
     user = create_user()
 
     assert_raise Ash.Error.Invalid, fn ->

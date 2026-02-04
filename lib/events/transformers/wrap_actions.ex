@@ -75,6 +75,15 @@ defmodule AshEvents.Events.Transformers.WrapActions do
 
     replay_config = AshEvents.Events.Info.events_replay_non_input_attribute_changes!(dsl)
 
+    apply_replay_primary_key = %Ash.Resource.Change{
+      change: {AshEvents.Events.Changes.ApplyReplayPrimaryKey, []},
+      on: nil,
+      only_when_valid?: false,
+      description: nil,
+      always_atomic?: false,
+      where: []
+    }
+
     apply_changed_attributes = %Ash.Resource.Change{
       change: {AshEvents.Events.Changes.ApplyChangedAttributes, [replay_config: replay_config]},
       on: nil,
@@ -83,6 +92,26 @@ defmodule AshEvents.Events.Transformers.WrapActions do
       always_atomic?: false,
       where: []
     }
+
+    # Ignored actions may still be used via replay_overrides
+    ignored_cud_actions =
+      all_actions
+      |> Enum.filter(&(&1.name in ignored and &1.type in [:create, :update, :destroy]))
+
+    dsl =
+      Enum.reduce(ignored_cud_actions, dsl, fn action, dsl ->
+        updated_action = %{
+          action
+          | changes: [apply_replay_primary_key | action.changes] ++ [apply_changed_attributes]
+        }
+
+        Spark.Dsl.Transformer.replace_entity(
+          dsl,
+          [:actions],
+          updated_action,
+          &(&1.name == action.name)
+        )
+      end)
 
     Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       wrapped_changes =
@@ -136,7 +165,9 @@ defmodule AshEvents.Events.Transformers.WrapActions do
                ]},
             primary?: action.primary?,
             arguments: action.arguments,
-            changes: [store_changeset_params | wrapped_changes] ++ [apply_changed_attributes]
+            changes:
+              [store_changeset_params, apply_replay_primary_key | wrapped_changes] ++
+                [apply_changed_attributes]
         }
         |> then(fn action ->
           case action.type do

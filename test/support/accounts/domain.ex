@@ -83,5 +83,12 @@ defmodule AshEvents.Accounts do
       define :destroy_article, action: :destroy
       define :soft_destroy_article, action: :soft_destroy
     end
+
+    resource AshEvents.Accounts.UserNonWritableId do
+      define :get_user_non_writable_id_by_id, action: :get_by_id, args: [:id]
+      define :create_user_non_writable_id, action: :create
+      define :update_user_non_writable_id, action: :update
+      define :destroy_user_non_writable_id, action: :destroy
+    end
   end
 end

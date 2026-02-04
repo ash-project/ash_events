@@ -19,7 +19,7 @@ defmodule AshEvents.DestroyActionWrapper do
   Ash implements soft deletes as updates, so it calls `update/3` on the manual module.
   """
   def update(changeset, module_opts, ctx) do
-    merged_ctx = Map.get(ctx, :source_context) |> Map.merge(ctx)
+    merged_ctx = (Map.get(ctx, :source_context) || %{}) |> Map.merge(ctx)
 
     if Map.get(merged_ctx, :ash_events_replay?) do
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
@@ -47,7 +47,7 @@ defmodule AshEvents.DestroyActionWrapper do
   Handles hard destroy actions.
   """
   def destroy(changeset, module_opts, ctx) do
-    merged_ctx = Map.get(ctx, :source_context) |> Map.merge(ctx)
+    merged_ctx = (Map.get(ctx, :source_context) || %{}) |> Map.merge(ctx)
 
     if Map.get(merged_ctx, :ash_events_replay?) do
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)

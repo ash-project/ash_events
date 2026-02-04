@@ -9,7 +9,7 @@ defmodule AshEvents.CreateActionWrapper do
   use Ash.Resource.ManualCreate
 
   def create(changeset, module_opts, %{upsert?: upsert?, upsert_keys: upsert_keys} = ctx) do
-    merged_ctx = Map.get(ctx, :source_context) |> Map.merge(ctx)
+    merged_ctx = (Map.get(ctx, :source_context) || %{}) |> Map.merge(ctx)
 
     if Map.get(merged_ctx, :ash_events_replay?) do
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)

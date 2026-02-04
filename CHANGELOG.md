@@ -11,6 +11,31 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.6.0](https://github.com/ash-project/ash_events/compare/v0.5.1...v0.6.0) (2026-02-04)
+
+
+
+
+### Features:
+
+* destroy: add soft delete support and comprehensive tests by [@Torkan](https://github.com/Torkan)
+
+* add store_sensitive_attributes dsl option by [@Torkan](https://github.com/Torkan)
+
+### Bug Fixes:
+
+* replay: support non-writable UUID primary keys during replay by [@Torkan](https://github.com/Torkan)
+
+* action-wrappers: handle nil source_context to allow actions without actor by [@Torkan](https://github.com/Torkan)
+
+* upsert: use update_timestamp for occurred_at when upsert updates existing record by [@Torkan](https://github.com/Torkan)
+
+* tests: remove duplicate atomic create test assertion by [@Torkan](https://github.com/Torkan)
+
+* mix: move preferred_cli_env to cli/0 callback by [@Torkan](https://github.com/Torkan)
+
+* events: return notifications from event creation to prevent missed notification warnings by [@Torkan](https://github.com/Torkan)
+
 ## v0.5.1 (2025-09-19)
 
 

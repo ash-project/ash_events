@@ -63,4 +63,61 @@ defmodule AshEvents.ActorAttributionTest do
     assert system_event.action == :update
     assert system_event.resource == User
   end
+
+  describe "actions without actor" do
+    alias AshEvents.Accounts.Org
+
+    test "create action works without an actor" do
+      org = Accounts.create_org!(%{name: "Test Org"})
+
+      assert org.name == "Test Org"
+
+      [event] =
+        EventLog
+        |> Ash.Query.filter(resource == Org)
+        |> Ash.read!()
+
+      assert event.action == :create
+      assert event.resource == Org
+      assert event.user_id == nil
+      assert event.system_actor == nil
+    end
+
+    test "update action works without an actor" do
+      org = Accounts.create_org!(%{name: "Test Org"})
+
+      updated_org =
+        org
+        |> Ash.Changeset.for_update(:update, %{name: "Updated Org"})
+        |> Ash.update!()
+
+      assert updated_org.name == "Updated Org"
+
+      [_create_event, update_event] =
+        EventLog
+        |> Ash.Query.filter(resource == Org)
+        |> Ash.Query.sort({:id, :asc})
+        |> Ash.read!()
+
+      assert update_event.action == :update
+      assert update_event.resource == Org
+      assert update_event.user_id == nil
+      assert update_event.system_actor == nil
+    end
+
+    test "create action works with actor explicitly set to nil" do
+      org = Accounts.create_org!(%{name: "Nil Actor Org"}, actor: nil)
+
+      assert org.name == "Nil Actor Org"
+
+      [event] =
+        EventLog
+        |> Ash.Query.filter(resource == Org)
+        |> Ash.read!()
+
+      assert event.action == :create
+      assert event.user_id == nil
+      assert event.system_actor == nil
+    end
+  end
 end

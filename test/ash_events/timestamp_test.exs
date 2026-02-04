@@ -120,5 +120,68 @@ defmodule AshEvents.TimestampTest do
       assert org_update_event.occurred_at == updated_org.updated_at,
              "Event occurred_at (#{org_update_event.occurred_at}) should match org updated_at (#{updated_org.updated_at})"
     end
+
+    test "upsert action that creates new record uses create_timestamp for occurred_at" do
+      user =
+        Accounts.create_user_upsert!(
+          %{
+            email: "upsert_new@example.com",
+            given_name: "New",
+            family_name: "User",
+            hashed_password: "hashed_password_123"
+          },
+          actor: %SystemActor{name: "test_runner"}
+        )
+
+      upsert_event =
+        EventLog
+        |> Ash.Query.filter(resource == ^User and action == :create_upsert)
+        |> Ash.Query.sort({:id, :desc})
+        |> Ash.read!()
+        |> List.first()
+
+      assert upsert_event.occurred_at == user.created_at
+    end
+
+    test "upsert action that updates existing record uses update_timestamp for occurred_at" do
+      user1 =
+        Accounts.create_user_upsert!(
+          %{
+            email: "upsert_update@example.com",
+            given_name: "Initial",
+            family_name: "User",
+            hashed_password: "hashed_password_123"
+          },
+          actor: %SystemActor{name: "test_runner"}
+        )
+
+      # Ensure timestamps differ between first and second upsert
+      Process.sleep(10)
+
+      user2 =
+        Accounts.create_user_upsert!(
+          %{
+            email: "upsert_update@example.com",
+            given_name: "Updated",
+            family_name: "Person",
+            hashed_password: "hashed_password_123"
+          },
+          actor: %SystemActor{name: "test_runner"}
+        )
+
+      assert user1.id == user2.id
+
+      events =
+        EventLog
+        |> Ash.Query.filter(resource == ^User and action == :create_upsert)
+        |> Ash.Query.sort({:id, :asc})
+        |> Ash.read!()
+
+      second_event = List.last(events)
+
+      # Should use update_timestamp, not create_timestamp, for upserts that update
+      assert second_event.occurred_at == user2.updated_at
+      assert DateTime.compare(user2.updated_at, user2.created_at) == :gt
+    end
   end
 end

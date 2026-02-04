@@ -53,10 +53,8 @@ defmodule AshEvents.GeneratorTest do
       |> Ash.Query.filter(resource == ^User)
       |> Ash.read!()
 
-    assert length(events) >= 1
-
     # Check the user creation event
-    [user_event | _] = events
+    assert [user_event | _] = events
     assert user_event.action == :create
     assert user_event.resource == User
     assert user_event.system_actor == "test_generator"
@@ -148,8 +146,7 @@ defmodule AshEvents.GeneratorTest do
       )
       |> Ash.read!()
 
-    assert length(events) >= 1
-    [event | _] = events
+    assert [event | _] = events
     assert event.data["email"] == custom_email
     assert event.data["given_name"] == "CustomFirst"
   end

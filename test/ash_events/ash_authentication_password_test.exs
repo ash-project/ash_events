@@ -292,9 +292,7 @@ defmodule AshEvents.AshAuthenticationPasswordTest do
         |> Ash.Query.filter(resource == ^User and action == :change_password)
         |> Ash.read!()
 
-      assert length(password_change_events) >= 1
-
-      password_change_event = hd(password_change_events)
+      assert [password_change_event | _] = password_change_events
       assert password_change_event.resource == User
       assert password_change_event.action == :change_password
       assert password_change_event.record_id == user.id
@@ -441,7 +439,7 @@ defmodule AshEvents.AshAuthenticationPasswordTest do
         |> Ash.Query.filter(resource == ^User and record_id == ^user.id)
         |> Ash.read!()
 
-      assert length(events) >= 1
+      assert [_ | _] = events
 
       registration_event = Enum.find(events, &(&1.action == :register_with_password))
       assert registration_event != nil

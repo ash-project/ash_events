@@ -149,7 +149,7 @@ defmodule AshEvents.AshAuthenticationMagicLinkTest do
         |> Ash.Query.sort({:id, :asc})
         |> Ash.read!()
 
-      assert length(events) >= 1
+      assert [_ | _] = events
 
       # Find the magic link sign-in event
       magic_link_event = Enum.find(events, &(&1.action == :sign_in_with_magic_link))
@@ -415,7 +415,7 @@ defmodule AshEvents.AshAuthenticationMagicLinkTest do
         |> Ash.Query.filter(resource == ^User and record_id == ^user.id)
         |> Ash.read!()
 
-      assert length(events) >= 1
+      assert [_ | _] = events
 
       magic_link_event = Enum.find(events, &(&1.action == :sign_in_with_magic_link))
       assert magic_link_event != nil
@@ -499,8 +499,8 @@ defmodule AshEvents.AshAuthenticationMagicLinkTest do
       password_events = Enum.filter(all_events, &(&1.action == :register_with_password))
       magic_link_events = Enum.filter(all_events, &(&1.action == :sign_in_with_magic_link))
 
-      assert length(password_events) >= 1
-      assert length(magic_link_events) >= 1
+      assert [_ | _] = password_events
+      assert [_ | _] = magic_link_events
     end
   end
 end

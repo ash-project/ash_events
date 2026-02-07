@@ -113,7 +113,7 @@ defmodule MyApp.Accounts.User do
 
     # Optionally ignore certain actions. This is mainly used for actions
     # that are kept around for supporting previous event versions, and
-    # are configured as replay_overrrides in the event log (see above).
+    # are configured as replay_overrides in the event log (see above).
     ignore_actions [:old_create_v1]
 
     # Optionally specify version numbers for actions

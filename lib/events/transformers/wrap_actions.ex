@@ -144,6 +144,22 @@ defmodule AshEvents.Events.Transformers.WrapActions do
           end
         end)
 
+      # Copy manage_relationship changes with ignore?: true so that AshPhoenix
+      # can detect them for nested form generation. The actual relationship
+      # management is handled by the wrapped version above.
+      ignored_manage_relationship_changes =
+        action.changes
+        |> Enum.filter(fn
+          %Ash.Resource.Change{change: {Ash.Resource.Change.ManageRelationship, _}} -> true
+          _ -> false
+        end)
+        |> Enum.map(fn %Ash.Resource.Change{change: {mod, opts}} = change ->
+          updated_opts =
+            Keyword.update(opts, :opts, [ignore?: true], &Keyword.put(&1, :ignore?, true))
+
+          %{change | change: {mod, updated_opts}}
+        end)
+
       manual_module =
         case action.type do
           :create -> AshEvents.CreateActionWrapper
@@ -167,7 +183,8 @@ defmodule AshEvents.Events.Transformers.WrapActions do
             arguments: action.arguments,
             changes:
               [store_changeset_params, apply_replay_primary_key | wrapped_changes] ++
-                [apply_changed_attributes]
+                [apply_changed_attributes] ++
+                ignored_manage_relationship_changes
         }
         |> then(fn action ->
           case action.type do

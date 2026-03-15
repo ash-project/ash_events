@@ -97,6 +97,14 @@ defmodule AshEvents.Accounts.User do
       change set_attribute(:confirmed_at, &DateTime.utc_now/0)
     end
 
+    create :create_with_roles do
+      accept [:id, :created_at, :updated_at, :email, :given_name, :family_name, :hashed_password]
+      argument :user_role, :map
+
+      change manage_relationship(:user_role, type: :direct_control)
+      change set_attribute(:confirmed_at, &DateTime.utc_now/0)
+    end
+
     update :update do
       require_atomic? false
       accept [:given_name, :family_name, :created_at, :updated_at, :hashed_password]

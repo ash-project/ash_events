@@ -75,6 +75,7 @@ settings = {
             'Bash(wc:*)',
             'Bash(grep:*)',
             'Bash(ls:*)',
+            'Bash(cmux:*)',
             'WebSearch',
             'WebFetch(domain:hexdocs.pm)',
             'WebFetch(domain:hex.pm)',

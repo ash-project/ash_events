@@ -24,13 +24,17 @@ defmodule AshEvents.ManageRelationship.HasOneTest do
     test "creates parent and child, separate events for each" do
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_nested_role, %{
-          email: "ho-dc@example.com",
-          given_name: "Jane",
-          family_name: "Doe",
-          hashed_password: "hash",
-          user_role: %{name: "admin"}
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_nested_role,
+          %{
+            email: "ho-dc@example.com",
+            given_name: "Jane",
+            family_name: "Doe",
+            hashed_password: "hash",
+            user_role: %{name: "admin"}
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:user_role, actor: @actor)
 
@@ -43,7 +47,9 @@ defmodule AshEvents.ManageRelationship.HasOneTest do
         |> Enum.filter(&(&1.action_type == :create))
 
       user_event = Enum.find(events, &(&1.resource == User and &1.record_id == user.id))
-      role_event = Enum.find(events, &(&1.resource == UserRole and &1.record_id == user.user_role.id))
+
+      role_event =
+        Enum.find(events, &(&1.resource == UserRole and &1.record_id == user.user_role.id))
 
       assert user_event != nil
       assert user_event.action == :create_with_nested_role
@@ -55,13 +61,17 @@ defmodule AshEvents.ManageRelationship.HasOneTest do
     test "replay does not duplicate child — child is recreated from its own event" do
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_nested_role, %{
-          email: "ho-dc-replay@example.com",
-          given_name: "Jane",
-          family_name: "Doe",
-          hashed_password: "hash",
-          user_role: %{name: "editor"}
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_nested_role,
+          %{
+            email: "ho-dc-replay@example.com",
+            given_name: "Jane",
+            family_name: "Doe",
+            hashed_password: "hash",
+            user_role: %{name: "editor"}
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:user_role, actor: @actor)
 
@@ -85,13 +95,17 @@ defmodule AshEvents.ManageRelationship.HasOneTest do
     test "creates parent and child, replay works correctly" do
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_role_create, %{
-          email: "ho-create@example.com",
-          given_name: "Bob",
-          family_name: "Smith",
-          hashed_password: "hash",
-          user_role: %{name: "viewer"}
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_role_create,
+          %{
+            email: "ho-create@example.com",
+            given_name: "Bob",
+            family_name: "Smith",
+            hashed_password: "hash",
+            user_role: %{name: "viewer"}
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:user_role, actor: @actor)
 

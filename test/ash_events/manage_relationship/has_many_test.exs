@@ -12,7 +12,7 @@ defmodule AshEvents.ManageRelationship.HasManyTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Accounts.{User, Comment}
+  alias AshEvents.Accounts.{Comment, User}
   alias AshEvents.EventLogs
   alias AshEvents.EventLogs.{EventLog, SystemActor}
 
@@ -24,13 +24,17 @@ defmodule AshEvents.ManageRelationship.HasManyTest do
     test "creates parent with multiple children, separate events for each" do
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_comments, %{
-          email: "hm-create@example.com",
-          given_name: "Jane",
-          family_name: "Doe",
-          hashed_password: "hash",
-          comments: [%{body: "First comment"}, %{body: "Second comment"}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_comments,
+          %{
+            email: "hm-create@example.com",
+            given_name: "Jane",
+            family_name: "Doe",
+            hashed_password: "hash",
+            comments: [%{body: "First comment"}, %{body: "Second comment"}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:comments, actor: @actor)
 
@@ -53,13 +57,17 @@ defmodule AshEvents.ManageRelationship.HasManyTest do
     test "replay does not duplicate children" do
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_comments, %{
-          email: "hm-replay@example.com",
-          given_name: "Jane",
-          family_name: "Doe",
-          hashed_password: "hash",
-          comments: [%{body: "Comment A"}, %{body: "Comment B"}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_comments,
+          %{
+            email: "hm-replay@example.com",
+            given_name: "Jane",
+            family_name: "Doe",
+            hashed_password: "hash",
+            comments: [%{body: "Comment A"}, %{body: "Comment B"}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:comments, actor: @actor)
 
@@ -81,13 +89,17 @@ defmodule AshEvents.ManageRelationship.HasManyTest do
       # Create user with one comment
       user =
         User
-        |> Ash.Changeset.for_create(:create_with_comments, %{
-          email: "hm-dc@example.com",
-          given_name: "Jane",
-          family_name: "Doe",
-          hashed_password: "hash",
-          comments: [%{body: "Initial comment"}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_comments,
+          %{
+            email: "hm-dc@example.com",
+            given_name: "Jane",
+            family_name: "Doe",
+            hashed_password: "hash",
+            comments: [%{body: "Initial comment"}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:comments, actor: @actor)
 
@@ -96,12 +108,16 @@ defmodule AshEvents.ManageRelationship.HasManyTest do
       # Update: keep existing comment (updated), add a new one
       user =
         user
-        |> Ash.Changeset.for_update(:update_with_comments_direct_control, %{
-          comments: [
-            %{id: initial_comment.id, body: "Updated comment"},
-            %{body: "New comment"}
-          ]
-        }, actor: @actor)
+        |> Ash.Changeset.for_update(
+          :update_with_comments_direct_control,
+          %{
+            comments: [
+              %{id: initial_comment.id, body: "Updated comment"},
+              %{body: "New comment"}
+            ]
+          },
+          actor: @actor
+        )
         |> Ash.update!(actor: @actor)
         |> Ash.load!(:comments, actor: @actor)
 

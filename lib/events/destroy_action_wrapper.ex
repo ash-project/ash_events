@@ -44,6 +44,35 @@ defmodule AshEvents.DestroyActionWrapper do
   end
 
   @doc """
+  Handles bulk soft destroy actions.
+
+  When Ash converts a bulk soft-delete destroy into a bulk update, the changeset
+  context key is `:bulk_destroy` but the bulk update pipeline expects `:bulk_update`.
+  Implementing `bulk_update/3` allows us to tag results with their changesets directly,
+  bypassing the context key mismatch.
+  """
+  def bulk_update(changesets, module_opts, bulk_ctx) do
+    Enum.map(changesets, fn changeset ->
+      ctx = %Ash.Resource.ManualUpdate.Context{
+        actor: bulk_ctx.actor,
+        source_context: changeset.context,
+        select: bulk_ctx.select,
+        authorize?: bulk_ctx.authorize?,
+        tracer: bulk_ctx.tracer,
+        domain: bulk_ctx.domain,
+        return_notifications?: bulk_ctx.return_notifications? || false,
+        tenant: bulk_ctx.tenant
+      }
+
+      case update(changeset, module_opts, ctx) do
+        {:ok, record} -> {:ok, record, changeset}
+        {:ok, record, _notifications} -> {:ok, record, changeset}
+        {:error, error} -> {:error, error}
+      end
+    end)
+  end
+
+  @doc """
   Handles hard destroy actions.
   """
   def destroy(changeset, module_opts, ctx) do

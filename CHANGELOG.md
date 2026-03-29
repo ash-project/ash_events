@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.7.0](https://github.com/ash-project/ash_events/compare/v0.6.0...v0.7.0) (2026-03-29)
+
+
+
+
+### Bug Fixes:
+
+* handle bulk_destroy with soft delete (#85) by [@Torkan](https://github.com/Torkan)
+
+* implement atomic/3 on replay changes for ignored action compatibility by [@Torkan](https://github.com/Torkan)
+
+* clear managed relationships during replay and capture belongs_to FKs in changed_attributes by [@Torkan](https://github.com/Torkan)
+
+* preserve ManageRelationship visibility for AshPhoenix nested forms (#87) by [@Torkan](https://github.com/Torkan)
+
 ## [v0.6.0](https://github.com/ash-project/ash_events/compare/v0.5.1...v0.6.0) (2026-02-04)
 
 

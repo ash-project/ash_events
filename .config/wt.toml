@@ -39,7 +39,7 @@ import json, os
 path = '.mcp.json'
 data = json.load(open(path)) if os.path.exists(path) else {'mcpServers': {}}
 data.setdefault('mcpServers', {})
-data['mcpServers']['tidewave'] = {'type': 'http', 'url': 'http://localhost:{{ branch | hash_port }}/mcp'}
+data['mcpServers']['tidewave'] = {'type': 'http', 'url': 'http://localhost:{{ branch | hash_port }}/tidewave/mcp'}
 json.dump(data, open(path, 'w'), indent=4)
 "
 """

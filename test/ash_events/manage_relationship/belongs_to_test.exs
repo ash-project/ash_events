@@ -12,7 +12,7 @@ defmodule AshEvents.ManageRelationship.BelongsToTest do
   use AshEvents.RepoCase, async: false
 
   alias AshEvents.Accounts
-  alias AshEvents.Accounts.{UserRole, Comment}
+  alias AshEvents.Accounts.{Comment, UserRole}
   alias AshEvents.EventLogs
   alias AshEvents.EventLogs.{EventLog, SystemActor}
 

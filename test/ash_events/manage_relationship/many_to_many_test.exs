@@ -31,11 +31,15 @@ defmodule AshEvents.ManageRelationship.ManyToManyTest do
 
       article =
         Article
-        |> Ash.Changeset.for_create(:create_with_tags, %{
-          title: "Learning Ash",
-          body: "Great framework",
-          tags: [%{id: tag1.id}, %{id: tag2.id}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_tags,
+          %{
+            title: "Learning Ash",
+            body: "Great framework",
+            tags: [%{id: tag1.id}, %{id: tag2.id}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:tags, actor: @actor)
 
@@ -58,11 +62,15 @@ defmodule AshEvents.ManageRelationship.ManyToManyTest do
 
       article =
         Article
-        |> Ash.Changeset.for_create(:create_with_tags, %{
-          title: "Phoenix LiveView",
-          body: "Real-time web",
-          tags: [%{id: tag1.id}, %{id: tag2.id}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_tags,
+          %{
+            title: "Phoenix LiveView",
+            body: "Real-time web",
+            tags: [%{id: tag1.id}, %{id: tag2.id}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:tags, actor: @actor)
 
@@ -89,10 +97,14 @@ defmodule AshEvents.ManageRelationship.ManyToManyTest do
       # Create article with tag1 and tag2
       article =
         Article
-        |> Ash.Changeset.for_create(:create_with_tags, %{
-          title: "Initial Article",
-          tags: [%{id: tag1.id}, %{id: tag2.id}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_create(
+          :create_with_tags,
+          %{
+            title: "Initial Article",
+            tags: [%{id: tag1.id}, %{id: tag2.id}]
+          },
+          actor: @actor
+        )
         |> Ash.create!(actor: @actor)
         |> Ash.load!(:tags, actor: @actor)
 
@@ -101,9 +113,13 @@ defmodule AshEvents.ManageRelationship.ManyToManyTest do
       # Update: remove tag2, add tag3
       article =
         article
-        |> Ash.Changeset.for_update(:update_tags, %{
-          tags: [%{id: tag1.id}, %{id: tag3.id}]
-        }, actor: @actor)
+        |> Ash.Changeset.for_update(
+          :update_tags,
+          %{
+            tags: [%{id: tag1.id}, %{id: tag3.id}]
+          },
+          actor: @actor
+        )
         |> Ash.update!(actor: @actor)
         |> Ash.load!(:tags, actor: @actor)
 

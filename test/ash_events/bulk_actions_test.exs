@@ -122,6 +122,92 @@ defmodule AshEvents.BulkActionsTest do
     assert Enum.count(events) == 10
   end
 
+  test "bulk_create works atomically with ignored action" do
+    alias AshEvents.Accounts.Org
+
+    result =
+      Ash.bulk_create!(
+        [%{name: "Org 1"}, %{name: "Org 2"}, %{name: "Org 3"}],
+        Org,
+        :create_ignored,
+        return_errors?: true,
+        return_records?: true,
+        actor: %SystemActor{name: "system"}
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 3
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Org and action == :create_ignored)
+      |> Ash.read!()
+
+    assert events == []
+  end
+
+  test "bulk_update works atomically with ignored action" do
+    alias AshEvents.Accounts.Org
+
+    orgs =
+      1..3
+      |> Enum.map(fn i ->
+        Org
+        |> Ash.Changeset.for_create(:create, %{name: "Org #{i}"})
+        |> Ash.create!(actor: %SystemActor{name: "system"})
+      end)
+
+    result =
+      orgs
+      |> Ash.bulk_update!(:update_ignored, %{name: "Updated"},
+        return_errors?: true,
+        return_records?: true,
+        actor: %SystemActor{name: "system"}
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 3
+    assert Enum.all?(result.records, &(&1.name == "Updated"))
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Org and action == :update_ignored)
+      |> Ash.read!()
+
+    assert events == []
+  end
+
+  test "bulk_destroy works atomically with ignored action" do
+    alias AshEvents.Accounts.Org
+
+    orgs =
+      1..3
+      |> Enum.map(fn i ->
+        Org
+        |> Ash.Changeset.for_create(:create, %{name: "Org #{i}"})
+        |> Ash.create!(actor: %SystemActor{name: "system"})
+      end)
+
+    result =
+      orgs
+      |> Ash.bulk_destroy!(:destroy_ignored, %{},
+        return_errors?: true,
+        return_records?: true,
+        actor: %SystemActor{name: "system"}
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 3
+    assert [] == Org |> Ash.read!()
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Org and action == :destroy_ignored)
+      |> Ash.read!()
+
+    assert events == []
+  end
+
   test "bulk_create without return_notifications? should not generate missed notification warnings" do
     result =
       Ash.bulk_create!(

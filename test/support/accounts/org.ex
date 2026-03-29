@@ -16,6 +16,7 @@ defmodule AshEvents.Accounts.Org do
 
   events do
     event_log AshEvents.EventLogs.EventLog
+    ignore_actions [:create_ignored, :update_ignored, :destroy_ignored]
     create_timestamp :created_at
     update_timestamp :updated_at
   end
@@ -33,6 +34,18 @@ defmodule AshEvents.Accounts.Org do
       accept [:name, :updated_at]
 
       validate string_length(:name, min: 2, max: 100)
+    end
+
+    create :create_ignored do
+      accept [:id, :created_at, :updated_at, :name]
+    end
+
+    update :update_ignored do
+      accept [:name]
+    end
+
+    destroy :destroy_ignored do
+      accept []
     end
 
     update :reactivate do

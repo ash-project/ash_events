@@ -174,7 +174,7 @@ defmodule AshEvents.MixProject do
       "test.reset": ["test.drop", "test.create", "test.migrate", "ash_postgres.migrate --tenants"],
       "test.drop": "ash_postgres.drop",
       tidewave:
-        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: 4002) end)'",
+        "run --no-halt -e 'Agent.start(fn -> Bandit.start_link(plug: Tidewave, port: String.to_integer(System.get_env(\"TIDEWAVE_PORT\") || \"4002\")) end)'",
       sobelow: "sobelow --skip -i Config.HTTPS",
       docs: [
         "spark.cheat_sheets",

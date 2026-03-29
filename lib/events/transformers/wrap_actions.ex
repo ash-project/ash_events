@@ -115,32 +115,55 @@ defmodule AshEvents.Events.Transformers.WrapActions do
 
     Enum.reduce(event_actions, {:ok, dsl}, fn action, {:ok, dsl} ->
       wrapped_changes =
-        Enum.map(action.changes, fn change ->
+        Enum.flat_map(action.changes, fn change ->
           case change do
             %Ash.Resource.Validation{} = validation ->
-              %Ash.Resource.Change{
-                change:
-                  {AshEvents.Events.ReplayValidationWrapper,
-                   [
-                     validation: validation,
-                     message: validation.message
-                   ]},
-                on: validation.on,
-                only_when_valid?: validation.only_when_valid?,
-                description: validation.description,
-                always_atomic?: false,
-                where: validation.where || []
-              }
+              [
+                %Ash.Resource.Change{
+                  change:
+                    {AshEvents.Events.ReplayValidationWrapper,
+                     [
+                       validation: validation,
+                       message: validation.message
+                     ]},
+                  on: validation.on,
+                  only_when_valid?: validation.only_when_valid?,
+                  description: validation.description,
+                  always_atomic?: false,
+                  where: validation.where || []
+                }
+              ]
+
+            %Ash.Resource.Change{change: {Ash.Resource.Change.ManageRelationship, _}} = change ->
+              # ManageRelationship needs two representations:
+              # 1. An unwrapped copy for AshPhoenix nested form introspection (never executes)
+              # 2. A wrapped copy for proper replay behavior (runs change but strips hooks)
+              introspection_only =
+                %{change | where: [{AshEvents.Events.Validations.Never, []} | change.where || []]}
+
+              wrapped =
+                %Ash.Resource.Change{
+                  change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
+                  on: change.on,
+                  only_when_valid?: change.only_when_valid?,
+                  description: change.description,
+                  always_atomic?: change.always_atomic?,
+                  where: change.where || []
+                }
+
+              [introspection_only, wrapped]
 
             %Ash.Resource.Change{} = change ->
-              %Ash.Resource.Change{
-                change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
-                on: change.on,
-                only_when_valid?: change.only_when_valid?,
-                description: change.description,
-                always_atomic?: change.always_atomic?,
-                where: change.where || []
-              }
+              [
+                %Ash.Resource.Change{
+                  change: {AshEvents.Events.ReplayChangeWrapper, [change: change]},
+                  on: change.on,
+                  only_when_valid?: change.only_when_valid?,
+                  description: change.description,
+                  always_atomic?: change.always_atomic?,
+                  where: change.where || []
+                }
+              ]
           end
         end)
 

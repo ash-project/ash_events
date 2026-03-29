@@ -32,7 +32,12 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
             after_transaction: cs.after_transaction,
             around_action: cs.around_action,
             before_action: cs.before_action,
-            after_action: cs.after_action
+            after_action: cs.after_action,
+            # Clear all managed relationships to prevent relationship management
+            # during replay. Related records have their own events and will be
+            # recreated separately. For belongs_to FKs, the value is set from
+            # changed_attributes by ApplyChangedAttributes instead.
+            relationships: %{}
         }
       end
     else

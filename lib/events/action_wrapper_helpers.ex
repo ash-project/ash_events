@@ -118,10 +118,24 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     original_params = Map.get(changeset.context, :original_params, %{})
     original_param_keys = MapSet.new(Map.keys(original_params))
 
+    # belongs_to FK attributes must always be captured in changed_attributes,
+    # even when their name matches an original param key (e.g., argument :user_id
+    # and FK attribute :user_id). During replay, managed relationships are skipped
+    # entirely, so the FK must come from changed_attributes.
+    belongs_to_fk_attrs =
+      changeset.resource
+      |> Ash.Resource.Info.relationships()
+      |> Enum.filter(&(&1.type == :belongs_to))
+      |> Enum.map(& &1.source_attribute)
+      |> MapSet.new()
+
     changed_attributes =
       Enum.reduce(changeset.attributes, %{}, fn {attr_name, value}, acc ->
-        if MapSet.member?(original_param_keys, attr_name) or
-             MapSet.member?(original_param_keys, to_string(attr_name)) do
+        is_belongs_to_fk = MapSet.member?(belongs_to_fk_attrs, attr_name)
+
+        if not is_belongs_to_fk and
+             (MapSet.member?(original_param_keys, attr_name) or
+                MapSet.member?(original_param_keys, to_string(attr_name))) do
           acc
         else
           case Ash.Resource.Info.attribute(changeset.resource, attr_name) do

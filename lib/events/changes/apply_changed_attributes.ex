@@ -13,6 +13,10 @@ defmodule AshEvents.Events.Changes.ApplyChangedAttributes do
   """
   use Ash.Resource.Change
 
+  def atomic(changeset, _opts, _context) do
+    {:ok, changeset}
+  end
+
   def change(cs, opts, _ctx) do
     ash_events_replay? = cs.context[:ash_events_replay?] || false
 

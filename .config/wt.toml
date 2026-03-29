@@ -31,5 +31,92 @@ json.dump(data, open(path, 'w'), indent=4)
 "
 """
 
+# Generate Claude sandbox settings for this worktree
+# - Sandbox restricts filesystem writes to the worktree directory
+# - Read-only gh/git operations are auto-allowed
+# - Mutative remote operations (push, comment, merge, close, create PR) require user approval
+claude-settings = """
+mkdir -p .claude
+python3 -c "
+import json, os
+settings = {
+    'permissions': {
+        'allow': [
+            'Bash(mix *)',
+            'Bash(MIX_ENV=test mix *)',
+            'Bash(MIX_ENV=test LOGGER_LEVEL=debug mix *)',
+            'Bash(git status:*)',
+            'Bash(git log:*)',
+            'Bash(git diff:*)',
+            'Bash(git add:*)',
+            'Bash(git commit:*)',
+            'Bash(git stash:*)',
+            'Bash(git branch:*)',
+            'Bash(git checkout:*)',
+            'Bash(git switch:*)',
+            'Bash(git show:*)',
+            'Bash(git blame:*)',
+            'Bash(git fetch:*)',
+            'Bash(git merge:*)',
+            'Bash(git rebase:*)',
+            'Bash(git cherry-pick:*)',
+            'Bash(gh issue list:*)',
+            'Bash(gh issue view:*)',
+            'Bash(gh issue status:*)',
+            'Bash(gh pr list:*)',
+            'Bash(gh pr view:*)',
+            'Bash(gh pr checks:*)',
+            'Bash(gh pr diff:*)',
+            'Bash(gh pr status:*)',
+            'Bash(gh repo view:*)',
+            'Bash(mkdir:*)',
+            'Bash(find:*)',
+            'Bash(tree:*)',
+            'Bash(wc:*)',
+            'Bash(grep:*)',
+            'Bash(ls:*)',
+            'WebSearch',
+            'WebFetch(domain:hexdocs.pm)',
+            'WebFetch(domain:hex.pm)',
+            'WebFetch(domain:preview.hex.pm)',
+            'WebFetch(domain:github.com)',
+            'WebFetch(domain:api.github.com)',
+            'WebFetch(domain:raw.githubusercontent.com)',
+            'WebFetch(domain:ash-hq.org)',
+            'mcp__tidewave__project_eval',
+            'mcp__tidewave__get_docs',
+            'mcp__tidewave__search_package_docs',
+            'mcp__tidewave__get_source_location',
+            'mcp__tidewave__get_ash_resources',
+            'mcp__tidewave__get_logs',
+        ],
+        'deny': []
+    },
+    'enableAllProjectMcpServers': True,
+    'enabledMcpjsonServers': ['tidewave'],
+    'sandbox': {
+        'enabled': True,
+        'filesystem': {
+            'allowWrite': ['.']
+        },
+        'network': {
+            'allowedDomains': [
+                'github.com',
+                'api.github.com',
+                'hex.pm',
+                'repo.hex.pm',
+                'hexdocs.pm',
+                'preview.hex.pm',
+                'ash-hq.org',
+            ]
+        }
+    }
+}
+os.makedirs('.claude', exist_ok=True)
+json.dump(settings, open('.claude/settings.local.json', 'w'), indent=2)
+print('Claude sandbox settings written')
+"
+"""
+
 # Install deps
 setup = "mix deps.get --quiet"

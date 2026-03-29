@@ -234,6 +234,50 @@ defmodule AshEvents.BulkActionsTest do
     assert Enum.count(events) == 2
   end
 
+  test "bulk_destroy with soft delete works correctly" do
+    alias AshEvents.Accounts.Article
+
+    # Create articles
+    articles =
+      1..3
+      |> Enum.map(fn i ->
+        Accounts.create_article!(
+          %{title: "Article #{i}", body: "Body #{i}"},
+          actor: %SystemActor{name: "system"}
+        )
+      end)
+
+    # Bulk soft-delete the articles
+    result =
+      articles
+      |> Ash.bulk_destroy!(:soft_destroy, %{},
+        resource: Article,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream,
+        actor: %SystemActor{name: "system"}
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 3
+
+    # Verify articles are soft-deleted (deleted_at is set)
+    all_articles = Article |> Ash.read!()
+
+    Enum.each(all_articles, fn article ->
+      assert article.deleted_at != nil
+    end)
+
+    # Verify soft-delete events were created
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Article and action == :soft_destroy)
+      |> Ash.read!()
+
+    assert Enum.count(events) == 3
+  end
+
   test "single create without return_notifications? should work fine" do
     org =
       Accounts.Org

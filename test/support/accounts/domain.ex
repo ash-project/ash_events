@@ -90,5 +90,15 @@ defmodule AshEvents.Accounts do
       define :update_user_non_writable_id, action: :update
       define :destroy_user_non_writable_id, action: :destroy
     end
+
+    resource AshEvents.Accounts.Comment do
+      define :create_comment, action: :create
+    end
+
+    resource AshEvents.Accounts.Tag do
+      define :create_tag, action: :create
+    end
+
+    resource AshEvents.Accounts.ArticleTag
   end
 end

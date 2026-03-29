@@ -97,6 +97,53 @@ defmodule AshEvents.Accounts.User do
       change set_attribute(:confirmed_at, &DateTime.utc_now/0)
     end
 
+    create :create_with_nested_role do
+      accept [:email, :given_name, :family_name, :hashed_password]
+      argument :user_role, :map, allow_nil?: true
+
+      change manage_relationship(:user_role,
+               type: :direct_control,
+               on_no_match: {:create, :create_from_parent}
+             )
+
+      change set_attribute(:confirmed_at, &DateTime.utc_now/0)
+    end
+
+    create :create_with_role_create do
+      accept [:email, :given_name, :family_name, :hashed_password]
+      argument :user_role, :map, allow_nil?: true
+
+      change manage_relationship(:user_role,
+               type: :create,
+               on_no_match: {:create, :create_from_parent}
+             )
+
+      change set_attribute(:confirmed_at, &DateTime.utc_now/0)
+    end
+
+    create :create_with_comments do
+      accept [:email, :given_name, :family_name, :hashed_password]
+      argument :comments, {:array, :map}, default: []
+
+      change manage_relationship(:comments,
+               type: :create,
+               on_no_match: {:create, :create_from_parent}
+             )
+
+      change set_attribute(:confirmed_at, &DateTime.utc_now/0)
+    end
+
+    update :update_with_comments_direct_control do
+      require_atomic? false
+      accept [:given_name, :family_name]
+      argument :comments, {:array, :map}, default: []
+
+      change manage_relationship(:comments,
+               type: :direct_control,
+               on_no_match: {:create, :create_from_parent}
+             )
+    end
+
     update :update do
       require_atomic? false
       accept [:given_name, :family_name, :created_at, :updated_at, :hashed_password]
@@ -403,6 +450,10 @@ defmodule AshEvents.Accounts.User do
 
   relationships do
     has_one :user_role, AshEvents.Accounts.UserRole do
+      public? true
+    end
+
+    has_many :comments, AshEvents.Accounts.Comment do
       public? true
     end
   end

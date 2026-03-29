@@ -2,12 +2,17 @@
 #
 # SPDX-License-Identifier: MIT
 
-defmodule AshEvents.Accounts.UserRole do
+defmodule AshEvents.Accounts.Comment do
   @moduledoc false
   use Ash.Resource,
     domain: AshEvents.Accounts,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshEvents.Events]
+
+  postgres do
+    table "comments"
+    repo AshEvents.TestRepo
+  end
 
   events do
     event_log AshEvents.EventLogs.EventLog
@@ -15,35 +20,30 @@ defmodule AshEvents.Accounts.UserRole do
     update_timestamp :updated_at
   end
 
-  postgres do
-    table "user_roles"
-    repo AshEvents.TestRepo
-  end
-
   actions do
     defaults [:read]
 
     create :create do
       primary? true
-      accept [:id, :created_at, :updated_at, :name]
+      accept [:id, :created_at, :updated_at, :body]
       argument :user_id, :uuid, allow_nil?: false
 
       change manage_relationship(:user_id, :user, type: :append)
     end
 
     create :create_from_parent do
-      accept [:name]
+      accept [:body]
     end
 
     update :update do
       primary? true
       require_atomic? false
-      accept [:created_at, :updated_at, :name]
+      accept [:body, :updated_at]
     end
 
     destroy :destroy do
-      require_atomic? false
       primary? true
+      require_atomic? false
       accept []
     end
   end
@@ -65,9 +65,9 @@ defmodule AshEvents.Accounts.UserRole do
       writable? true
     end
 
-    attribute :name, :string do
-      allow_nil? false
+    attribute :body, :string do
       public? true
+      allow_nil? false
     end
   end
 
@@ -75,9 +75,5 @@ defmodule AshEvents.Accounts.UserRole do
     belongs_to :user, AshEvents.Accounts.User do
       allow_nil? false
     end
-  end
-
-  identities do
-    identity :unique_for_user, [:user_id]
   end
 end

@@ -66,6 +66,21 @@ defmodule AshEvents.Accounts.Article do
       accept []
       change set_attribute(:deleted_at, &DateTime.utc_now/0)
     end
+
+    create :create_with_tags do
+      accept [:id, :created_at, :updated_at, :title, :body]
+      argument :tags, {:array, :map}, default: []
+
+      change manage_relationship(:tags, type: :append)
+    end
+
+    update :update_tags do
+      require_atomic? false
+      accept [:title]
+      argument :tags, {:array, :map}, default: []
+
+      change manage_relationship(:tags, type: :append_and_remove)
+    end
   end
 
   attributes do
@@ -103,6 +118,15 @@ defmodule AshEvents.Accounts.Article do
     attribute :deleted_at, :utc_datetime_usec do
       public? true
       allow_nil? true
+    end
+  end
+
+  relationships do
+    many_to_many :tags, AshEvents.Accounts.Tag do
+      public? true
+      through AshEvents.Accounts.ArticleTag
+      source_attribute_on_join_resource :article_id
+      destination_attribute_on_join_resource :tag_id
     end
   end
 end

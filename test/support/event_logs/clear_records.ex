@@ -8,12 +8,15 @@ defmodule AshEvents.EventLogs.ClearRecords do
   alias AshEvents.TestRepo
 
   def clear_records!(_opts) do
+    {_, nil} = TestRepo.delete_all("article_tags")
+    {_, nil} = TestRepo.delete_all("comments")
     {_, nil} = TestRepo.delete_all("user_roles")
     {_, nil} = TestRepo.delete_all("users")
     {_, nil} = TestRepo.delete_all("routed_users")
     {_, nil} = TestRepo.delete_all("users_embedded")
     {_, nil} = TestRepo.delete_all("users_with_auto_attrs")
     {_, nil} = TestRepo.delete_all("articles")
+    {_, nil} = TestRepo.delete_all("tags")
     {_, nil} = TestRepo.delete_all("users_non_writable_id")
     :ok
   end

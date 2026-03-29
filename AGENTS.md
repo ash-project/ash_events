@@ -372,6 +372,75 @@ mix docs                                 # Generate documentation
 - Side effects are implemented as separate tracked actions
 - Event replay works correctly with test data and auto-generated attributes
 
+## Worktree Development Workflow (requires `wt` + `cmux`)
+
+**Prerequisites**: This workflow requires both [`wt`](https://github.com/torkild/worktrunk) and [`cmux`](https://cmux.com) to be installed. Skip this section if either tool is unavailable.
+
+When the user asks you to work on a GitHub issue in an isolated worktree, follow these steps:
+
+### 1. Pick or confirm the issue
+
+```bash
+gh issue list --state open
+gh issue view <number>
+```
+
+### 2. Create a worktree via a temporary terminal
+
+```bash
+# Open a temporary split in the current workspace
+cmux new-split right
+# => returns surface:<N>
+
+# Create the worktree (wt switch auto-cds into it)
+cmux send --surface surface:<N> "wt switch -c <folder/branch-name>"
+cmux send-key --surface surface:<N> Enter
+
+# Wait and verify it completed
+sleep 5 && cmux read-screen --surface surface:<N> --lines 20
+```
+
+Approve any prompts (e.g. sandbox settings generation) by sending `y` + Enter to that surface.
+
+### 3. Create the dev workspace for the worktree
+
+```bash
+# Create workspace with Claude running in the worktree directory
+cmux new-workspace --name "<short-name>" --cwd <worktree-path> --command "claude"
+# => returns workspace:<M>
+
+# Add a right split for tidewave
+cmux new-split right --workspace workspace:<M>
+# => returns surface:<T>
+
+cmux send --workspace workspace:<M> --surface surface:<T> "mix tidewave"
+cmux send-key --workspace workspace:<M> --surface surface:<T> Enter
+```
+
+### 4. Submit instructions to the Claude session
+
+Wait for Claude to be ready (`read-screen` should show the Claude Code prompt), then send the issue context:
+
+```bash
+cmux send --workspace workspace:<M> --surface surface:<claude> "<prompt with issue details>"
+cmux send-key --workspace workspace:<M> --surface surface:<claude> Enter
+```
+
+The prompt should include: issue number, problem summary, likely root cause, relevant files to investigate, and reproduction steps.
+
+### 5. Clean up the temporary terminal
+
+```bash
+cmux close-surface --surface surface:<N> --workspace workspace:<original>
+```
+
+### Branch naming convention
+
+Use descriptive folder/branch names based on the issue:
+- Bug fixes: `fix/<number>-<short-description>`
+- Features: `feat/<number>-<short-description>`
+- Example: `fix/87-ash-phoenix-nested-forms`
+
 ## Context and Evolution
 
 For understanding the current state of the project and the reasoning behind architectural decisions, see [agent-docs/changelog.md](agent-docs/changelog.md). This changelog provides context for why certain patterns exist and tracks the evolution of implementation approaches.

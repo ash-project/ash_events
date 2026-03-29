@@ -16,7 +16,8 @@ if Mix.env() == :test do
     # sobelow_skip ["Config.Secrets"]
     password: "postgres",
     hostname: "localhost",
-    database: "ash_events_test",
+    port: String.to_integer(System.get_env("POSTGRES_PORT", "5432")),
+    database: System.get_env("POSTGRES_TEST_DATABASE", "ash_events_test"),
     stacktrace: true,
     show_sensitive_data_on_connection_error: true,
     pool_size: 10,

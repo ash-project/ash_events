@@ -9,10 +9,23 @@
 # Copy build caches and dependencies from primary worktree (blocks until done)
 copy = "wt step copy-ignored"
 
-# Generate a mise.local.toml with a unique tidewave port for this worktree
+# Generate a mise.local.toml with unique database names and ports for this worktree
 mise-local = """
+SANITIZED="{{ branch | sanitize_db }}"
+HASH=$(printf '%s' "{{ branch }}" | shasum -a 256 | cut -c1-8)
+truncate_db() {
+  local name="$1" max="$2"
+  local len=$(printf '%s' "$name" | wc -c | tr -d ' ')
+  if [ "$len" -gt "$max" ]; then
+    echo "${name:0:$((max - 9))}_${HASH}"
+  else
+    echo "$name"
+  fi
+}
+TEST_DB=$(truncate_db "$SANITIZED" 47)  # 63 - "ash_events_test_"(16)
 cat > mise.local.toml <<MISE
 [env]
+POSTGRES_TEST_DATABASE = "ash_events_test_${TEST_DB}"
 TIDEWAVE_PORT = "{{ branch | hash_port }}"
 MISE
 """
@@ -119,5 +132,10 @@ print('Claude sandbox settings written')
 "
 """
 
-# Install deps
+# Install deps and set up test database
 setup = "mix deps.get --quiet"
+db-setup = "mise exec -- mix test.reset"
+
+[pre-remove]
+# Drop the worktree-specific test database
+drop-test-db = "mise exec -- mix test.drop"

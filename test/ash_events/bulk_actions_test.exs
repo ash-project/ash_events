@@ -278,6 +278,70 @@ defmodule AshEvents.BulkActionsTest do
     assert Enum.count(events) == 3
   end
 
+  test "bulk_destroy with soft delete and nested bulk operation works correctly" do
+    alias AshEvents.Accounts.Article
+    alias AshEvents.Accounts.ArticleTag
+    alias AshEvents.Accounts.Tag
+
+    # Create a tag
+    tag =
+      Tag
+      |> Ash.Changeset.for_create(:create, %{name: "test-tag"})
+      |> Ash.create!(actor: %SystemActor{name: "system"})
+
+    # Create articles with tags
+    articles =
+      1..3
+      |> Enum.map(fn i ->
+        Article
+        |> Ash.Changeset.for_create(:create_with_tags, %{
+          title: "Article #{i}",
+          body: "Body #{i}",
+          tags: [%{id: tag.id}]
+        })
+        |> Ash.create!(actor: %SystemActor{name: "system"})
+      end)
+
+    # Verify article_tags were created
+    article_tags = ArticleTag |> Ash.read!()
+    assert Enum.count(article_tags) == 3
+
+    # Bulk soft-delete the articles with nested bulk operation to delete tags
+    # This tests the fix for original_params being nil in nested bulk operations
+    result =
+      articles
+      |> Ash.bulk_destroy!(:soft_destroy_with_tags, %{},
+        resource: Article,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream,
+        actor: %SystemActor{name: "system"}
+      )
+
+    assert result.error_count == 0
+    assert Enum.count(result.records) == 3
+
+    # Verify articles are soft-deleted (deleted_at is set)
+    all_articles = Article |> Ash.read!()
+
+    Enum.each(all_articles, fn article ->
+      assert article.deleted_at != nil
+    end)
+
+    # Verify article_tags were hard deleted by the nested bulk operation
+    article_tags_after = ArticleTag |> Ash.read!()
+    assert article_tags_after == []
+
+    # Verify soft-delete events were created for articles
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Article and action == :soft_destroy_with_tags)
+      |> Ash.read!()
+
+    assert Enum.count(events) == 3
+  end
+
   test "single create without return_notifications? should work fine" do
     org =
       Accounts.Org

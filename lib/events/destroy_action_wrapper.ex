@@ -30,9 +30,13 @@ defmodule AshEvents.DestroyActionWrapper do
         |> Ash.Context.to_opts()
         |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
+      original_params =
+        Map.get(merged_ctx, :original_params) ||
+          Map.get(changeset.context, :original_params, %{})
+
       AshEvents.Events.ActionWrapperHelpers.create_event!(
         changeset,
-        merged_ctx.original_params,
+        original_params,
         DateTime.utc_now(),
         module_opts,
         opts
@@ -90,9 +94,13 @@ defmodule AshEvents.DestroyActionWrapper do
         |> Keyword.put(:return_destroyed?, true)
         |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
+      original_params =
+        Map.get(merged_ctx, :original_params) ||
+          Map.get(changeset.context, :original_params, %{})
+
       AshEvents.Events.ActionWrapperHelpers.create_event!(
         changeset,
-        merged_ctx.original_params,
+        original_params,
         DateTime.utc_now(),
         module_opts,
         opts

@@ -67,6 +67,31 @@ defmodule AshEvents.Accounts.Article do
       change set_attribute(:deleted_at, &DateTime.utc_now/0)
     end
 
+    destroy :soft_destroy_with_tags do
+      require_atomic? false
+      soft? true
+      description "Soft delete an article and bulk destroy its article_tags"
+      accept []
+      change set_attribute(:deleted_at, &DateTime.utc_now/0)
+
+      # Nested bulk operation - delete article_tags
+      change fn changeset, _context ->
+        Ash.Changeset.after_action(changeset, fn _changeset, record ->
+          require Ash.Query
+
+          AshEvents.Accounts.ArticleTag
+          |> Ash.Query.filter(article_id == ^record.id)
+          |> Ash.bulk_destroy!(:destroy, %{},
+            authorize?: false,
+            return_errors?: true,
+            strategy: :stream
+          )
+
+          {:ok, record}
+        end)
+      end
+    end
+
     create :create_with_tags do
       accept [:id, :created_at, :updated_at, :title, :body]
       argument :tags, {:array, :map}, default: []

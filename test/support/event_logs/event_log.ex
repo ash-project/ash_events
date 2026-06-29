@@ -7,7 +7,8 @@ defmodule AshEvents.EventLogs.EventLog do
   use Ash.Resource,
     domain: AshEvents.EventLogs,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshEvents.EventLog]
+    extensions: [AshEvents.EventLog],
+    notifiers: [AshEvents.TestNotifier]
 
   postgres do
     table "events"

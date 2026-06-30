@@ -53,6 +53,12 @@ defmodule AshEvents.Accounts.Org do
       argument :justification, :string, allow_nil?: false, constraints: [allow_empty?: true]
       validate attribute_equals(:active, false), message: "Organization is already active"
     end
+
+    create :create_with_before_action_validation do
+      accept [:id, :created_at, :updated_at, :name]
+      argument :required_arg, :string
+      validate present(:required_arg), before_action?: true
+    end
   end
 
   attributes do

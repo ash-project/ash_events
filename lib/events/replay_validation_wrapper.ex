@@ -57,9 +57,46 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
         }
       end
     else
+      maybe_deferred_run_validation(
+        changeset,
+        validation,
+        validation_module,
+        validation_opts,
+        context,
+        custom_message
+      )
+    end
+  end
+
+  # before_action? validations need to stay in a before_action hook, otherwise
+  # they run during changeset construction (e.g. Ash.can?/2) and before any
+  # other before_action change. See Ash.Changeset.validate/5.
+  defp maybe_deferred_run_validation(
+         changeset,
+         validation,
+         validation_module,
+         validation_opts,
+         context,
+         custom_message
+       ) do
+    if before_action?(validation) do
+      Ash.Changeset.before_action(changeset, fn changeset ->
+        if only_when_valid?(validation) and not changeset.valid? do
+          changeset
+        else
+          run_validation(changeset, validation_module, validation_opts, context, custom_message)
+        end
+      end)
+    else
       run_validation(changeset, validation_module, validation_opts, context, custom_message)
     end
   end
+
+  defp before_action?(%Ash.Resource.Validation{before_action?: true}), do: true
+  defp before_action?(_validation), do: false
+
+  defp only_when_valid?(%Ash.Resource.Validation{only_when_valid?: true}), do: true
+  defp only_when_valid?(_validation), do: false
 
   defp run_validation(changeset, validation_module, validation_opts, context, custom_message) do
     case validation_module.init(validation_opts) do

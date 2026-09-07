@@ -17,13 +17,11 @@ defmodule AshEvents.EncryptionTest do
 
     decrypted_data =
       event.encrypted_data
-      |> Base.decode64!()
       |> AshEvents.Vault.decrypt!()
       |> Jason.decode!()
 
     decrypted_metadata =
       event.encrypted_metadata
-      |> Base.decode64!()
       |> AshEvents.Vault.decrypt!()
       |> Jason.decode!()
 

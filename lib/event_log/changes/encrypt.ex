@@ -17,19 +17,16 @@ defmodule AshEvents.EventLog.Changes.Encrypt do
       data
       |> Jason.encode!()
       |> vault.encrypt!()
-      |> Base.encode64()
 
     encrypted_metadata =
       metadata
       |> Jason.encode!()
       |> vault.encrypt!()
-      |> Base.encode64()
 
     encrypted_changed_attributes =
       changed_attributes
       |> Jason.encode!()
       |> vault.encrypt!()
-      |> Base.encode64()
 
     cs
     |> Ash.Changeset.change_attribute(:encrypted_data, encrypted_data)

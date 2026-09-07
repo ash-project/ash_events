@@ -20,7 +20,6 @@ defmodule AshEvents.EventLog.Calculations.Decrypt do
 
         value ->
           value
-          |> Base.decode64!()
           |> vault.decrypt!()
           |> Jason.decode!()
       end

@@ -18,6 +18,10 @@
     {:check_cheat_sheets, command: "mix spark.cheat_sheets --check"},
     {:check_formatter, command: "mix spark.formatter --check"},
     {:doctor, false},
-    {:reuse, command: ["pipx", "run", "reuse", "lint", "-q"]}
+    # The `charset-normalizer` extra is required: without it reuse falls back to
+    # `python-magic`, which needs libmagic installed system-wide and otherwise
+    # fails to import with `NoEncodingModuleError`.
+    {:reuse,
+     command: ["pipx", "run", "--spec", "reuse[charset-normalizer]", "reuse", "lint", "-q"]}
   ]
 ]

@@ -4,6 +4,8 @@
 
 import Config
 
+config :ash, default_string_length_count: :codepoints
+
 if Mix.env() == :test do
   config :ash,
     validate_domain_resource_inclusion?: false,

@@ -140,7 +140,7 @@ defmodule AshEvents.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
-      {:ash, ash_version("~> 3.5")},
+      {:ash, ash_version("~> 3.33")},
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0"},

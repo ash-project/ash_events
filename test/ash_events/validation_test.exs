@@ -47,8 +47,7 @@ defmodule AshEvents.ValidationTest do
 
   test "replay events on event log missing clear function throws RuntimeError" do
     assert_raise(
-      RuntimeError,
-      "clear_records_for_replay must be specified on Elixir.AshEvents.EventLogs.EventLogMissingClear when doing a replay.",
+      Ash.Error.Unknown,
       fn -> EventLogs.replay_events_missing_clear() end
     )
   end

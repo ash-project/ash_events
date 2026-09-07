@@ -25,7 +25,7 @@ defmodule AshEvents.Accounts.Org do
     defaults [:read]
 
     create :create do
-      accept [:id, :created_at, :updated_at, :name]
+      accept [:id, :created_at, :updated_at, :name, :secret_hash]
 
       validate string_length(:name, min: 2, max: 100)
     end
@@ -81,6 +81,11 @@ defmodule AshEvents.Accounts.Org do
       public? true
       allow_nil? false
       default true
+    end
+
+    attribute :secret_hash, :binary do
+      public? true
+      allow_nil? true
     end
   end
 end

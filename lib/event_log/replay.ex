@@ -28,8 +28,34 @@ defmodule AshEvents.EventLog.Actions.Replay do
           event.data
       end
 
+    # Reverse dump_to_embedded for values that need it (e.g., base64-encoded binaries)
+    raw_input = cast_input_from_embedded(raw_input, resource)
+
     # replay_overrides may route events to resources with different schemas
     filter_input_for_action(raw_input, resource, action)
+  end
+
+  defp cast_input_from_embedded(input, resource) do
+    Map.new(input, fn {key, value} ->
+      attr_name =
+        if is_binary(key) do
+          try do
+            String.to_existing_atom(key)
+          rescue
+            ArgumentError -> nil
+          end
+        else
+          key
+        end
+
+      case Ash.Resource.Info.attribute(resource, attr_name) do
+        nil ->
+          {key, value}
+
+        attr ->
+          {key, AshEvents.Events.ActionWrapperHelpers.cast_from_embedded(value, attr)}
+      end
+    end)
   end
 
   defp filter_input_for_action(input, resource, action) do

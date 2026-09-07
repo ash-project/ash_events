@@ -44,8 +44,18 @@ defmodule AshEvents.Events.Changes.ApplyChangedAttributes do
               cs.resource |> Ash.Resource.Info.attributes() |> Enum.map(& &1.name) |> MapSet.new()
 
             filtered_attrs =
-              Map.filter(atomized_attrs, fn {key, _value} ->
+              atomized_attrs
+              |> Map.filter(fn {key, _value} ->
                 key != primary_key and MapSet.member?(resource_attr_names, key)
+              end)
+              |> Map.new(fn {key, value} ->
+                case Ash.Resource.Info.attribute(cs.resource, key) do
+                  nil ->
+                    {key, value}
+
+                  attr ->
+                    {key, AshEvents.Events.ActionWrapperHelpers.cast_from_embedded(value, attr)}
+                end
               end)
 
             Ash.Changeset.force_change_attributes(cs, filtered_attrs)

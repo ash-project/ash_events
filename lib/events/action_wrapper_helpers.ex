@@ -7,6 +7,34 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   Helper functions used by the action wrappers.
   """
 
+  @doc """
+  Reverses `dump_to_embedded` for a single attribute value.
+
+  Used during replay to convert stored values (e.g., base64-encoded binaries)
+  back to their original types before passing them as action input.
+  """
+  def cast_from_embedded(nil, _attribute), do: nil
+
+  def cast_from_embedded(value, attribute) do
+    if embedded_type?(attribute.type) do
+      # Embedded resources are stored as partial maps and should be passed
+      # through as-is — cast_input handles them correctly during replay.
+      value
+    else
+      case Ash.Type.cast_from_embedded(attribute.type, value, attribute.constraints) do
+        {:ok, restored} -> restored
+        _ -> value
+      end
+    end
+  end
+
+  defp embedded_type?({:array, type}), do: embedded_type?(type)
+
+  defp embedded_type?(type) do
+    type = Ash.Type.get_type(type)
+    is_atom(type) and type.embedded?()
+  end
+
   def dump_value(nil, _attribute), do: nil
 
   def dump_value(values, %{type: {:array, attr_type}} = attribute) do

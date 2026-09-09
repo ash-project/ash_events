@@ -84,6 +84,26 @@ defmodule AshEvents.ValidationTest do
     assert user.family_name == "Doe"
   end
 
+  test "before_action?: true delays a validation on a tracked action" do
+    org =
+      Accounts.create_org_with_before_action_validation!(
+        %{name: "Test Organization"},
+        actor: %SystemActor{name: "test_runner"}
+      )
+
+    assert org.active == false
+  end
+
+  test "before_action?: true behaves the same on tracked and ignored actions" do
+    args = [%{name: "Test Organization"}, [actor: %SystemActor{name: "test_runner"}]]
+
+    tracked = apply(Accounts, :create_org_with_before_action_validation, args)
+    ignored = apply(Accounts, :create_ignored_org_with_before_action_validation, args)
+
+    assert {:ok, %{active: false}} = tracked
+    assert {:ok, %{active: false}} = ignored
+  end
+
   test "custom validation messages are preserved when using AshEvents" do
     # Create an active org (active = true by default)
     org =

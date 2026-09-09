@@ -16,7 +16,14 @@ defmodule AshEvents.Accounts.Org do
 
   events do
     event_log AshEvents.EventLogs.EventLog
-    ignore_actions [:create_ignored, :update_ignored, :destroy_ignored]
+
+    ignore_actions [
+      :create_ignored,
+      :update_ignored,
+      :destroy_ignored,
+      :create_ignored_with_before_action_validation
+    ]
+
     create_timestamp :created_at
     update_timestamp :updated_at
   end
@@ -52,6 +59,30 @@ defmodule AshEvents.Accounts.Org do
       require_atomic? false
       argument :justification, :string, allow_nil?: false, constraints: [allow_empty?: true]
       validate attribute_equals(:active, false), message: "Organization is already active"
+    end
+
+    # `active` defaults to true and is only flipped from a before_action hook, so
+    # the validation below passes only if `before_action?: true` actually delays
+    # it. These two actions are identical apart from event tracking, and must
+    # behave identically.
+    create :create_with_before_action_validation do
+      accept [:id, :created_at, :updated_at, :name]
+
+      change AshEvents.Accounts.Org.DeactivateInBeforeAction
+
+      validate attribute_equals(:active, false),
+        message: "validation ran before the before_action hook",
+        before_action?: true
+    end
+
+    create :create_ignored_with_before_action_validation do
+      accept [:id, :created_at, :updated_at, :name]
+
+      change AshEvents.Accounts.Org.DeactivateInBeforeAction
+
+      validate attribute_equals(:active, false),
+        message: "validation ran before the before_action hook",
+        before_action?: true
     end
   end
 

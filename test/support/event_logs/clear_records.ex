@@ -18,6 +18,8 @@ defmodule AshEvents.EventLogs.ClearRecords do
     {_, nil} = TestRepo.delete_all("articles")
     {_, nil} = TestRepo.delete_all("tags")
     {_, nil} = TestRepo.delete_all("users_non_writable_id")
+    {_, nil} = TestRepo.delete_all("org_details")
+    {_, nil} = TestRepo.delete_all("orgs")
     :ok
   end
 end

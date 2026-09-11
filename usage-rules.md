@@ -84,9 +84,6 @@ defmodule MyApp.Accounts.User do
       legacy_action: :force_change
     ]
 
-    # Optional: Allow storing specific sensitive attributes (by default, sensitive attributes are excluded)
-    store_sensitive_attributes [:hashed_password, :api_key]
-
     # Optional: Ignore specific actions (usually legacy versions)
     ignore_actions [:old_create_v1]
   end
@@ -664,106 +661,40 @@ events do
 end
 ```
 
-### Sensitive Attribute Configuration
+### Sensitive Data
 
-**By default, sensitive attributes are excluded from events** for security. The `store_sensitive_attributes` DSL option provides fine-grained control over which sensitive attributes to include in events.
+AshEvents does not filter event payloads based on `sensitive?`. `changed_attributes` stores every attribute the action set, verbatim, because replay needs it. Only action input in `data` has a convenience filter: sensitive attributes and arguments are stored as `nil` on non-encrypted event logs, so that plaintext passwords from AshAuthentication never reach the log. A sensitive attribute set by a change (for example `hashed_password`) is stored in `changed_attributes` in plaintext on a non-encrypted log.
 
-**IMPORTANT**: `store_sensitive_attributes` is **only valid for resources using non-encrypted event logs**. Resources using cloaked (encrypted) event logs automatically store all sensitive attributes and **must not** configure this option.
-
-#### For Non-Encrypted Event Logs
-
-Use `store_sensitive_attributes` to explicitly allow specific sensitive attributes:
+**Rule: if a tracked resource has sensitive attributes or arguments, use an encrypted event log.**
 
 ```elixir
-defmodule MyApp.Accounts.User do
-  use Ash.Resource,
-    extensions: [AshEvents.Events]
-
-  events do
-    event_log MyApp.Events.Event  # Non-encrypted event log
-    # Explicitly allow storing specific sensitive attributes
-    store_sensitive_attributes [:hashed_password, :api_key_hash]
-  end
-
-  attributes do
-    attribute :email, :string, public?: true
-    attribute :hashed_password, :string, sensitive?: true, public?: true
-    attribute :api_key_hash, :binary, sensitive?: true, public?: true
-    attribute :secret_token, :string, sensitive?: true, public?: true  # NOT stored in events
-  end
+defmodule MyApp.Vault do
+  use Cloak.Vault, otp_app: :my_app
 end
 
-# Result: Only hashed_password and api_key_hash will be included in events
-# secret_token will be excluded for security
-```
-
-#### For Encrypted (Cloaked) Event Logs
-
-**Do NOT use `store_sensitive_attributes` with cloaked event logs** - it will result in a compilation error:
-
-```elixir
-# ❌ INVALID - This will cause a compilation error
-defmodule MyApp.Accounts.User do
-  use Ash.Resource,
-    extensions: [AshEvents.Events]
-
-  events do
-    event_log MyApp.Events.CloakedEvent  # This is a cloaked event log
-    store_sensitive_attributes [:password]  # ❌ ERROR: Invalid with cloaked logs
-  end
-end
-```
-
-**Correct usage with cloaked event logs:**
-
-```elixir
-# ✅ CORRECT - No store_sensitive_attributes needed
-defmodule MyApp.Accounts.User do
-  use Ash.Resource,
-    extensions: [AshEvents.Events]
-
-  events do
-    event_log MyApp.Events.CloakedEvent  # Cloaked event log with encryption
-    # No store_sensitive_attributes - all sensitive data automatically stored
-  end
-
-  attributes do
-    attribute :email, :string, public?: true
-    attribute :hashed_password, :string, sensitive?: true, public?: true
-    attribute :api_key_hash, :binary, sensitive?: true, public?: true
-    attribute :secret_token, :string, sensitive?: true, public?: true
-  end
-end
-
-# Result: ALL sensitive attributes (hashed_password, api_key_hash, secret_token)
-# are automatically stored because they're encrypted by the cloaked event log
-```
-
-**Cloaked event log configuration:**
-
-```elixir
-defmodule MyApp.Events.CloakedEvent do
+defmodule MyApp.Events.Event do
   use Ash.Resource,
     extensions: [AshEvents.EventLog]
 
   event_log do
-    cloak_vault MyApp.Vault  # Enables encryption for all event data
+    clear_records_for_replay MyApp.Events.ClearAllRecords
+    cloak_vault MyApp.Vault  # Encrypts data, changed_attributes and metadata at rest
   end
 end
 ```
 
-#### Summary
+| Event Log Type | `data` | `changed_attributes` |
+|----------------|--------|----------------------|
+| **Non-encrypted** | Sensitive input stored as `nil` | Everything stored in plaintext |
+| **Encrypted (`cloak_vault`)** | Everything stored, encrypted | Everything stored, encrypted |
 
-| Event Log Type | Sensitive Attribute Behavior | `store_sensitive_attributes` Usage |
-|----------------|------------------------------|-------------------------------------|
-| **Non-encrypted** | Excluded by default | ✅ **Required** to store specific sensitive attributes |
-| **Cloaked (encrypted)** | All automatically stored | ❌ **Invalid** - will cause compilation error |
+- There is **no** `store_sensitive_attributes` DSL option. The v0.6.0 changelog entry refers to a feature that was reverted.
+- The payload fields (`data`, `changed_attributes`, `metadata`) are marked `sensitive?: true` on both log types and are omitted from `inspect` output.
+- Encrypted payloads cannot be filtered or indexed by content, and the application owns key management.
 
-**⚠️ Security considerations:**
-- **Non-encrypted event logs:** Only store sensitive attributes that are absolutely necessary for replay or audit purposes
-- **Encrypted event logs:** All sensitive attributes are safely stored because they're encrypted
-- Use encryption (`cloak_vault`) when you need comprehensive sensitive data storage in events
-- Never store sensitive attributes in non-encrypted logs unless specifically required for functionality
+### Auto-Generated Replay Actions
+
+Every create action with `upsert? true` gets a companion update action named `ash_events_replay_<action_name>_update`. Replay uses it to apply a recorded upsert onto an existing record. It skips the source action's changes and validations and writes no event, so it is marked `public?: false` (hidden from API extensions and `Ash.Resource.Info.public_actions/1`) and refuses to run unless the changeset context carries `ash_events_replay?: true`, which the replay runner sets. Do not call it, set that context flag yourself, or reference the action in policies. It may appear in tooling that lists every action on a resource; that is expected.
 
 ### Resource-Specific Event Handling
 

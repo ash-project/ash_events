@@ -24,6 +24,26 @@ Each entry includes:
 
 ---
 
+## 2026-09-08
+
+### Security Report Triage (reports 2873, 2874, 2879)
+**Change**: Assessed three externally reported findings and applied targeted hardening. Plain event log payload columns (`data`, `changed_attributes`, `metadata`) are now `sensitive?: true`; the destroy wrapper propagates data layer failures instead of discarding them; the auto-generated `ash_events_replay_<name>_update` action is `public?: false` and carries a `ReplayOnly` validation that rejects any changeset without the `ash_events_replay?` context marker.
+**Context**: See `agent-docs/cves/cve-summary.md` (local only, the folder is gitignored) for the full assessment. Key decision: the library will not attempt per-attribute redaction of `changed_attributes`. The `data` filter is param-keyed and cannot see derived values, replay needs derived secrets such as `hashed_password`, and the `store_sensitive_attributes` allowlist was already tried and reverted. The documented stance is now: use `cloak_vault` for any resource with sensitive data.
+**Files**:
+- `lib/event_log/transformers/add_attributes.ex` - `sensitive?: true` on plain payload attributes
+- `lib/events/destroy_action_wrapper.ex` - propagates `data_layer.destroy/2` errors, writes the event only after the data layer call succeeds (matching the create wrapper), and rejects atomic changes before touching the data layer
+- `lib/events/action_wrapper_helpers.ex` - `atomics_error/0` shared by the helper and the destroy wrapper
+- `lib/events/validations/replay_only.ex` - new validation module
+- `lib/events/transformers/wrap_actions.ex` - attach validation and update description of the generated action
+- `test/ash_events/security_reports_test.exs` - regression tests, one `describe` per report, including bulk and atomic entry points
+- `test/ash_events/replay_error_paths_test.exs` - create failing at the data layer, validations failing at replay time (with and without custom message), replay aborting mid-stream, and orphaned update/destroy events
+- `test/support/event_logs/clear_records.ex` - now also clears `orgs` and `org_details`; both log to the plain event log but were never cleared, so any replay test that created an org failed on a duplicate id
+- `README.md`, `usage-rules.md` - new Sensitive Data and Auto-Generated Replay Actions sections; removed stale `store_sensitive_attributes` text
+**Impact**: Every wrapped action and the generated replay action now share the same trust model: the `ash_events_replay?` context key is the only thing that switches off event logging, and it is settable only by application code. Destroy failures on Postgres (stale record, FK restrict, permission errors) now surface as errors and no destroy event is committed for a surviving row, including in `Ash.bulk_destroy` with `strategy: :stream`, where Ash does not roll back the batch on a per-record manual action error. The update wrapper still writes its event before calling the data layer and has the same bulk exposure; it was left as is pending a decision.
+**Key Insights**: Ecto omits `redact: true` fields from `inspect` output entirely rather than printing a placeholder; tests should assert absence of the field, not presence of a marker. AshPostgres returns `Ash.Error.Changes.StaleRecord` when a destroy affects zero rows, which makes "destroy the same struct twice" a reliable way to exercise the failure path. In bulk stream actions Ash tags manual action errors as `{:error, error, changeset}` and processes them outside the batch transaction, so the batch commits; `Ash.Actions.Helpers.rollback_if_in_transaction/3` also explicitly skips rollback for `StaleRecord`. The only reliable protection is to write the event after the data layer call succeeds. The replay generic action does not run in a transaction: a failing event raises `Ash.Error.Invalid` out of `replay_events/0`, records are already cleared, and events before the failure stay applied. Postgrex JSON-encodes `jsonb` parameters itself, so pass raw Elixir values when tampering with event data in tests, not `Jason.encode!` output.
+
+---
+
 ## 2025-09-21
 
 ### Array Binary Attribute Support Implementation

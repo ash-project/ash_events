@@ -39,3 +39,6 @@ mise.local.toml
 
 # Per-worktree Claude settings (sandbox config in worktrees)
 .claude/settings.local.json
+
+# Local security audit write-ups, not for the repo
+/agent-docs/cves/

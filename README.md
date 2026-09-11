@@ -482,7 +482,7 @@ This structure captures all the essential information about each event:
 - **action_type**: The specific action that was performed (create, update, destroy)
 - **actor primary key**: Primary key of actor that ran the action (multiple actor types are supported)
 - **data**: Attributes and arguments that were provided to the action
-- **changed_attributes**: Attributes modified during action execution (defaults, auto-generated values, business logic changes)
+- **changed_attributes**: Attributes modified during action execution (defaults, auto-generated values, business logic changes). Stored verbatim; see [Sensitive Data and Encryption](#sensitive-data-and-encryption)
 - **metadata**: Additional contextual information about the event
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
@@ -555,6 +555,40 @@ end
 - Actor attribution fields from `persist_actor_primary_key` (e.g., `:user_id`, `:system_actor`)
 
 **Important**: Only AshEvents-managed fields can be made public. User-added custom fields are not affected by this configuration.
+
+### Sensitive Data and Encryption
+
+AshEvents persists everything an action wrote. The `data` field holds the action's input, and `changed_attributes` holds every attribute the action set that was not part of that input, including values produced by changes, defaults, and hooks. Replay depends on this, so the library does not filter the payload based on `sensitive?`.
+
+The one exception is a convenience filter on `data`: attributes and arguments marked `sensitive?: true` are stored as `nil` in `data` on non-encrypted event logs. This exists so that plaintext password arguments from AshAuthentication never reach the log. It only covers action input. A sensitive attribute set by a change, such as a hashed password or a generated token, is written to `changed_attributes` verbatim.
+
+**If a resource with event tracking handles sensitive data, use an encrypted event log.** Configure a [Cloak](https://hexdocs.pm/cloak) vault on the event log resource:
+
+```elixir
+defmodule MyApp.Vault do
+  use Cloak.Vault, otp_app: :my_app
+end
+
+defmodule MyApp.Events.Event do
+  use Ash.Resource,
+    extensions: [AshEvents.EventLog]
+
+  event_log do
+    clear_records_for_replay MyApp.Events.ClearAllRecords
+    cloak_vault MyApp.Vault
+  end
+end
+```
+
+With a vault configured, `data`, `changed_attributes`, and `metadata` are stored in the encrypted columns `encrypted_data`, `encrypted_changed_attributes`, and `encrypted_metadata`, and exposed as decrypting calculations under their original names. Sensitive attributes are then stored in full, since they are protected at rest, and replay has everything it needs. Encrypted payloads cannot be filtered or indexed by content, and your application takes on key management.
+
+On both encrypted and plain event logs, the payload fields are marked `sensitive?: true`, so they are omitted when events are inspected or logged.
+
+### Auto-Generated Replay Actions
+
+For every create action with `upsert? true`, AshEvents adds an update action named `ash_events_replay_<action_name>_update` to the resource. Replay uses it to apply a recorded upsert onto a record that already exists. The action accepts the same attributes and arguments as the source action, but it runs none of the source action's changes or validations and does not record an event.
+
+The action is marked `public?: false`, so API extensions such as AshGraphql and AshJsonApi will not expose it, and it is excluded from `Ash.Resource.Info.public_actions/1`. It also carries a validation that rejects any changeset without the `ash_events_replay?: true` context flag, which the replay runner sets. Since changeset context can only be set by application code, the action fails with an error explaining that it is auto-generated when called from anywhere else, regardless of how policies are configured. Tooling that lists every action on a resource, such as AshAdmin, may still show it.
 
 ### Multiple Actor Types
 

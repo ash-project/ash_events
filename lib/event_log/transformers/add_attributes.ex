@@ -111,18 +111,21 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
         |> Ash.Resource.Builder.add_attribute(:metadata, :map,
           allow_nil?: false,
           default: %{},
+          sensitive?: true,
           public?: public_field?(public_fields, :metadata),
           description: "Any relevant metadata you want to store with the event."
         )
         |> Ash.Resource.Builder.add_attribute(:data, :map,
           allow_nil?: false,
           default: %{},
+          sensitive?: true,
           public?: public_field?(public_fields, :data),
           description: "This is where the action params (attrs & args) are stored."
         )
         |> Ash.Resource.Builder.add_attribute(:changed_attributes, :map,
           allow_nil?: false,
           default: %{},
+          sensitive?: true,
           public?: public_field?(public_fields, :changed_attributes),
           description:
             "Attributes that were changed but not present in the original action input."

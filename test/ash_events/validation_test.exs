@@ -36,13 +36,10 @@ defmodule AshEvents.ValidationTest do
       )
     end
 
-    assert_raise Ash.Error.Invalid, fn ->
-      Accounts.destroy_user_with_atomic(
-        user,
-        %{},
-        actor: user
-      )
-    end
+    assert {:error, %Ash.Error.Invalid{errors: errors}} =
+             Accounts.destroy_user_with_atomic(user, %{}, actor: user)
+
+    assert Enum.any?(errors, &(Exception.message(&1) =~ "atomic changes are not compatible"))
   end
 
   test "replay events on event log missing clear function throws RuntimeError" do

@@ -202,16 +202,21 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     |> Ash.Changeset.for_create(:create, event_params, opts ++ [authorize?: false])
     |> then(fn cs ->
       if has_atomics? do
-        Ash.Changeset.add_error(
-          cs,
-          Ash.Error.Changes.InvalidChanges.exception(
-            message: "atomic changes are not compatible with ash_events"
-          )
-        )
+        Ash.Changeset.add_error(cs, atomics_error())
       else
         cs
       end
     end)
     |> Ash.create!(authorize?: false, return_notifications?: true)
+  end
+
+  @doc """
+  The error returned when an event-tracked action carries atomic changes, which
+  cannot be recorded in an event.
+  """
+  def atomics_error do
+    Ash.Error.Changes.InvalidChanges.exception(
+      message: "atomic changes are not compatible with ash_events"
+    )
   end
 end

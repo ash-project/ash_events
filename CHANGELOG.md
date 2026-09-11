@@ -11,6 +11,49 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.0](https://github.com/ash-project/ash_events/compare/v0.7.0...v0.8.0) (2026-09-11)
+
+
+
+
+### Improvements:
+
+* encryption: drop redundant base64 layer on encrypted event fields by [@Torkan](https://github.com/Torkan)
+
+  Encrypted `data`, `changed_attributes` and `metadata` columns now hold raw
+  Cloak ciphertext. Rows written by earlier releases are base64 text and keep
+  decrypting through a read-time fallback, so no migration is required.
+
+### Upgrade Notes:
+
+* Ash `~> 3.33` is now required.
+
+* `data`, `changed_attributes` and `metadata` are marked `sensitive?: true` on
+  plain event logs and are omitted from `inspect` output and logs.
+
+* The generated `ash_events_replay_<action>_update` action is `public?: false`
+  and rejects any call that does not carry the replay context flag.
+
+* Destroy actions now return data layer errors (stale record, foreign key
+  restrict) instead of succeeding and recording an event. Destroys with atomic
+  changes return an error tuple instead of raising.
+
+* A missing `clear_records_for_replay` surfaces as `Ash.Error.Unknown`.
+
+### Bug Fixes:
+
+* encryption: decrypt ciphertext stored as base64 by releases before 0.8.0 by [@Torkan](https://github.com/Torkan)
+
+* events: propagate destroy failures and write the event only after the row is gone by [@Torkan](https://github.com/Torkan)
+
+* events: make the generated replay update action private and replay-only by [@Torkan](https://github.com/Torkan)
+
+* event_log: mark data, changed_attributes and metadata as sensitive on plain event logs by [@Torkan](https://github.com/Torkan)
+
+* replay: restore binary attributes from embedded event data (#64) by [@Torkan](https://github.com/Torkan)
+
+* handle nil original_params in bulk destroy with nested operations (#89) by diogomrts [(#89)](https://github.com/ash-project/ash_events/pull/89)
+
 ## [v0.7.0](https://github.com/ash-project/ash_events/compare/v0.6.0...v0.7.0) (2026-03-29)
 
 

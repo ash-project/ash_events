@@ -89,11 +89,16 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
       case Code.ensure_loaded(Ecto.Adapters.SQL) do
         {:module, _} ->
+          # `query!` so a failed lock acquisition (deadlock victim, lock_timeout)
+          # surfaces with its real error code. Discarding the result leaves the
+          # transaction aborted and the event insert below fails with a
+          # misleading 25P02 instead.
           if is_list(lock_key) do
             [key1, key2] = lock_key
-            Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1, $2)", [key1, key2])
+
+            Ecto.Adapters.SQL.query!(pg_repo, "SELECT pg_advisory_xact_lock($1, $2)", [key1, key2])
           else
-            Ecto.Adapters.SQL.query(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
+            Ecto.Adapters.SQL.query!(pg_repo, "SELECT pg_advisory_xact_lock($1)", [lock_key])
           end
 
         {:error, _} ->

@@ -57,6 +57,30 @@ defmodule AshEvents.AdvisoryLocksTest do
     assert lock_row != nil
   end
 
+  test "a failed advisory lock acquisition raises with its own error instead of a 25P02" do
+    # Hold the default lock key from a connection outside the sandbox so the
+    # lock statement issued by create_event! cannot be granted.
+    repo_config = Application.fetch_env!(:ash_events, AshEvents.TestRepo)
+
+    {:ok, holder} =
+      Postgrex.start_link(
+        Keyword.take(repo_config, [:username, :password, :hostname, :port, :database])
+      )
+
+    Postgrex.query!(holder, "BEGIN", [])
+    Postgrex.query!(holder, "SELECT pg_advisory_xact_lock(2147483647)", [])
+
+    # Make the blocked lock statement fail quickly, the same way a deadlock
+    # victim fails: server-side, mid-transaction, on the lock query itself.
+    Ecto.Adapters.SQL.query!(TestRepo, "SET LOCAL lock_timeout = '200ms'")
+
+    error = assert_raise(Ash.Error.Unknown, fn -> Accounts.create_org!(%{name: "Test Org"}) end)
+
+    assert [%Ash.Error.Unknown.UnknownError{error: message}] = error.errors
+    assert message =~ "55P03 (lock_not_available)"
+    refute message =~ "25P02"
+  end
+
   test "advisory lock generator raises on unsupported tenant type" do
     org = Accounts.create_org!(%{name: "Test Org"})
     org_details = Accounts.create_org_details!(%{details: "Test details"}, tenant: org.id)

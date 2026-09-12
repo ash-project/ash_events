@@ -8,6 +8,13 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
 
   This wrapper ensures that custom validation messages are preserved when using AshEvents,
   while still allowing for replay-specific behavior during event replay.
+
+  `before_action?: true` on the wrapped validation is honoured outside of replay:
+  the validation is registered as a `before_action` hook instead of running
+  inline, matching `Ash.Changeset`'s own handling. During replay the validation
+  keeps running inline, because a hook registered by a validation that is not in
+  `allowed_change_modules` is discarded below and the validation would silently
+  never run.
   """
   use Ash.Resource.Change
 
@@ -57,8 +64,46 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
         }
       end
     else
-      run_validation(changeset, validation_module, validation_opts, context, custom_message)
+      maybe_before_action(
+        changeset,
+        validation,
+        validation_module,
+        validation_opts,
+        context,
+        custom_message
+      )
     end
+  end
+
+  defp maybe_before_action(
+         changeset,
+         %Ash.Resource.Validation{before_action?: true} = validation,
+         validation_module,
+         validation_opts,
+         context,
+         custom_message
+       ) do
+    Ash.Changeset.before_action(changeset, fn changeset ->
+      # Re-checked here rather than relying on the generated change's
+      # `only_when_valid?`, which Ash evaluates before the change runs. This
+      # mirrors `Ash.Changeset.validate/5`, which re-checks it inside the hook.
+      if validation.only_when_valid? and not changeset.valid? do
+        changeset
+      else
+        run_validation(changeset, validation_module, validation_opts, context, custom_message)
+      end
+    end)
+  end
+
+  defp maybe_before_action(
+         changeset,
+         _validation,
+         validation_module,
+         validation_opts,
+         context,
+         custom_message
+       ) do
+    run_validation(changeset, validation_module, validation_opts, context, custom_message)
   end
 
   defp run_validation(changeset, validation_module, validation_opts, context, custom_message) do

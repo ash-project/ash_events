@@ -32,7 +32,11 @@ defmodule AshEvents.BulkActionsTest do
 
     assert result.error_count == 0
     assert Enum.count(result.records) == 2
-    assert Enum.count(result.notifications) == 2
+
+    assert Enum.frequencies_by(result.notifications, & &1.resource) == %{
+             AshEvents.Accounts.User => 2,
+             EventLog => 2
+           }
 
     events =
       EventLog
@@ -58,7 +62,11 @@ defmodule AshEvents.BulkActionsTest do
 
     assert update_result.error_count == 0
     assert Enum.count(update_result.records) == 2
-    assert Enum.count(update_result.notifications) == 2
+
+    assert Enum.frequencies_by(update_result.notifications, & &1.resource) == %{
+             AshEvents.Accounts.User => 2,
+             EventLog => 2
+           }
 
     events =
       EventLog
@@ -87,7 +95,11 @@ defmodule AshEvents.BulkActionsTest do
 
     assert destroy_roles_result.error_count == 0
     assert Enum.count(destroy_roles_result.records) == 2
-    assert Enum.count(destroy_roles_result.notifications) == 2
+
+    assert Enum.frequencies_by(destroy_roles_result.notifications, & &1.resource) == %{
+             AshEvents.Accounts.UserRole => 2,
+             EventLog => 2
+           }
 
     [] = Accounts.UserRole |> Ash.read!()
 
@@ -110,7 +122,11 @@ defmodule AshEvents.BulkActionsTest do
 
     assert destroy_users_result.error_count == 0
     assert Enum.count(destroy_users_result.records) == 2
-    assert Enum.count(destroy_users_result.notifications) == 2
+
+    assert Enum.frequencies_by(destroy_users_result.notifications, & &1.resource) == %{
+             AshEvents.Accounts.User => 2,
+             EventLog => 2
+           }
 
     [] = Accounts.User |> Ash.read!(actor: %SystemActor{name: "system"})
 

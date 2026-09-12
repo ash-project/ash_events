@@ -24,6 +24,24 @@ Each entry includes:
 
 ---
 
+## 2026-09-12
+
+### Event Log Notifications Propagated Out of the Action Wrappers (#92)
+**Change**: `create_event!/5` now returns the notifications produced by the event write, and each action wrapper hands them back to Ash instead of discarding them. Notifiers on an event log resource previously never fired.
+**Context**: Events are written with `return_notifications?: true`, which makes Ash hand the notifications to the caller rather than dispatching them. All three wrappers ignored the `Ash.create!/3` return value, so those notifications were silently dropped. Reported with a failing test by Rekkice in #92.
+**Files**:
+- `lib/events/action_wrapper_helpers.ex` - `create_event!/5` returns notifications; new `notifications_result/3` and `bulk_changeset?/1`
+- `lib/events/create_action_wrapper.ex`, `lib/events/update_action_wrapper.ex` - return the notifications in the shape the enclosing pipeline expects
+- `lib/events/destroy_action_wrapper.ex` - same for soft destroy and bulk destroy; `destroy_result/3` documents why single hard destroys still drop them; `tag_bulk_ref/2` lets Ash re-associate the changeset by ref
+- `test/support/test_notifier.ex`, `test/support/event_logs/event_log.ex` - notifier that forwards notifications to a registered test pid
+- `test/ash_events/notifications_test.exs` - regression tests per action type, single and bulk
+- `test/ash_events/bulk_actions_test.exs` - per-resource notification breakdown instead of a bare count; the old counts encoded the dropped notifications
+- `README.md` - Notifiers on the Event Log section, including the hard destroy limitation
+**Impact**: Anything that hangs off the event log through a notifier (PubSub broadcast, outbox dispatch, projection updates) now works, for create, update, soft destroy and every bulk action. Single hard destroys are the one remaining gap.
+**Key Insights**: Ash asks for two incompatible manual action result shapes. The single-record create/update pipelines accept only `{:ok, record, %{notifications: [...]}}` (`validate_manual_action_return_result!/3` raises `InvalidReturnType` on a bare list), while `Ash.Actions.BulkManualActionHelpers.process_non_bulk_result/6` passes the third element straight to `store_notification/3`, which treats a non-list as a single notification. The `:bulk_create`/`:bulk_update`/`:bulk_destroy` context key that the bulk pipelines put on their changesets is the only way to tell the two apart. The single destroy pipeline cannot carry notifications at all: `validate_manual_action_return_result!/3` accepts a bare list, but `manage_relationships/4` and the notify step after it only match `%{notifications: ...}`, so the 3-tuple falls through `other -> other` and takes the destroyed record's own notifications with it -- returning the 2-tuple and dropping only the event's notification is the lesser loss until Ash normalises that shape. `Ash.Notifier.notify/1` is not a workaround either: it returns notifications unsent when the resource is in a transaction, which is exactly where the wrapper runs.
+
+---
+
 ## 2026-09-08
 
 ### Security Report Triage (reports 2873, 2874, 2879)

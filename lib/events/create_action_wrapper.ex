@@ -48,15 +48,20 @@ defmodule AshEvents.CreateActionWrapper do
 
           occurred_at = get_occurred_at_for_create(changeset, record, upsert?)
 
-          AshEvents.Events.ActionWrapperHelpers.create_event!(
-            changeset,
-            merged_ctx.original_params,
-            occurred_at,
-            module_opts,
-            opts
-          )
+          notifications =
+            AshEvents.Events.ActionWrapperHelpers.create_event!(
+              changeset,
+              merged_ctx.original_params,
+              occurred_at,
+              module_opts,
+              opts
+            )
 
-          result
+          AshEvents.Events.ActionWrapperHelpers.notifications_result(
+            changeset,
+            record,
+            notifications
+          )
 
         error ->
           error

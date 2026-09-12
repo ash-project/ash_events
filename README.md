@@ -487,6 +487,31 @@ This structure captures all the essential information about each event:
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
 
+## Notifiers on the Event Log
+
+Your event log resource is an ordinary Ash resource, so you can attach
+notifiers to it and react to every event as it is written:
+
+```elixir
+defmodule MyApp.Events.Event do
+  use Ash.Resource,
+    domain: MyApp.Events,
+    data_layer: AshPostgres.DataLayer,
+    extensions: [AshEvents.EventLog],
+    notifiers: [MyApp.Events.EventBroadcaster]
+end
+```
+
+The notifier fires for events recorded by create, update and soft destroy
+actions, and for all bulk actions.
+
+**Known limitation**: events recorded by a *single* (non-bulk) hard destroy do
+not produce a notification. Ash's non-bulk destroy pipeline cannot carry
+notifications out of a manual destroy, so the event's notification is dropped
+rather than trading away the destroyed record's own notification. Bulk destroys
+are unaffected, so `Ash.bulk_destroy/4` is a workaround if you need the
+notification for hard destroys.
+
 ## Advanced Configuration
 
 ### Version Management

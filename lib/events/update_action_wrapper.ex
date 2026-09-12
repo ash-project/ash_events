@@ -25,16 +25,24 @@ defmodule AshEvents.UpdateActionWrapper do
       occurred_at =
         AshEvents.Events.ActionWrapperHelpers.get_occurred_at(changeset, update_timestamp_attr)
 
-      AshEvents.Events.ActionWrapperHelpers.create_event!(
-        changeset,
-        merged_ctx.original_params,
-        occurred_at,
-        module_opts,
-        opts
-      )
+      notifications =
+        AshEvents.Events.ActionWrapperHelpers.create_event!(
+          changeset,
+          merged_ctx.original_params,
+          occurred_at,
+          module_opts,
+          opts
+        )
 
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
-      data_layer.update(changeset.resource, changeset)
+
+      with {:ok, record} <- data_layer.update(changeset.resource, changeset) do
+        AshEvents.Events.ActionWrapperHelpers.notifications_result(
+          changeset,
+          record,
+          notifications
+        )
+      end
     end
   end
 end

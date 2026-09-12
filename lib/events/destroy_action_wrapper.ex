@@ -33,9 +33,14 @@ defmodule AshEvents.DestroyActionWrapper do
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
 
       with :ok <- reject_atomics(changeset),
-           {:ok, _record} = result <- data_layer.update(changeset.resource, changeset) do
-        create_event!(changeset, merged_ctx, module_opts, opts)
-        result
+           {:ok, record} <- data_layer.update(changeset.resource, changeset) do
+        notifications = create_event!(changeset, merged_ctx, module_opts, opts)
+
+        AshEvents.Events.ActionWrapperHelpers.notifications_result(
+          changeset,
+          record,
+          notifications
+        )
       end
     end
   end
@@ -62,9 +67,21 @@ defmodule AshEvents.DestroyActionWrapper do
       }
 
       case update(changeset, module_opts, ctx) do
-        {:ok, record} -> {:ok, record, changeset}
-        {:ok, record, _notifications} -> {:ok, record, changeset}
-        {:error, error} -> {:error, error}
+        {:ok, record} ->
+          {:ok, record, changeset}
+
+        {:ok, record, notifications} ->
+          # Returning the changeset-tagged form would drop the notifications, so
+          # hand them back instead and let Ash re-associate the changeset. It
+          # looks the changeset up by the `:bulk_action_ref` metadata first, which
+          # sidesteps the `:bulk_destroy`/`:bulk_update` index key mismatch.
+          # `process_bulk_results/9` accepts both the bare list and the
+          # `%{notifications: ...}` form, so pass whatever `update/3` produced
+          # through untouched.
+          {:ok, tag_bulk_ref(record, changeset), notifications}
+
+        {:error, error} ->
+          {:error, error}
       end
     end)
   end
@@ -85,12 +102,44 @@ defmodule AshEvents.DestroyActionWrapper do
         |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
       with :ok <- reject_atomics(changeset),
-           {:ok, _record} = result <- destroy_record(changeset) do
-        create_event!(changeset, merged_ctx, module_opts, opts)
-        result
+           {:ok, record} <- destroy_record(changeset) do
+        notifications = create_event!(changeset, merged_ctx, module_opts, opts)
+        destroy_result(changeset, record, notifications)
       end
     end
   end
+
+  # Ash's single-record destroy pipeline cannot carry notifications out of a
+  # manual destroy. `Ash.Actions.Destroy.validate_manual_action_return_result!/3`
+  # only accepts a bare list, but the `manage_relationships/4` clauses and the
+  # notify step after them only match `%{notifications: ...}`, so a 3-tuple
+  # falls straight through `other -> other` and every notification is lost --
+  # including the ones Ash itself accumulated for the destroyed record.
+  # Returning the 2-tuple keeps those working; the event's own notification
+  # stays dropped.
+  #
+  # The bulk pipeline is fine: it hands the third element to
+  # `Ash.Actions.Helpers.Bulk.store_notification/3`, which takes a bare list.
+  #
+  # This does NOT resolve itself when Ash is fixed -- `notifications` is
+  # discarded here. Once `Ash.Actions.Destroy` normalises the bare-list form,
+  # drop this function and return `{:ok, record, notifications}` directly (both
+  # pipelines then want the same shape), and update the
+  # "single destroy still delivers the record's own notification" test in
+  # test/ash_events/notifications_test.exs to expect the event log
+  # notification too. Verified against a locally patched Ash.
+  defp destroy_result(changeset, record, notifications) do
+    if AshEvents.Events.ActionWrapperHelpers.bulk_changeset?(changeset) do
+      {:ok, record, notifications}
+    else
+      {:ok, record}
+    end
+  end
+
+  defp tag_bulk_ref(record, %{context: %{bulk_destroy: %{ref: ref}}}) when not is_nil(ref),
+    do: Ash.Resource.put_metadata(record, :bulk_action_ref, ref)
+
+  defp tag_bulk_ref(record, _changeset), do: record
 
   # Atomic changes cannot be recorded, so refuse them before touching the data
   # layer rather than discovering it after the row is gone.

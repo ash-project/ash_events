@@ -69,6 +69,14 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
   end
 
+  @doc """
+  Writes the event for `changeset` and returns the notifications it produced.
+
+  The event is created with `return_notifications?: true`, which makes Ash hand
+  the notifications back instead of dispatching them. Callers must therefore
+  pass them on to Ash in the shape their action type expects, or notifiers on
+  the event log resource never fire.
+  """
   def create_event!(changeset, original_params, occurred_at, module_opts, opts) do
     pg_repo = AshPostgres.DataLayer.Info.repo(changeset.resource)
 
@@ -208,6 +216,45 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
       end
     end)
     |> Ash.create!(authorize?: false, return_notifications?: true)
+    |> then(fn {_event, notifications} -> notifications end)
+  end
+
+  @doc """
+  Wraps `notifications` in the shape the enclosing action pipeline expects.
+
+  Ash is not consistent here, so the shape cannot be hardcoded:
+
+    * the single-record create/update pipelines require
+      `%{notifications: [...]}` (see `validate_manual_action_return_result!/3`
+      in `Ash.Actions.Create`/`Ash.Actions.Update`), while
+    * the bulk pipelines hand the third element of `{:ok, record, _}` straight
+      to `Ash.Actions.Helpers.Bulk.store_notification/3`, which treats anything
+      that is not a list as a single notification.
+
+  A changeset built by a bulk action carries a `:bulk_create`/`:bulk_update`/
+  `:bulk_destroy` context key, which is what tells the two apart.
+
+  Hard destroys do not use this: their single-record pipeline cannot carry
+  notifications at all. See `destroy_result/3` in
+  `AshEvents.DestroyActionWrapper`.
+  """
+  def notifications_result(changeset, record, notifications) do
+    if bulk_changeset?(changeset) do
+      {:ok, record, notifications}
+    else
+      {:ok, record, %{notifications: notifications}}
+    end
+  end
+
+  @doc """
+  Whether `changeset` was built by a bulk action.
+
+  Bulk actions tag their changesets with a `:bulk_create`/`:bulk_update`/
+  `:bulk_destroy` context key, which is the only way to tell which of Ash's two
+  incompatible manual-action result shapes the caller wants.
+  """
+  def bulk_changeset?(%{context: context}) do
+    Enum.any?([:bulk_create, :bulk_update, :bulk_destroy], &Map.has_key?(context, &1))
   end
 
   @doc """

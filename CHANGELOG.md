@@ -11,6 +11,21 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.1](https://github.com/ash-project/ash_events/compare/v0.8.0...v0.8.1) (2026-09-12)
+
+
+
+
+### Bug Fixes:
+
+* events: pass a Validation.Context to wrapped validations by [@Torkan](https://github.com/Torkan)
+
+* events: raise on advisory lock failure instead of discarding the error by [@Torkan](https://github.com/Torkan)
+
+* events: propagate notifications from event creation instead of dropping them by [@Torkan](https://github.com/Torkan)
+
+* honour before_action?: true on validations of event-tracked actions by Fábio Pacheco [(#97)](https://github.com/ash-project/ash_events/pull/97)
+
 ## [v0.8.0](https://github.com/ash-project/ash_events/compare/v0.7.0...v0.8.0) (2026-09-11)
 
 

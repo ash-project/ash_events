@@ -46,6 +46,10 @@ defmodule AshEvents.Accounts do
     resource AshEvents.Accounts.Org do
       define :create_org, action: :create
       define :reactivate_org, action: :reactivate
+      define :require_org_name_change, action: :require_name_change
+
+      define :require_org_name_change_with_message,
+        action: :require_name_change_with_message
 
       define :create_org_with_before_action_validation,
         action: :create_with_before_action_validation

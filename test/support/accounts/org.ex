@@ -61,6 +61,22 @@ defmodule AshEvents.Accounts.Org do
       validate attribute_equals(:active, false), message: "Organization is already active"
     end
 
+    # Builtins such as `changing/2` read `context.message`, so these only work if
+    # the wrapper hands validations a proper `Ash.Resource.Validation.Context`.
+    update :require_name_change do
+      accept [:name]
+      require_atomic? false
+
+      validate changing(:name)
+    end
+
+    update :require_name_change_with_message do
+      accept [:name]
+      require_atomic? false
+
+      validate changing(:name), message: "a new name is required"
+    end
+
     # `active` defaults to true and is only flipped from a before_action hook, so
     # the validation below passes only if `before_action?: true` actually delays
     # it. These two actions are identical apart from event tracking, and must

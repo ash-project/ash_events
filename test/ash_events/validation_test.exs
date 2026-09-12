@@ -100,6 +100,42 @@ defmodule AshEvents.ValidationTest do
     assert {:ok, %{active: false}} = ignored
   end
 
+  test "validations receive a Validation.Context on tracked actions" do
+    org =
+      Accounts.create_org!(%{name: "Test Organization"}, actor: %SystemActor{name: "test_runner"})
+
+    # `changing/2` reads `context.message`, which only exists on
+    # `Ash.Resource.Validation.Context`. With a `Change.Context` this is a
+    # KeyError instead of a validation error.
+    {:error, %Ash.Error.Invalid{errors: errors}} =
+      Accounts.require_org_name_change(org, %{}, actor: %SystemActor{name: "test_runner"})
+
+    assert [%Ash.Error.Changes.InvalidAttribute{field: :name, message: "must be changing"}] =
+             errors
+
+    {:ok, %{name: "Renamed"}} =
+      Accounts.require_org_name_change(org, %{name: "Renamed"},
+        actor: %SystemActor{name: "test_runner"}
+      )
+  end
+
+  test "validations that read context.message use the custom message on tracked actions" do
+    org =
+      Accounts.create_org!(%{name: "Test Organization"}, actor: %SystemActor{name: "test_runner"})
+
+    {:error, %Ash.Error.Invalid{errors: errors}} =
+      Accounts.require_org_name_change_with_message(org, %{},
+        actor: %SystemActor{name: "test_runner"}
+      )
+
+    assert [
+             %Ash.Error.Changes.InvalidAttribute{
+               field: :name,
+               message: "a new name is required"
+             }
+           ] = errors
+  end
+
   test "custom validation messages are preserved when using AshEvents" do
     # Create an active org (active = true by default)
     org =

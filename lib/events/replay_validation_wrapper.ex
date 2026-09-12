@@ -107,6 +107,8 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
   end
 
   defp run_validation(changeset, validation_module, validation_opts, context, custom_message) do
+    validation_context = validation_context(context, custom_message)
+
     case validation_module.init(validation_opts) do
       {:ok, initialized_opts} ->
         templated_opts =
@@ -119,57 +121,53 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
             changeset
           )
 
-        case validation_module.validate(changeset, templated_opts, context) do
-          :ok ->
-            changeset
-
-          {:error, error} ->
-            # If we have a custom message, override the error message
-            final_error =
-              if custom_message do
-                override_error_message(error, custom_message)
-              else
-                error
-              end
-
-            Ash.Changeset.add_error(changeset, final_error)
+        case validation_module.validate(changeset, templated_opts, validation_context) do
+          :ok -> changeset
+          {:error, error} -> add_validation_error(changeset, error, custom_message)
         end
 
       {:error, error} ->
-        final_error =
-          if custom_message do
-            override_error_message(error, custom_message)
-          else
-            error
-          end
-
-        Ash.Changeset.add_error(changeset, final_error)
+        add_validation_error(changeset, error, custom_message)
     end
   end
 
-  defp override_error_message(error, custom_message) do
-    case error do
-      %Ash.Error.Changes.InvalidAttribute{} = error ->
-        %{error | message: custom_message}
+  # This wrapper is invoked as a change and receives an
+  # `Ash.Resource.Change.Context`, but validations expect an
+  # `Ash.Resource.Validation.Context`. The only difference is `message`, which
+  # builtins such as `changing/2` read directly (#93).
+  defp validation_context(context, custom_message) do
+    struct(
+      Ash.Resource.Validation.Context,
+      context |> Map.delete(:__struct__) |> Map.put(:message, custom_message)
+    )
+  end
 
-      %Ash.Error.Changes.InvalidArgument{} = error ->
-        %{error | message: custom_message}
+  # Mirrors how `Ash.Changeset` applies a validation's `message` option.
+  defp add_validation_error(changeset, error, nil) do
+    Ash.Changeset.add_error(changeset, error)
+  end
 
-      # Handle other error types that might need message override
-      error when is_struct(error) ->
-        if Map.has_key?(error, :message) do
-          %{error | message: custom_message}
-        else
-          error
-        end
+  defp add_validation_error(changeset, error, message) when is_binary(error) do
+    Ash.Changeset.add_error(changeset, message)
+  end
 
-      _ ->
-        %Ash.Error.Changes.InvalidAttribute{
-          field: :unknown,
-          message: custom_message,
-          value: nil
-        }
+  defp add_validation_error(changeset, error, message) when is_exception(error) do
+    Ash.Changeset.add_error(changeset, Ash.Error.override_validation_message(error, message))
+  end
+
+  defp add_validation_error(changeset, errors, message) when is_list(errors) do
+    if Keyword.keyword?(errors) do
+      Ash.Changeset.add_error(changeset, Keyword.put(errors, :message, message))
+    else
+      Ash.Changeset.add_error(
+        changeset,
+        Enum.map(errors, &Ash.Error.override_validation_message(&1, message))
+      )
     end
+  end
+
+  defp add_validation_error(changeset, _error, message) do
+    Ash.Changeset.add_error(changeset, message)
   end
 
   defp templated_opts(opts, actor, tenant, arguments, context, changeset) do

@@ -24,6 +24,20 @@ Each entry includes:
 
 ---
 
+## 2026-09-13
+
+### Validations Receive a Validation.Context From the Replay Wrapper (#93)
+**Change**: `ReplayValidationWrapper.run_validation/5` now builds an `Ash.Resource.Validation.Context` (carrying the validation's `message` option) before calling `validate/3`, and applies custom messages the way `Ash.Changeset` does, via `Ash.Error.override_validation_message/2`. The hand-rolled `override_error_message/2` is gone.
+**Context**: The wrapper is registered as a change, so Ash hands it an `Ash.Resource.Change.Context`. That struct was passed straight through to validations. Builtins such as `changing/2` read `context.message`, which only exists on `Validation.Context`, so any tracked action using them crashed with `KeyError` instead of returning a validation error. Reported by dcollie-siio in #93.
+**Files**:
+- `lib/events/replay_validation_wrapper.ex` - `validation_context/2` and `add_validation_error/3`
+- `test/support/accounts/org.ex`, `test/support/accounts/domain.ex` - `require_name_change` and `require_name_change_with_message` update actions using `changing(:name)`
+- `test/ash_events/validation_test.exs` - regression tests for the default message and a custom message
+**Impact**: Any validation that reads `context.message` works on tracked actions. Custom messages now follow Ash's rules exactly: string errors are replaced, exceptions go through `override_validation_message/2`, keyword errors get `message` put on them.
+**Key Insights**: `Change.Context` and `Validation.Context` share every field except `message`; `struct/2` over the change context map plus `message` is the whole conversion. Ash applies the validation `message` in two places, in the context (for builtins that honour it) and again on the returned error, so the wrapper must do both to match behaviour.
+
+---
+
 ## 2026-09-12
 
 ### Advisory Lock Failures Now Raise Instead of Being Discarded (#98)

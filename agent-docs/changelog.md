@@ -26,6 +26,15 @@ Each entry includes:
 
 ## 2026-09-12
 
+### Advisory Lock Failures Now Raise Instead of Being Discarded (#98)
+**Change**: `create_event!/5` acquires the transactional advisory lock with `Ecto.Adapters.SQL.query!/3`. The previous `query/3` call discarded the `{:error, _}` tuple.
+**Context**: `pg_advisory_xact_lock` is held until commit, and the default key generator returns one key per resource without multitenancy, so an evented write can deadlock with any transaction that touches the same rows without taking the lock. When PostgreSQL chose the lock statement as the victim, the `40P01` was dropped, the transaction stayed aborted, and the event insert at the end of the function failed with `25P02 in_failed_sql_transaction`. The trace pointed at the insert and "deadlock" never appeared in the logs. Callers with retry logic keyed on `40P01` could not retry. Reported by harshsbajwa in #98.
+**Files**:
+- `lib/events/action_wrapper_helpers.ex` - `query!` for both the one- and two-key lock statements
+- `test/ash_events/advisory_locks_test.exs` - regression test that holds the default lock key from a raw `Postgrex` connection outside the sandbox and sets `SET LOCAL lock_timeout`, so the lock statement fails server-side with `55P03` mid-transaction, the same shape as a deadlock victim but deterministic
+**Impact**: Lock acquisition failures reach the caller as `Ash.Error.Unknown` wrapping the original `Postgrex.Error`, with the real SQLSTATE and a stack frame on the lock query.
+**Key Insights**: A real two-session deadlock cannot be used as a regression test because PostgreSQL picks the victim nondeterministically; `lock_timeout` produces the identical failure mode on demand. The sandbox shares one connection in shared mode, so the lock holder has to be a separate `Postgrex.start_link` built from the repo config. Ash stringifies exceptions raised inside manual actions into `Ash.Error.Unknown.UnknownError.error`, so tests must match on the message text, not the exception struct.
+
 ### Event Log Notifications Propagated Out of the Action Wrappers (#92)
 **Change**: `create_event!/5` now returns the notifications produced by the event write, and each action wrapper hands them back to Ash instead of discarding them. Notifiers on an event log resource previously never fired.
 **Context**: Events are written with `return_notifications?: true`, which makes Ash hand the notifications to the caller rather than dispatching them. All three wrappers ignored the `Ash.create!/3` return value, so those notifications were silently dropped. Reported with a failing test by Rekkice in #92.

@@ -38,7 +38,6 @@ defmodule AshEvents.EventLog.Verifiers.VerifyReplayOverrides do
   end
 
   defp validate_route_to_list(nil, _resource), do: :ok
-  defp validate_route_to_list([], _resource), do: :ok
 
   defp validate_route_to(nil, _resource), do: :ok
 

@@ -54,6 +54,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 * handle nil original_params in bulk destroy with nested operations (#89) by diogomrts [(#89)](https://github.com/ash-project/ash_events/pull/89)
 
+### Chores:
+
+* deps: bump `ash_cloak` to 0.4.0 and `ash_phoenix` to 2.3.25, clearing the published
+  advisories for those packages. Both are `only: [:dev, :test]` dependencies and are not
+  shipped to consumers of this library.
+
+* build: the test harness now runs on Elixir 1.20.4 / OTP 29.0.6, and the test-repo
+  migrations were regenerated for `ash_functions` v6 (`ash_postgres` 2.13.1).
+
 ## [v0.7.0](https://github.com/ash-project/ash_events/compare/v0.6.0...v0.7.0) (2026-03-29)
 
 

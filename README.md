@@ -512,6 +512,18 @@ rather than trading away the destroyed record's own notification. Bulk destroys
 are unaffected, so `Ash.bulk_destroy/4` is a workaround if you need the
 notification for hard destroys.
 
+## Manual Actions
+
+AshEvents implements event tracking by installing its own manual implementation
+on every tracked create, update and destroy action, so the wrapper can write the
+event around the data layer call. An action that already declares `manual`
+cannot be tracked, and the combination is rejected at compile time with a
+`Spark.Error.DslError`.
+
+To keep a manual action on a resource that uses `AshEvents.Events`, exclude it
+from tracking with `ignore_actions` or leave it out of `only_actions`. No event
+is recorded when the action runs.
+
 ## Advanced Configuration
 
 ### Version Management

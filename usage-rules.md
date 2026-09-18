@@ -92,6 +92,13 @@ defmodule MyApp.Accounts.User do
 end
 ```
 
+**Tracked actions cannot declare `manual`**. AshEvents installs its own manual
+implementation on every tracked create, update and destroy action so it can
+write the event around the data layer call. Declaring `manual` on a tracked
+action is a compile-time `Spark.Error.DslError`. To keep a manual action on a
+tracked resource, exclude it with `ignore_actions` or leave it out of
+`only_actions`; no event is recorded for it.
+
 ## Event Tracking Patterns
 
 ### Automatic Event Creation

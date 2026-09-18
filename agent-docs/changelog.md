@@ -24,6 +24,20 @@ Each entry includes:
 
 ---
 
+## 2026-09-18
+
+### Manual Implementations on Tracked Actions Rejected at Compile Time (#99)
+**Change**: `WrapActions` now raises a `Spark.Error.DslError` when a tracked create, update or destroy action already has a non-nil `manual`, alongside the other configuration guards at the top of `transform/1`.
+**Context**: The transformer set `manual:` on every tracked action unconditionally, so a `manual` declared by the resource was replaced by the AshEvents wrapper and never ran. There was no warning or error, and nothing in the docs said manual actions were unsupported. Reported by Fasp96 in #99.
+**Files**:
+- `lib/events/transformers/wrap_actions.ex` - `reject_manual_actions!/2`
+- `test/ash_events/manual_action_test.exs` - compiles resources at runtime with `Code.compile_string/1`; asserts the DslError for each action type and that `ignore_actions`/`only_actions` keep the user's manual
+- `README.md`, `usage-rules.md` - "Manual Actions" note
+**Impact**: A tracked action with `manual` no longer compiles. Users who need one must exclude it from tracking, in which case no event is recorded for it.
+**Key Insights**: The guard has to live in the transformer, not `VerifyActions`: verifiers run after all transformers, and by then the original `manual` has already been overwritten. Delegating to the user's manual from inside the wrapper is not a bug fix; it would run user side effects during replay and the create wrapper would need the manual's return value to obtain the primary key. Compiling Ash resources with `Code.compile_string/1` inside a test emits Inspect protocol consolidation warnings on stderr, so wrap the compile in `capture_io(:stderr, ...)`.
+
+---
+
 ## 2026-09-13
 
 ### Validations Receive a Validation.Context From the Replay Wrapper (#93)

@@ -48,6 +48,8 @@ defmodule AshEvents.Events.Transformers.WrapActions do
       end)
     end
 
+    reject_manual_actions!(event_actions, resource)
+
     action_version_names = Keyword.keys(action_versions)
 
     Enum.each(action_version_names, fn action_name ->
@@ -253,5 +255,32 @@ defmodule AshEvents.Events.Transformers.WrapActions do
         {:ok, dsl_with_main_action}
       end
     end)
+  end
+
+  # Event tracking is implemented by installing our own manual implementation on
+  # every tracked action, and the wrapper must own the data layer call so the
+  # event is written around it. A manual declared by the resource would be
+  # silently replaced and never run, so refuse the combination up front.
+  defp reject_manual_actions!(event_actions, resource) do
+    case Enum.find(event_actions, &(&1.manual != nil)) do
+      nil ->
+        :ok
+
+      action ->
+        raise Spark.Error.DslError,
+          message: """
+          Action :#{action.name} declares a manual implementation, but is also tracked by AshEvents.
+
+          AshEvents installs its own manual implementation on every tracked create, update
+          and destroy action so it can write the event around the data layer call. A manual
+          declared on the action would be replaced and never run.
+
+          Either remove the manual implementation from :#{action.name}, or exclude the action
+          from event tracking with `ignore_actions [:#{action.name}]` or by leaving it out of
+          `only_actions`.
+          """,
+          path: [:actions, action.type, action.name, :manual],
+          module: resource
+    end
   end
 end

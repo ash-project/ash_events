@@ -11,6 +11,15 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [v0.8.2](https://github.com/ash-project/ash_events/compare/v0.8.1...v0.8.2) (2026-09-18)
+
+
+
+
+### Bug Fixes:
+
+* events: raise a DslError when a tracked action declares manual (#99) by [@Torkan](https://github.com/Torkan)
+
 ## [v0.8.1](https://github.com/ash-project/ash_events/compare/v0.8.0...v0.8.1) (2026-09-12)
 
 

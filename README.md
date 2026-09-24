@@ -619,6 +619,15 @@ end
 
 With a vault configured, `data`, `changed_attributes`, and `metadata` are stored in the encrypted columns `encrypted_data`, `encrypted_changed_attributes`, and `encrypted_metadata`, and exposed as decrypting calculations under their original names. Sensitive attributes are then stored in full, since they are protected at rest, and replay has everything it needs. Encrypted payloads cannot be filtered or indexed by content, and your application takes on key management.
 
+If the log should never hold certain secrets at all, even encrypted, set `store_sensitive_inputs? false`. Sensitive attributes and arguments passed as action input (passwords, one-time codes, tokens) are then stored as `nil` in `data`, as on a non-encrypted log, while the rest of the payload stays encrypted. The trade-off is replay: an action whose required sensitive input was not stored cannot be replayed as recorded, so route such events with `replay_overrides` or treat the log as an audit trail.
+
+```elixir
+event_log do
+  cloak_vault MyApp.Vault
+  store_sensitive_inputs? false
+end
+```
+
 On both encrypted and plain event logs, the payload fields are marked `sensitive?: true`, so they are omitted when events are inspected or logged.
 
 ### Auto-Generated Replay Actions

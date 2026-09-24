@@ -29,6 +29,7 @@ defmodule AshEvents.Accounts.OrgCloaked do
 
     create :create do
       accept [:id, :created_at, :updated_at, :name]
+      argument :access_code, :string, sensitive?: true
     end
 
     update :update do

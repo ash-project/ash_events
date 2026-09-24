@@ -107,6 +107,7 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
 
     event_log_resource = module_opts[:event_log]
+    store_sensitive_inputs? = AshEvents.EventLog.Info.store_sensitive_inputs?(event_log_resource)
 
     params =
       original_params
@@ -124,14 +125,14 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
 
         cond do
           attr = Ash.Resource.Info.attribute(changeset.resource, key) ->
-            if not attr.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+            if not attr.sensitive? or store_sensitive_inputs? do
               Map.put(acc, key, cast_and_dump_value(value, attr))
             else
               Map.put(acc, key, nil)
             end
 
           arg = Enum.find(changeset.action.arguments, &(&1.name == key)) ->
-            if not arg.sensitive? or AshEvents.EventLog.Info.cloaked?(event_log_resource) do
+            if not arg.sensitive? or store_sensitive_inputs? do
               Map.put(acc, key, cast_and_dump_value(value, arg))
             else
               Map.put(acc, key, nil)

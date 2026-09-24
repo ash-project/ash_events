@@ -123,6 +123,16 @@ defmodule AshEvents.EventLog do
         doc:
           "The vault module to use for encrypting and decrypting both the event data and metadata."
       ],
+      store_sensitive_inputs?: [
+        type: :boolean,
+        default: true,
+        doc: """
+        Whether attributes and arguments marked `sensitive?: true` are stored in the event's `data` when `cloak_vault` is set.
+        Set it to `false` to store them as `nil`, so plaintext secrets such as passwords and one-time codes stay out of an encrypted log.
+        Event logs without `cloak_vault` always store them as `nil`.
+        Replaying an action whose required sensitive input was not stored fails.
+        """
+      ],
       record_id_type: [
         type: :any,
         doc:
@@ -177,5 +187,15 @@ defmodule AshEvents.EventLog.Info do
       {:ok, _} -> true
       :error -> false
     end
+  end
+
+  @doc """
+  Whether sensitive attributes and arguments are stored in the event's `data`.
+
+  True only when the event log has a `cloak_vault` and `store_sensitive_inputs?` is `true`.
+  """
+  def store_sensitive_inputs?(event_log_resource) do
+    cloaked?(event_log_resource) and
+      AshEvents.EventLog.Info.event_log_store_sensitive_inputs?(event_log_resource)
   end
 end

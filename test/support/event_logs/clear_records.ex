@@ -56,3 +56,14 @@ defmodule AshEvents.EventLogs.ClearRecordsStateMachine do
     :ok
   end
 end
+
+defmodule AshEvents.EventLogs.ClearRecordsCloakedNoSensitiveInputs do
+  @moduledoc false
+  use AshEvents.ClearRecordsForReplay
+  alias AshEvents.TestRepo
+
+  def clear_records!(_opts) do
+    {_, nil} = TestRepo.delete_all("cloaked_credentials")
+    :ok
+  end
+end

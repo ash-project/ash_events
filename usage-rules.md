@@ -694,7 +694,9 @@ end
 |----------------|--------|----------------------|
 | **Non-encrypted** | Sensitive input stored as `nil` | Everything stored in plaintext |
 | **Encrypted (`cloak_vault`)** | Everything stored, encrypted | Everything stored, encrypted |
+| **Encrypted, `store_sensitive_inputs? false`** | Sensitive input stored as `nil`, the rest encrypted | Everything stored, encrypted |
 
+- `store_sensitive_inputs? false` (default `true`) keeps plaintext secrets such as passwords and one-time codes out of an encrypted log. Replaying an action whose required sensitive input was not stored fails, so route those events with `replay_overrides` or use the log as an audit trail.
 - There is **no** `store_sensitive_attributes` DSL option. The v0.6.0 changelog entry refers to a feature that was reverted.
 - The payload fields (`data`, `changed_attributes`, `metadata`) are marked `sensitive?: true` on both log types and are omitted from `inspect` output.
 - Encrypted payloads cannot be filtered or indexed by content, and the application owns key management.

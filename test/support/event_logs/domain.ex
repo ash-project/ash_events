@@ -23,6 +23,10 @@ defmodule AshEvents.EventLogs do
       define :replay_events_cloaked, action: :replay
     end
 
+    resource AshEvents.EventLogs.EventLogCloakedNoSensitiveInputs do
+      define :replay_events_cloaked_no_sensitive_inputs, action: :replay
+    end
+
     resource AshEvents.EventLogs.EventLogStateMachine do
       define :replay_events_state_machine, action: :replay
     end

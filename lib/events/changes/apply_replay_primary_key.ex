@@ -38,4 +38,9 @@ defmodule AshEvents.Events.Changes.ApplyReplayPrimaryKey do
       cs
     end
   end
+    # Temporal safety (ash_events#103): this change only captures/moves
+    # changeset state — it never reads the wall clock and has no now-assuming
+    # side effects, so it is safe on writes made as of any instant.
+    @impl true
+    def temporal_safe?(_opts), do: true
 end

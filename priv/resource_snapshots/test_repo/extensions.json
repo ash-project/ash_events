@@ -1,8 +1,9 @@
 {
-  "ash_functions_version": 6,
+  "ash_functions_version": 7,
   "installed": [
     "uuid-ossp",
     "citext",
-    "ash-functions"
+    "ash-functions",
+    "btree_gist"
   ]
 }

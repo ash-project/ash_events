@@ -62,6 +62,76 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
     end
   end
 
+  @doc """
+  The reserved metadata key under which a write's `as_of` is captured.
+
+  `as_of` travels like `tenant` (an action option / changeset field), so it
+  is not action input and would otherwise be invisible to replay. It is
+  stored in the event's metadata — a JSON map — as an ISO-8601 instant, or
+  as `%{"lower" => iso, "upper" => iso | nil, "bounds" => string}` when the
+  write was given a period. A first-class column is the longer-term shape,
+  but that asks every deployment for an event-log migration; metadata needs
+  nothing and is already the capture point for context-like values.
+  """
+  def as_of_metadata_key, do: "as_of"
+
+  def merge_captured_as_of(metadata, as_of)
+
+  def merge_captured_as_of(metadata, nil), do: metadata
+  # `:now` means the same thing replay's own wall-clock resolution means;
+  # recording it would only pin a timestamp that carries no information.
+  def merge_captured_as_of(metadata, :now), do: metadata
+
+  def merge_captured_as_of(metadata, %Ash.Range{} = period) do
+    captured = %{
+      "lower" => dump_instant(period.lower),
+      "upper" => dump_instant(period.upper),
+      "bounds" => to_string(period.bounds)
+    }
+
+    Map.merge(%{as_of_metadata_key() => captured}, metadata)
+  end
+
+  def merge_captured_as_of(metadata, as_of) do
+    Map.merge(%{as_of_metadata_key() => dump_instant(as_of)}, metadata)
+  end
+
+  defp dump_instant(%DateTime{} = dt), do: DateTime.to_iso8601(dt)
+  defp dump_instant(other), do: other
+
+  @doc """
+  Restores a captured `as_of` from an event's metadata as the action option
+  value replay should pass — `nil` when the event carries none (events
+  recorded before this change, or non-temporal writes), so replay falls
+  back to its previous wall-clock behavior.
+  """
+  def restore_captured_as_of(nil), do: nil
+  def restore_captured_as_of(metadata) when not is_map(metadata), do: nil
+
+  def restore_captured_as_of(metadata) do
+    case Map.get(metadata, as_of_metadata_key()) || Map.get(metadata, :as_of) do
+      %{"lower" => lower, "upper" => upper, "bounds" => bounds}
+      when is_binary(lower) and is_binary(bounds) ->
+        upper =
+          case upper do
+            nil -> nil
+            iso -> elem(DateTime.from_iso8601(iso), 1)
+          end
+
+        %Ash.Range{
+          lower: elem(DateTime.from_iso8601(lower), 1),
+          upper: upper,
+          bounds: String.to_existing_atom(bounds)
+        }
+
+      iso when is_binary(iso) ->
+        elem(DateTime.from_iso8601(iso), 1)
+
+      _ ->
+        nil
+    end
+  end
+
   defp cast_and_dump_value(value, attr_or_arg) do
     case Ash.Type.cast_input(attr_or_arg.type, value, attr_or_arg.constraints) do
       {:ok, cast_value} -> dump_value(cast_value, attr_or_arg)
@@ -154,6 +224,16 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
       end
 
     metadata = Map.get(changeset.context, :ash_events_metadata, %{})
+
+    # Capture the write's `as_of` (Ash temporal resources) so replay can
+    # re-invoke the action at the original instant rather than at replay
+    # wall-clock (ash_events#103). Stored under a reserved metadata key —
+    # no event-log schema change — and merged BENEATH user-supplied
+    # metadata, so an explicit user value always wins. Events recorded
+    # without an `as_of` carry no key at all: their payloads are
+    # byte-compatible with previous versions, and replay keeps today's
+    # wall-clock behavior for them.
+    metadata = merge_captured_as_of(metadata, Map.get(changeset, :as_of))
 
     # Calculate changed attributes from the final changeset state
     original_params = Map.get(changeset.context, :original_params, %{})

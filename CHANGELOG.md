@@ -11,6 +11,17 @@ See [Conventional Commits](Https://conventionalcommits.org) for commit guideline
 
 <!-- changelog -->
 
+## [Unreleased]
+
+### Features:
+
+* events: capture a write's `as_of` (Ash temporal resources) in event metadata and honour it during replay, so temporal periods rebuild at their original instants instead of replay wall-clock (#103)
+
+### Breaking Changes:
+
+* none — events recorded without an `as_of` carry no metadata key and replay exactly as before
+
+
 ## [v0.8.2](https://github.com/ash-project/ash_events/compare/v0.8.1...v0.8.2) (2026-09-18)
 
 

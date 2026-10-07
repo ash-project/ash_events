@@ -110,5 +110,11 @@ defmodule AshEvents.Accounts do
     end
 
     resource AshEvents.Accounts.ArticleTag
+
+    resource AshEvents.Accounts.TemporalCoverage do
+      define :create_temporal_coverage, action: :create
+      define :update_temporal_coverage, action: :update
+      define :destroy_temporal_coverage, action: :destroy
+    end
   end
 end

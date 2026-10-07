@@ -75,4 +75,11 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
       changeset: changeset
     )
   end
+
+  # Temporal safety (ash_events#103): mechanical capture/replay plumbing —
+  # this change only moves changeset or event state and never reads the
+  # wall clock nor assumes the write is happening now.
+  @impl true
+  def temporal_safe?(_opts), do: true
 end
+

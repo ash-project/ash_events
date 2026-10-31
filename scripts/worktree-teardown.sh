@@ -7,8 +7,10 @@
 #
 #   scripts/worktree-teardown.sh [worktree-path]
 #
-# Tool-agnostic counterpart to scripts/worktree-setup.sh: drops the worktree's own test
-# database. It never touches the primary checkout's database.
+# Opt-in, tool-agnostic counterpart to scripts/worktree-setup.sh: drops the
+# worktree's own test database. It never touches the primary checkout's
+# database. Like setup, it runs the checked-out code (mix), so only use it on
+# reviewed code.
 
 set -euo pipefail
 

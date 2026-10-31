@@ -7,9 +7,13 @@
 #
 #   scripts/worktree-setup.sh [worktree-path]
 #
-# Tool-agnostic: Orca, wt or a plain `git worktree add` can all call it. The
+# Opt-in and tool-agnostic: nothing in the repo runs it. Call it by hand, or
+# from your own local Orca, wt or other worktree tooling configuration. The
 # worktree defaults to the current directory, and the primary checkout is found
 # through git, so no tool-specific environment variables are needed.
+#
+# It runs the checked-out code (mise trust and install, mix), so only run it on
+# reviewed code, never on an external PR branch.
 #
 # Each worktree gets its own test database and tidewave port through a
 # generated mise.local.toml (POSTGRES_TEST_DATABASE is read by
@@ -49,6 +53,8 @@ POSTGRES_TEST_DATABASE = "ash_events_test_${slug}_${hash}"
 TIDEWAVE_PORT = "${port}"
 MISE
 mise trust --quiet .
+# Install any runtimes from .tool-versions this machine does not have yet.
+mise install
 
 # Point this worktree's tidewave MCP entry at its own port, without showing
 # .mcp.json as modified.

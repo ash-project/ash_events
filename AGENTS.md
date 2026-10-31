@@ -61,14 +61,14 @@ Claude skills generated from the usage rules of the deps this library builds on 
 
 ## Worktrees
 
-Every git worktree gets its own test database and tidewave port.
+[scripts/worktree-setup.sh](scripts/worktree-setup.sh) and [scripts/worktree-teardown.sh](scripts/worktree-teardown.sh) give a worktree its own test database and tidewave port. They are opt-in conveniences: nothing in the repo runs them. To use them with worktree tooling (Orca, wt, ...), add them to your own local configuration of that tool. They run the checked-out code (mise, `mix`), so only use them on reviewed code, never on an external PR branch.
 
 **Create**:
 ```bash
 git worktree add <path> -b <branch>
 <path>/scripts/worktree-setup.sh <path>
 ```
-Worktree tooling may already run [scripts/worktree-setup.sh](scripts/worktree-setup.sh) for you; if `mise.local.toml` is missing in the worktree, run it yourself. It is safe to re-run.
+If your tooling runs the setup script for you, check that `mise.local.toml` exists in the worktree. The script is safe to re-run.
 
 **Tear down**:
 ```bash

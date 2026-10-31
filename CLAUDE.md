@@ -372,74 +372,24 @@ mix docs                                 # Generate documentation
 - Side effects are implemented as separate tracked actions
 - Event replay works correctly with test data and auto-generated attributes
 
-## Worktree Development Workflow (requires `wt` + `cmux`)
+## Worktrees
 
-**Prerequisites**: This workflow requires both [`wt`](https://github.com/torkild/worktrunk) and [`cmux`](https://cmux.com) to be installed. Skip this section if either tool is unavailable.
+Every git worktree gets its own test database and tidewave port.
 
-When the user asks you to work on a GitHub issue in an isolated worktree, follow these steps:
-
-### 1. Pick or confirm the issue
-
+**Create**:
 ```bash
-gh issue list --state open
-gh issue view <number>
+git worktree add <path> -b <branch>
+<path>/scripts/worktree-setup.sh <path>
+```
+Worktree tooling may already run [scripts/worktree-setup.sh](scripts/worktree-setup.sh) for you; if `mise.local.toml` is missing in the worktree, run it yourself. It is safe to re-run.
+
+**Tear down**:
+```bash
+<path>/scripts/worktree-teardown.sh <path>   # drops the worktree's test database
+git worktree remove <path>
 ```
 
-### 2. Create a worktree via a temporary terminal
-
-```bash
-# Open a temporary split in the current workspace
-cmux new-split right
-# => returns surface:<N>
-
-# Create the worktree (wt switch auto-cds into it)
-cmux send --surface surface:<N> "wt switch -c <folder/branch-name>"
-cmux send-key --surface surface:<N> Enter
-
-# Wait and verify it completed
-sleep 5 && cmux read-screen --surface surface:<N> --lines 20
-```
-
-Approve any prompts (e.g. sandbox settings generation) by sending `y` + Enter to that surface.
-
-### 3. Create the dev workspace for the worktree
-
-```bash
-# Create workspace with Claude running in the worktree directory
-cmux new-workspace --name "<short-name>" --cwd <worktree-path> --command "claude"
-# => returns workspace:<M>
-
-# Add a right split for tidewave
-cmux new-split right --workspace workspace:<M>
-# => returns surface:<T>
-
-cmux send --workspace workspace:<M> --surface surface:<T> "mix tidewave"
-cmux send-key --workspace workspace:<M> --surface surface:<T> Enter
-```
-
-### 4. Submit instructions to the Claude session
-
-Wait for Claude to be ready (`read-screen` should show the Claude Code prompt), then send the issue context:
-
-```bash
-cmux send --workspace workspace:<M> --surface surface:<claude> "<prompt with issue details>"
-cmux send-key --workspace workspace:<M> --surface surface:<claude> Enter
-```
-
-The prompt should include: issue number, problem summary, likely root cause, relevant files to investigate, and reproduction steps.
-
-### 5. Clean up the temporary terminal
-
-```bash
-cmux close-surface --surface surface:<N> --workspace workspace:<original>
-```
-
-### Branch naming convention
-
-Use descriptive folder/branch names based on the issue:
-- Bug fixes: `fix/<number>-<short-description>`
-- Features: `feat/<number>-<short-description>`
-- Example: `fix/87-ash-phoenix-nested-forms`
+**Test database isolation depends on mise**: `POSTGRES_TEST_DATABASE` is only set in shells where mise is activated, or for commands run with `mise exec --`. If it is unset, tests fall back to the shared `ash_events_test` database. In a worktree, check with `echo $POSTGRES_TEST_DATABASE` before running `mix test.reset`, and use `mise exec -- mix test` if it is empty.
 
 ## Context and Evolution
 

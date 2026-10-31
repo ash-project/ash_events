@@ -37,6 +37,28 @@ defmodule AshEvents.CreateActionWrapper do
         end
 
       case result do
+        {:ok, {:upsert_skipped, _query, callback}} ->
+          if return_skipped_upsert?(changeset, merged_ctx) do
+            callback.()
+          else
+            {:error,
+             Ash.Error.Changes.StaleRecord.exception(
+               resource: changeset.resource,
+               filter: changeset.filter
+             )}
+          end
+
+        {:ok, %{__metadata__: %{upsert_skipped: true}}} = result ->
+          if return_skipped_upsert?(changeset, merged_ctx) do
+            result
+          else
+            {:error,
+             Ash.Error.Changes.StaleRecord.exception(
+               resource: changeset.resource,
+               filter: changeset.filter
+             )}
+          end
+
         {:ok, record} ->
           [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
           actual_id = Map.get(record, primary_key)
@@ -104,4 +126,11 @@ defmodule AshEvents.CreateActionWrapper do
 
   defp get_timestamp_from_record(_record, nil), do: nil
   defp get_timestamp_from_record(record, attr), do: Map.get(record, attr)
+
+  defp return_skipped_upsert?(changeset, merged_ctx) do
+    Map.get(merged_ctx, :return_skipped_upsert?) ||
+      get_in(changeset.context, [:private, :return_skipped_upsert?]) ||
+      get_in(merged_ctx, [:private, :return_skipped_upsert?]) ||
+      Map.get(changeset.action, :return_skipped_upsert?, false)
+  end
 end

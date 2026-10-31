@@ -375,4 +375,120 @@ defmodule AshEvents.BulkActionsTest do
 
     assert Enum.count(events) == 1
   end
+
+  test "bulk create, update, and destroy on tracked actions with around_action or around_transaction hooks work correctly" do
+    alias AshEvents.Accounts.Article
+
+    actor = %SystemActor{name: "system"}
+
+    create_result =
+      [
+        %{title: "Around 1", body: "Body 1"},
+        %{title: "Around 2", body: "Body 2"}
+      ]
+      |> Ash.bulk_create!(Article, :create_with_around_action,
+        actor: actor,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true
+      )
+
+    assert create_result.error_count == 0
+    assert length(create_result.records) == 2
+
+    assert Enum.frequencies_by(create_result.notifications, & &1.resource) == %{
+             Article => 2,
+             EventLog => 2
+           }
+
+    update_result =
+      create_result.records
+      |> Ash.bulk_update!(:update_with_around_action, %{title: "Updated via around_action"},
+        actor: actor,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream
+      )
+
+    assert update_result.error_count == 0
+    assert Enum.all?(update_result.records, &(&1.title == "Updated via around_action"))
+
+    assert Enum.frequencies_by(update_result.notifications, & &1.resource) == %{
+             Article => 2,
+             EventLog => 2
+           }
+
+    update_tx_result =
+      update_result.records
+      |> Ash.bulk_update!(
+        :update_with_around_transaction,
+        %{title: "Updated via around_transaction"},
+        actor: actor,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream
+      )
+
+    assert update_tx_result.error_count == 0
+    assert Enum.all?(update_tx_result.records, &(&1.title == "Updated via around_transaction"))
+
+    assert Enum.frequencies_by(update_tx_result.notifications, & &1.resource) == %{
+             Article => 2,
+             EventLog => 2
+           }
+
+    [first_article, second_article] = update_tx_result.records
+
+    soft_destroy_result =
+      [first_article]
+      |> Ash.bulk_destroy!(:soft_destroy_with_around_action, %{},
+        resource: Article,
+        actor: actor,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream
+      )
+
+    assert soft_destroy_result.error_count == 0
+    assert [%Article{deleted_at: %DateTime{}}] = soft_destroy_result.records
+
+    assert Enum.frequencies_by(soft_destroy_result.notifications, & &1.resource) == %{
+             Article => 1,
+             EventLog => 1
+           }
+
+    hard_destroy_result =
+      [second_article]
+      |> Ash.bulk_destroy!(:destroy_with_around_action, %{},
+        resource: Article,
+        actor: actor,
+        return_errors?: true,
+        return_notifications?: true,
+        return_records?: true,
+        strategy: :stream
+      )
+
+    assert hard_destroy_result.error_count == 0
+    assert length(hard_destroy_result.records) == 1
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^Article)
+      |> Ash.Query.sort({:id, :asc})
+      |> Ash.read!()
+
+    assert Enum.map(events, & &1.action) == [
+             :create_with_around_action,
+             :create_with_around_action,
+             :update_with_around_action,
+             :update_with_around_action,
+             :update_with_around_transaction,
+             :update_with_around_transaction,
+             :soft_destroy_with_around_action,
+             :destroy_with_around_action
+           ]
+  end
 end

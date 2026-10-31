@@ -24,6 +24,21 @@ Each entry includes:
 
 ---
 
+## 2026-10-31
+
+### Bulk Actions With Around Hooks Return the Single-Record Result Shape (#101)
+**Change**: `ActionWrapperHelpers.notifications_result/3` now returns `{:ok, record, %{notifications: notifications}}` directly, and `ApplyChangedAttributes` records `:ash_events_has_around_hook?` in `changeset.context` before `Ash.Changeset.run_around_actions/2` and `run_around_transaction_hooks/2` consume the hook lists so `ActionWrapperHelpers.bulk_changeset?/1` returns `false` for changesets routed through `Ash.Actions.Helpers.split_and_run_simple/7`.
+**Context**: `Ash.Actions.Helpers.split_and_run_simple/7` splits changesets with `around_action` or `around_transaction` hooks out of the bulk manual-action batch and executes them individually through `Ash.Actions.Create.run/4`, `Ash.Actions.Update.run/4`, or `Ash.Actions.Destroy.run/4` while leaving the `:bulk_*` context key on the changeset. Furthermore, `run_around_actions/2` and `run_around_transaction_hooks/2` pop `changeset.around_action` and `changeset.around_transaction` down to `[]` before invoking the manual action callback. Because `bulk_changeset?/1` checked only the `:bulk_*` context key, `notifications_result/3` returned the bare-list shape (`{:ok, record, notifications}`) to the single-record create/update pipeline, whose `validate_manual_action_return_result!/3` only accepts `{:ok, record, %{notifications: notifications}}` and raised `Ash.Error.Framework.InvalidReturnType`. Reported in #101.
+**Files**:
+- `lib/events/action_wrapper_helpers.ex` - `notifications_result/3` and `bulk_changeset?/1`
+- `lib/events/changes/apply_changed_attributes.ex` - records `:ash_events_has_around_hook?` in `changeset.context`
+- `test/support/accounts/article.ex` - tracked actions with `around_action` and `around_transaction` hooks
+- `test/ash_events/bulk_actions_test.exs` - regression test covering `bulk_create`, `bulk_update`, soft `bulk_destroy`, and hard `bulk_destroy` with around hooks
+**Impact**: Tracked actions that register `around_action` or `around_transaction` hooks work under `Ash.bulk_create`, `Ash.bulk_update`, and `Ash.bulk_destroy` (including AshGraphql mutations, which execute updates via `Ash.bulk_update`), and still propagate `EventLog` notifications on create, update, and soft destroy.
+**Key Insights**: Since `ash-project/ash#2930`, `Ash.Actions.BulkManualActionHelpers.process_non_bulk_result/6` and `process_bulk_results/9` unwrap `%{notifications: notifications}`, so `notifications_result/3` can return the map shape unconditionally. For `DestroyActionWrapper.destroy_result/3`, recording `:ash_events_has_around_hook?` in `ApplyChangedAttributes` (the last change before `split_and_run_simple/7`) preserves the signal after `run_around_actions/2` clears `changeset.around_action`.
+
+---
+
 ## 2026-09-18
 
 ### Manual Implementations on Tracked Actions Rejected at Compile Time (#99)

@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 When updating agent documentation, maintain established patterns and focus on creating a practical reference corpus. Documentation should provide agents with the context and knowledge needed to complete tasks efficiently and correctly.
 
-**Important File Structure Note For Claude Code Agents**: `CLAUDE.md` is a symlink to `AGENTS.md` to support developers using different AI tools. Always reference `AGENTS.md` as the canonical main agent guide in documentation, as it is the actual file that contains the content.
-
 ## Pre-Update Analysis (MANDATORY)
 
 Before making any agent documentation changes, you MUST:
@@ -35,7 +33,6 @@ Create a systematic update plan with these steps:
 - Check cross-references and dependencies
 - Plan updates to maintain workflow consistency
 - Update main agent guide task mappings if needed
-- Plan changelog entry for significant changes
 
 ### 2. Content Standards
 
@@ -86,21 +83,11 @@ Create a systematic update plan with these steps:
 Whenever you update agent documentation, update `AGENTS.md`:
 - Add new documentation files to appropriate task categories
 - Update file descriptions and context window size references
-- Maintain task-to-documentation mapping in the "Documentation Reference Map" section
+- Maintain task-to-documentation mapping in the "Codebase Map" and "Agent Docs" sections
 - Update context window optimization notes if applicable
 - Keep navigation sections current
 
-### 5. Changelog Maintenance (REQUIRED)
-
-For significant changes, update `agent-docs/changelog.md`:
-- Add entry with current date
-- Describe what was changed and why
-- List affected files
-- Explain impact on future development
-- Include key insights or patterns discovered
-- Follow the established entry format
-
-### 6. Quality Assurance
+### 5. Quality Assurance
 
 **Content Quality:**
 - Information accurate for current codebase
@@ -121,7 +108,7 @@ For significant changes, update `agent-docs/changelog.md`:
 - Task-to-documentation mappings accurate
 - No broken internal links
 
-### 7. Specialized Documentation Types
+### 6. Specialized Documentation Types
 
 **Implementation Guides:**
 - Include task-to-documentation mappings
@@ -148,16 +135,14 @@ After completing documentation updates:
 1. **Test Examples**: Ensure workflow examples and commands work with current codebase
 2. **Check Links**: Verify all internal links are functional
 3. **Review Main Agent Guide**: Confirm `AGENTS.md` accurately reflects changes
-4. **Update Changelog**: Add entry to `agent-docs/changelog.md` for significant changes
-5. **Cross-Reference Check**: Ensure other documentation referencing changes is accurate
-6. **Pattern Consistency**: Verify changes follow established patterns
-7. **Context Window Check**: Ensure documentation remains optimized for agent context usage
+4. **Cross-Reference Check**: Ensure other documentation referencing changes is accurate
+5. **Pattern Consistency**: Verify changes follow established patterns
+6. **Context Window Check**: Ensure documentation remains optimized for agent context usage
 
 ## Error Prevention
 
 Common mistakes to avoid:
 - ❌ Creating documentation without updating main agent guide (`AGENTS.md`)
-- ❌ Making significant changes without updating changelog
 - ❌ Changing established workflow patterns without updating related files
 - ❌ Removing documentation without checking dependencies
 - ❌ Adding content without considering context window impact

@@ -18,6 +18,13 @@ defmodule AshEvents.Events.Changes.ApplyChangedAttributes do
   end
 
   def change(cs, opts, _ctx) do
+    cs =
+      if cs.around_action not in [[], nil] or cs.around_transaction not in [[], nil] do
+        Ash.Changeset.put_context(cs, :ash_events_has_around_hook?, true)
+      else
+        cs
+      end
+
     ash_events_replay? = cs.context[:ash_events_replay?] || false
 
     if ash_events_replay? do

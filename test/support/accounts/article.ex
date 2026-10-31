@@ -106,6 +106,52 @@ defmodule AshEvents.Accounts.Article do
 
       change manage_relationship(:tags, type: :append_and_remove)
     end
+
+    create :create_with_around_action do
+      accept [:id, :created_at, :updated_at, :title, :body]
+
+      change fn changeset, _context ->
+        Ash.Changeset.around_action(changeset, fn cs, callback -> callback.(cs) end)
+      end
+    end
+
+    update :update_with_around_action do
+      require_atomic? false
+      accept [:title, :body, :updated_at]
+
+      change fn changeset, _context ->
+        Ash.Changeset.around_action(changeset, fn cs, callback -> callback.(cs) end)
+      end
+    end
+
+    update :update_with_around_transaction do
+      require_atomic? false
+      accept [:title, :body, :updated_at]
+
+      change fn changeset, _context ->
+        Ash.Changeset.around_transaction(changeset, fn cs, callback -> callback.(cs) end)
+      end
+    end
+
+    destroy :soft_destroy_with_around_action do
+      require_atomic? false
+      soft? true
+      accept []
+      change set_attribute(:deleted_at, &DateTime.utc_now/0)
+
+      change fn changeset, _context ->
+        Ash.Changeset.around_action(changeset, fn cs, callback -> callback.(cs) end)
+      end
+    end
+
+    destroy :destroy_with_around_action do
+      require_atomic? false
+      accept []
+
+      change fn changeset, _context ->
+        Ash.Changeset.around_action(changeset, fn cs, callback -> callback.(cs) end)
+      end
+    end
   end
 
   attributes do

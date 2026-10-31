@@ -225,41 +225,37 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
   end
 
   @doc """
-  Wraps `notifications` in the shape the enclosing action pipeline expects.
+  Wraps `notifications` in the shape the action pipelines expect.
 
-  Ash is not consistent here, so the shape cannot be hardcoded:
+  Both the single-record create/update pipelines (`validate_manual_action_return_result!/3`
+  in `Ash.Actions.Create`/`Ash.Actions.Update`, which also runs when
+  `Ash.Actions.Helpers.split_and_run_simple/7` routes a bulk changeset with an
+  `around_action` or `around_transaction` hook through the single-record
+  pipeline) and the bulk manual-action pipelines
+  (`Ash.Actions.BulkManualActionHelpers.process_non_bulk_result/6` and
+  `process_bulk_results/9`) accept `{:ok, record, %{notifications: notifications}}`.
 
-    * the single-record create/update pipelines require
-      `%{notifications: [...]}` (see `validate_manual_action_return_result!/3`
-      in `Ash.Actions.Create`/`Ash.Actions.Update`), while
-    * the bulk pipelines hand the third element of `{:ok, record, _}` straight
-      to `Ash.Actions.Helpers.Bulk.store_notification/3`, which treats anything
-      that is not a list as a single notification.
-
-  A changeset built by a bulk action carries a `:bulk_create`/`:bulk_update`/
-  `:bulk_destroy` context key, which is what tells the two apart.
-
-  Hard destroys do not use this: their single-record pipeline cannot carry
-  notifications at all. See `destroy_result/3` in
+  Hard destroys do not use this: see `destroy_result/3` in
   `AshEvents.DestroyActionWrapper`.
   """
-  def notifications_result(changeset, record, notifications) do
-    if bulk_changeset?(changeset) do
-      {:ok, record, notifications}
-    else
-      {:ok, record, %{notifications: notifications}}
-    end
+  def notifications_result(_changeset, record, notifications) do
+    {:ok, record, %{notifications: notifications}}
   end
 
   @doc """
-  Whether `changeset` was built by a bulk action.
+  Whether `changeset` is running inside a bulk manual-action batch.
 
   Bulk actions tag their changesets with a `:bulk_create`/`:bulk_update`/
-  `:bulk_destroy` context key, which is the only way to tell which of Ash's two
-  incompatible manual-action result shapes the caller wants.
+  `:bulk_destroy` context key. However, `Ash.Actions.Helpers.split_and_run_simple/7`
+  routes any changeset carrying an `around_action` or `around_transaction` hook
+  through the single-record pipeline while leaving the `:bulk_*` key in
+  `changeset.context`.
   """
-  def bulk_changeset?(%{context: context}) do
-    Enum.any?([:bulk_create, :bulk_update, :bulk_destroy], &Map.has_key?(context, &1))
+  def bulk_changeset?(%{context: context} = changeset) do
+    Enum.any?([:bulk_create, :bulk_update, :bulk_destroy], &Map.has_key?(context, &1)) and
+      not Map.get(context, :ash_events_has_around_hook?, false) and
+      Map.get(changeset, :around_action) in [[], nil] and
+      Map.get(changeset, :around_transaction) in [[], nil]
   end
 
   @doc """

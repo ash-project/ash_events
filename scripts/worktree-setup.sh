@@ -147,6 +147,8 @@ json.dump(settings, open(".claude/settings.local.json", "w"), indent=2)
 PY
 
 mise exec -- mix deps.get --quiet
+# Claude skills from deps' usage rules (gitignored, so generated per checkout)
+mise exec -- mix sync_usage_rules
 mise exec -- mix test.reset
 
 echo "==> Done. Test database: ash_events_test_${slug}_${hash}, tidewave port: ${port}"

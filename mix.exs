@@ -27,6 +27,43 @@ defmodule AshEvents.MixProject do
       homepage_url: "https://github.com/ash-project/ash_events",
       dialyzer: [
         plt_add_apps: [:mix]
+      ],
+      usage_rules: usage_rules()
+    ]
+  end
+
+  # Read by `mix usage_rules.sync`: builds Claude skills in .claude/skills/
+  # (gitignored, generated locally) from the usage rules of the deps this
+  # library builds on. App-building rules (phoenix, ash_phoenix,
+  # ash_authentication) are left out on purpose; they are only test fixtures.
+  # Only top-level deps are read, which is one reason spark is listed in deps/0.
+  defp usage_rules do
+    [
+      skills: [
+        location: ".claude/skills",
+        build: [
+          "use-ash": [
+            description:
+              "Ash Framework rules: resources, actions, changes, validations, preparations, " <>
+                "code interfaces, queries, policies and testing. Use when touching lib/ or " <>
+                "test/support/ resources, or any Ash.Changeset, Ash.Query or Ash.Resource code.",
+            usage_rules: [:ash]
+          ],
+          "use-spark": [
+            description:
+              "Spark DSL extension rules: sections, entities, transformers, verifiers and " <>
+                "Info modules. Use when editing lib/events/events.ex, lib/event_log/event_log.ex, " <>
+                "anything under */transformers/ or */verifiers/, or on a Spark.Error.DslError.",
+            usage_rules: [:spark]
+          ],
+          "use-ash-postgres": [
+            description:
+              "AshPostgres data layer rules: postgres blocks, migrations, custom SQL and " <>
+                "multitenancy. Use when changing test resources' postgres config, " <>
+                "priv/test_repo/migrations or mix test.generate_migrations.",
+            usage_rules: [:ash_postgres]
+          ]
+        ]
       ]
     ]
   end
@@ -141,6 +178,7 @@ defmodule AshEvents.MixProject do
     [
       {:bcrypt_elixir, "~> 3.0"},
       {:ash, ash_version("~> 3.33")},
+      {:spark, "~> 2.6"},
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},
       {:ash_postgres, "~> 2.0"},
@@ -159,7 +197,8 @@ defmodule AshEvents.MixProject do
       {:ash_state_machine, "~> 0.2", only: [:dev, :test]},
       {:ash_phoenix, "~> 2.0", only: [:dev, :test]},
       {:bandit, "~> 1.0", only: [:dev, :test]},
-      {:tidewave, ">= 0.5.0", only: [:dev, :test]}
+      {:tidewave, ">= 0.5.0", only: [:dev, :test]},
+      {:usage_rules, "~> 1.3", only: [:dev]}
     ]
   end
 
@@ -182,6 +221,7 @@ defmodule AshEvents.MixProject do
         "spark.replace_doc_links"
       ],
       credo: "credo --strict",
+      sync_usage_rules: ["cmd rm -rf .claude/skills", "usage_rules.sync --yes"],
       "spark.formatter": "spark.formatter --extensions AshEvents.EventLog,AshEvents.Events",
       "spark.cheat_sheets": "spark.cheat_sheets --extensions AshEvents.EventLog,AshEvents.Events"
     ]

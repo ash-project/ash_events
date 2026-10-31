@@ -12,6 +12,7 @@ defmodule AshEvents.UpsertTest do
   alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
+  import Ash.Expr
 
   test "upsert action generates events correctly for both create and update paths" do
     # First upsert - should create a new record and generate a create event
@@ -92,5 +93,93 @@ defmodule AshEvents.UpsertTest do
     assert :given_name in replay_action.accept
     assert :family_name in replay_action.accept
     assert replay_action.primary? == false
+  end
+
+  test "skipped upsert returns StaleRecord error and records no event when return_skipped_upsert? is false" do
+    actor = %SystemActor{name: "test_upsert"}
+
+    user1 =
+      Accounts.create_user_upsert!(
+        %{
+          email: "skipped-upsert@example.com",
+          given_name: "Initial",
+          family_name: "User",
+          hashed_password: "hashed_password_123"
+        },
+        actor: actor
+      )
+
+    result =
+      User
+      |> Ash.Changeset.for_create(
+        :create_upsert,
+        %{
+          email: "skipped-upsert@example.com",
+          given_name: "Skipped",
+          family_name: "DifferentFamily",
+          hashed_password: "hashed_password_123"
+        },
+        actor: actor,
+        upsert_condition: expr(family_name == upsert_conflict(:family_name))
+      )
+      |> Ash.create(actor: actor)
+
+    assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Changes.StaleRecord{}]}} = result
+
+    persisted_user = Accounts.get_user_by_id!(user1.id, actor: actor)
+    assert persisted_user.given_name == "Initial"
+    assert persisted_user.family_name == "User"
+
+    events =
+      EventLog
+      |> Ash.Query.filter(resource == ^User and data[:email] == "skipped-upsert@example.com")
+      |> Ash.read!()
+
+    assert length(events) == 1
+  end
+
+  test "skipped upsert returns existing record and records no event when return_skipped_upsert? is true" do
+    actor = %SystemActor{name: "test_upsert"}
+
+    user1 =
+      Accounts.create_user_upsert!(
+        %{
+          email: "skipped-upsert-return@example.com",
+          given_name: "Initial",
+          family_name: "User",
+          hashed_password: "hashed_password_123"
+        },
+        actor: actor
+      )
+
+    assert {:ok, skipped_user} =
+             User
+             |> Ash.Changeset.for_create(
+               :create_upsert,
+               %{
+                 email: "skipped-upsert-return@example.com",
+                 given_name: "Skipped",
+                 family_name: "DifferentFamily",
+                 hashed_password: "hashed_password_123"
+               },
+               actor: actor,
+               return_skipped_upsert?: true,
+               upsert_condition: expr(family_name == upsert_conflict(:family_name))
+             )
+             |> Ash.create(actor: actor)
+
+    assert skipped_user.id == user1.id
+    assert skipped_user.given_name == "Initial"
+    assert skipped_user.family_name == "User"
+    assert Ash.Resource.get_metadata(skipped_user, :upsert_skipped) == true
+
+    events =
+      EventLog
+      |> Ash.Query.filter(
+        resource == ^User and data[:email] == "skipped-upsert-return@example.com"
+      )
+      |> Ash.read!()
+
+    assert length(events) == 1
   end
 end

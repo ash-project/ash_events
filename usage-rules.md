@@ -162,6 +162,8 @@ User
 - Attributes that were explicitly provided in the original input
 - Attributes that remain unchanged from their current value
 
+An update that changes no attributes writes no event and does not touch the record or its update timestamp, matching Ash's behaviour for untracked resources. Updates that manage relationships or carry a filter still record an event.
+
 #### Event Data Structure
 
 When an event is created, data is separated into two categories:

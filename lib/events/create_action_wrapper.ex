@@ -37,6 +37,14 @@ defmodule AshEvents.CreateActionWrapper do
         end
 
       case result do
+        # The upsert condition was false, so nothing was written and no event is recorded.
+        # AshPostgres reports this as a tuple, ETS and Mnesia as record metadata.
+        {:ok, {:upsert_skipped, _query, callback}} ->
+          skipped_upsert_result(changeset, callback)
+
+        {:ok, %{__metadata__: %{upsert_skipped: true}}} = result ->
+          skipped_upsert_result(changeset, fn -> result end)
+
         {:ok, record} ->
           [primary_key] = Ash.Resource.Info.primary_key(changeset.resource)
           actual_id = Map.get(record, primary_key)
@@ -66,6 +74,21 @@ defmodule AshEvents.CreateActionWrapper do
         error ->
           error
       end
+    end
+  end
+
+  # Matches Ash.Actions.Create: return the existing record when the caller asked for it,
+  # otherwise a StaleRecord error. `for_create` stores the option, or the action's
+  # default, in the changeset's private context.
+  defp skipped_upsert_result(changeset, existing_record) do
+    if changeset.context[:private][:return_skipped_upsert?] do
+      existing_record.()
+    else
+      {:error,
+       Ash.Error.Changes.StaleRecord.exception(
+         resource: changeset.resource,
+         filter: changeset.filter
+       )}
     end
   end
 

@@ -164,6 +164,8 @@ User
 
 An update that changes no attributes writes no event and does not touch the record or its update timestamp, matching Ash's behaviour for untracked resources. Updates that manage relationships or carry a filter still record an event.
 
+An upsert skipped because its `upsert_condition` is false for the existing row writes no event. As for untracked resources, it returns a `StaleRecord` error, or the existing record when `return_skipped_upsert?: true`. In `Ash.bulk_create`, a tracked resource reports each skipped row as a `StaleRecord` error, while an untracked resource drops skipped rows and still succeeds.
+
 #### Event Data Structure
 
 When an event is created, data is separated into two categories:

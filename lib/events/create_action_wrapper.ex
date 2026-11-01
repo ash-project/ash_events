@@ -65,11 +65,7 @@ defmodule AshEvents.CreateActionWrapper do
               opts
             )
 
-          AshEvents.Events.ActionWrapperHelpers.notifications_result(
-            changeset,
-            record,
-            notifications
-          )
+          {:ok, record, %{notifications: notifications}}
 
         error ->
           error

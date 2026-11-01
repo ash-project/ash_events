@@ -21,11 +21,7 @@ defmodule AshEvents.UpdateActionWrapper do
         # for manual actions it adds the update defaults (such as the update
         # timestamp) before calling us. Those defaults alone must not produce an
         # event or a write.
-        AshEvents.Events.ActionWrapperHelpers.notifications_result(
-          changeset,
-          changeset.data,
-          []
-        )
+        {:ok, changeset.data, %{notifications: []}}
 
       true ->
         record_and_update(changeset, module_opts, ctx, merged_ctx)
@@ -65,11 +61,7 @@ defmodule AshEvents.UpdateActionWrapper do
     data_layer = Ash.Resource.Info.data_layer(changeset.resource)
 
     with {:ok, record} <- data_layer.update(changeset.resource, changeset) do
-      AshEvents.Events.ActionWrapperHelpers.notifications_result(
-        changeset,
-        record,
-        notifications
-      )
+      {:ok, record, %{notifications: notifications}}
     end
   end
 end

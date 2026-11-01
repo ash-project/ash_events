@@ -36,11 +36,7 @@ defmodule AshEvents.DestroyActionWrapper do
            {:ok, record} <- data_layer.update(changeset.resource, changeset) do
         notifications = create_event!(changeset, merged_ctx, module_opts, opts)
 
-        AshEvents.Events.ActionWrapperHelpers.notifications_result(
-          changeset,
-          record,
-          notifications
-        )
+        {:ok, record, %{notifications: notifications}}
       end
     end
   end
@@ -75,9 +71,8 @@ defmodule AshEvents.DestroyActionWrapper do
           # hand them back instead and let Ash re-associate the changeset. It
           # looks the changeset up by the `:bulk_action_ref` metadata first, which
           # sidesteps the `:bulk_destroy`/`:bulk_update` index key mismatch.
-          # `process_bulk_results/9` accepts both the bare list and the
-          # `%{notifications: ...}` form, so pass whatever `update/3` produced
-          # through untouched.
+          # `process_bulk_results/9` accepts the `%{notifications: ...}` form
+          # that `update/3` returns.
           {:ok, tag_bulk_ref(record, changeset), notifications}
 
         {:error, error} ->
@@ -104,35 +99,10 @@ defmodule AshEvents.DestroyActionWrapper do
       with :ok <- reject_atomics(changeset),
            {:ok, record} <- destroy_record(changeset) do
         notifications = create_event!(changeset, merged_ctx, module_opts, opts)
-        destroy_result(changeset, record, notifications)
+        # Unlike create and update, Ash's single-record destroy pipeline only
+        # accepts the notifications as a bare list.
+        {:ok, record, notifications}
       end
-    end
-  end
-
-  # Ash's single-record destroy pipeline cannot carry notifications out of a
-  # manual destroy. `Ash.Actions.Destroy.validate_manual_action_return_result!/3`
-  # only accepts a bare list, but the `manage_relationships/4` clauses and the
-  # notify step after them only match `%{notifications: ...}`, so a 3-tuple
-  # falls straight through `other -> other` and every notification is lost --
-  # including the ones Ash itself accumulated for the destroyed record.
-  # Returning the 2-tuple keeps those working; the event's own notification
-  # stays dropped.
-  #
-  # The bulk pipeline is fine: it hands the third element to
-  # `Ash.Actions.Helpers.Bulk.store_notification/3`, which takes a bare list.
-  #
-  # This does NOT resolve itself when Ash is fixed -- `notifications` is
-  # discarded here. Once `Ash.Actions.Destroy` normalises the bare-list form,
-  # drop this function and return `{:ok, record, notifications}` directly (both
-  # pipelines then want the same shape), and update the
-  # "single destroy still delivers the record's own notification" test in
-  # test/ash_events/notifications_test.exs to expect the event log
-  # notification too. Verified against a locally patched Ash.
-  defp destroy_result(changeset, record, notifications) do
-    if AshEvents.Events.ActionWrapperHelpers.bulk_changeset?(changeset) do
-      {:ok, record, notifications}
-    else
-      {:ok, record}
     end
   end
 

@@ -61,12 +61,7 @@ defmodule AshEvents.NotificationsTest do
     assert_event_log_notification(:update)
   end
 
-  # Known upstream limitation, see destroy_result/3 in DestroyActionWrapper:
-  # Ash's single-record destroy pipeline cannot carry notifications out of a
-  # manual destroy at all. This locks in the part that does work -- the
-  # destroyed record's own notification -- so a future attempt to also emit the
-  # event's notification cannot silently trade it away.
-  test "single destroy still delivers the record's own notification" do
+  test "single destroy returns event log notifications alongside the record's own" do
     article = Accounts.create_article!(%{title: "T", body: "b"}, actor: @actor)
 
     {:ok, _destroyed, notifications} =
@@ -76,7 +71,7 @@ defmodule AshEvents.NotificationsTest do
         return_destroyed?: true
       )
 
-    assert Enum.map(notifications, & &1.resource) == [Article]
+    assert Enum.frequencies_by(notifications, & &1.resource) == %{Article => 1, EventLog => 1}
   end
 
   test "soft destroy actions propagate event log notifications" do

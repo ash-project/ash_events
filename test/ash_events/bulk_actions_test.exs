@@ -375,4 +375,103 @@ defmodule AshEvents.BulkActionsTest do
 
     assert Enum.count(events) == 1
   end
+
+  describe "tracked actions with an around_action hook" do
+    # Ash's bulk pipelines send changesets with an around hook through the
+    # single-record pipeline, but the changeset keeps its bulk context key.
+    alias AshEvents.Accounts.Org
+
+    @actor %SystemActor{name: "system"}
+
+    defp create_org(name) do
+      Org
+      |> Ash.Changeset.for_create(:create, %{name: name})
+      |> Ash.create!(actor: @actor)
+    end
+
+    defp org_events(action) do
+      EventLog
+      |> Ash.Query.filter(resource == ^Org and action == ^action)
+      |> Ash.read!()
+    end
+
+    test "bulk_create records an event and returns notifications" do
+      result =
+        [%{name: "Around 1"}, %{name: "Around 2"}]
+        |> Ash.bulk_create!(Org, :create_with_around_action,
+          actor: @actor,
+          return_records?: true,
+          return_errors?: true,
+          return_notifications?: true
+        )
+
+      assert result.error_count == 0
+      assert Enum.count(result.records) == 2
+      assert Enum.count(org_events(:create_with_around_action)) == 2
+
+      assert Enum.frequencies_by(result.notifications, & &1.resource) == %{
+               Org => 2,
+               EventLog => 2
+             }
+    end
+
+    test "bulk_update records an event and returns notifications" do
+      org = create_org("Before")
+
+      result =
+        [org]
+        |> Ash.bulk_update!(:update_with_around_action, %{name: "After"},
+          actor: @actor,
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true,
+          return_notifications?: true
+        )
+
+      assert result.error_count == 0
+      assert [%{name: "After"}] = result.records
+      assert Enum.count(org_events(:update_with_around_action)) == 1
+
+      assert Enum.frequencies_by(result.notifications, & &1.resource) == %{
+               Org => 1,
+               EventLog => 1
+             }
+    end
+
+    test "single update still works" do
+      org = create_org("Before")
+
+      assert {:ok, %{name: "After"}, notifications} =
+               org
+               |> Ash.Changeset.for_update(:update_with_around_action, %{name: "After"})
+               |> Ash.update(actor: @actor, return_notifications?: true)
+
+      assert Enum.count(org_events(:update_with_around_action)) == 1
+      assert Enum.frequencies_by(notifications, & &1.resource) == %{Org => 1, EventLog => 1}
+    end
+
+    test "bulk_destroy records an event and returns notifications" do
+      org = create_org("Doomed")
+
+      result =
+        [org]
+        |> Ash.bulk_destroy!(:destroy_with_around_action, %{},
+          actor: @actor,
+          strategy: :stream,
+          return_records?: true,
+          return_errors?: true,
+          return_notifications?: true
+        )
+
+      assert result.error_count == 0
+      assert Enum.count(result.records) == 1
+      assert Enum.count(org_events(:destroy_with_around_action)) == 1
+      assert Ash.read!(Org, actor: @actor) == []
+
+      assert Enum.frequencies_by(result.notifications, & &1.resource) == %{
+               Org => 1,
+               EventLog => 1
+             }
+    end
+  end
 end

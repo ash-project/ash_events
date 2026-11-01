@@ -177,7 +177,7 @@ defmodule AshEvents.MixProject do
   defp deps do
     [
       {:bcrypt_elixir, "~> 3.0"},
-      {:ash, ash_version("~> 3.33")},
+      {:ash, ash_version("~> 3.33 and >= 3.33.4")},
       {:spark, "~> 2.6"},
       {:git_ops, "~> 2.0", only: [:dev], runtime: false},
       {:sourceror, "~> 1.7", only: [:dev, :test]},

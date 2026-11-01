@@ -91,6 +91,27 @@ defmodule AshEvents.Accounts.Org do
         before_action?: true
     end
 
+    # An around hook makes Ash's bulk pipelines run each changeset through the
+    # single-record pipeline, while the changeset keeps its bulk context key.
+    create :create_with_around_action do
+      accept [:id, :created_at, :updated_at, :name]
+
+      change AshEvents.Accounts.Org.AddAroundAction
+    end
+
+    update :update_with_around_action do
+      accept [:name]
+      require_atomic? false
+
+      change AshEvents.Accounts.Org.AddAroundAction
+    end
+
+    destroy :destroy_with_around_action do
+      require_atomic? false
+
+      change AshEvents.Accounts.Org.AddAroundAction
+    end
+
     create :create_ignored_with_before_action_validation do
       accept [:id, :created_at, :updated_at, :name]
 

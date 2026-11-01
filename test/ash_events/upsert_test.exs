@@ -12,6 +12,39 @@ defmodule AshEvents.UpsertTest do
   alias AshEvents.EventLogs.EventLog
 
   require Ash.Query
+  import Ash.Expr
+
+  @actor %SystemActor{name: "test_upsert"}
+
+  defp create_initial_user(email) do
+    Accounts.create_user_upsert!(
+      %{
+        email: email,
+        given_name: "Initial",
+        family_name: "User",
+        hashed_password: "hashed_password_123"
+      },
+      actor: @actor
+    )
+  end
+
+  # The existing row has family_name "User", so this upsert's condition is false.
+  defp skipped_upsert_params(email) do
+    %{
+      email: email,
+      given_name: "Skipped",
+      family_name: "Other",
+      hashed_password: "hashed_password_123"
+    }
+  end
+
+  defp skipped_upsert_condition, do: expr(family_name == upsert_conflict(:family_name))
+
+  defp events_for(email) do
+    EventLog
+    |> Ash.Query.filter(resource == ^User and data[:email] == ^email)
+    |> Ash.read!()
+  end
 
   test "upsert action generates events correctly for both create and update paths" do
     # First upsert - should create a new record and generate a create event
@@ -92,5 +125,71 @@ defmodule AshEvents.UpsertTest do
     assert :given_name in replay_action.accept
     assert :family_name in replay_action.accept
     assert replay_action.primary? == false
+  end
+
+  describe "skipped upserts" do
+    test "returns a StaleRecord error and records no event" do
+      email = "skipped-upsert@example.com"
+      user = create_initial_user(email)
+
+      result =
+        User
+        |> Ash.Changeset.for_create(:create_upsert, skipped_upsert_params(email),
+          actor: @actor,
+          upsert_condition: skipped_upsert_condition()
+        )
+        |> Ash.create(actor: @actor)
+
+      assert {:error, %Ash.Error.Invalid{errors: [%Ash.Error.Changes.StaleRecord{}]}} = result
+
+      persisted = Accounts.get_user_by_id!(user.id, actor: @actor)
+      assert persisted.given_name == "Initial"
+      assert persisted.family_name == "User"
+      assert length(events_for(email)) == 1
+    end
+
+    test "returns the existing record with return_skipped_upsert? and records no event" do
+      email = "skipped-upsert-return@example.com"
+      user = create_initial_user(email)
+
+      assert {:ok, skipped} =
+               User
+               |> Ash.Changeset.for_create(:create_upsert, skipped_upsert_params(email),
+                 actor: @actor,
+                 upsert_condition: skipped_upsert_condition(),
+                 return_skipped_upsert?: true
+               )
+               |> Ash.create(actor: @actor)
+
+      assert skipped.id == user.id
+      assert skipped.given_name == "Initial"
+      assert skipped.family_name == "User"
+      assert Ash.Resource.get_metadata(skipped, :upsert_skipped) == true
+      assert length(events_for(email)) == 1
+    end
+
+    # Untracked bulk creates drop skipped rows and succeed. Tracked bulk creates run
+    # each record through the create wrapper, so a skipped row is a StaleRecord error.
+    test "bulk create reports a skipped row as a StaleRecord error and records no event" do
+      email = "skipped-upsert-bulk@example.com"
+      user = create_initial_user(email)
+
+      result =
+        Ash.bulk_create([skipped_upsert_params(email)], User, :create_upsert,
+          actor: @actor,
+          upsert_fields: [:given_name, :family_name],
+          upsert_condition: skipped_upsert_condition(),
+          return_errors?: true,
+          return_records?: true
+        )
+
+      assert result.status == :error
+      assert result.records == []
+      assert [%Ash.Error.Changes.StaleRecord{}] = result.errors
+
+      persisted = Accounts.get_user_by_id!(user.id, actor: @actor)
+      assert persisted.given_name == "Initial"
+      assert length(events_for(email)) == 1
+    end
   end
 end

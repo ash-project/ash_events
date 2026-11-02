@@ -739,6 +739,40 @@ defmodule AshEvents.TemporalEventsTest do
       assert_replays_identically()
     end
 
+    test "a range update with an unbounded lower bound replays to the same versions" do
+      sub = create!(TrackedSubscription, "bronze", @t1)
+      update!(sub, :update, "gold", range(nil, @t3))
+
+      assert [%{plan: "gold", valid_at: {@t1, @t3}}, %{plan: "bronze", valid_at: {@t3, nil}}] =
+               versions(sub.id)
+
+      assert [_create, %{as_of: nil, as_of_range: %Ash.Range{lower: nil}}] = events()
+      assert_replays_identically()
+    end
+
+    test "an event without a captured as_of replays at the replay's now, without its recorded_at" do
+      sub = create!(TrackedSubscription, "bronze", @t1)
+      [event] = events()
+
+      # An event recorded before the resource became temporal has no as_of, and
+      # its changed_attributes have no recorded_at.
+      AshEvents.TestRepo.query!("""
+      UPDATE events_temporal
+      SET as_of = NULL, as_of_range = NULL, changed_attributes = changed_attributes - 'recorded_at'
+      """)
+
+      before = DateTime.utc_now()
+      :ok = AshEvents.EventLogs.replay_events_temporal!()
+      after_replay = DateTime.utc_now()
+
+      assert [%{plan: "bronze", valid_at: {lower, nil}, recorded_at: recorded_at}] =
+               versions(sub.id)
+
+      assert_wall_clock(lower, before, after_replay)
+      assert_wall_clock(recorded_at, before, after_replay)
+      refute recorded_at == event.occurred_at
+    end
+
     # replayPrefix
     test "T10: replay up to each event reproduces the state after that write" do
       a = create!(TrackedSubscription, "bronze", @t1)
@@ -1034,6 +1068,24 @@ defmodule AshEvents.TemporalEventsTest do
                )
 
       assert Enum.map(events(), & &1.action) == [:create]
+    end
+
+    test "a bulk destroy over a range is refused and writes no events" do
+      sub = create!(TrackedSubscription, "bronze", @t1)
+
+      assert %Ash.BulkResult{
+               status: :error,
+               errors: [%Ash.Error.Framework{errors: [%Ash.Error.Framework.NotAtomicOverRange{}]}]
+             } =
+               Ash.bulk_destroy([sub], :destroy, %{},
+                 strategy: :stream,
+                 as_of: range(@t2, @t3),
+                 actor: @actor,
+                 return_errors?: true
+               )
+
+      assert Enum.map(events(), & &1.action) == [:create]
+      assert [%{plan: "bronze", valid_at: {@t1, nil}}] = versions(sub.id)
     end
   end
 

@@ -37,6 +37,7 @@ end
 | [`advisory_lock_key_default`](#event_log-advisory_lock_key_default){: #event_log-advisory_lock_key_default } | `integer \| list(integer)` | `2147483647` | The value to use when acquiring advisory locks during event inserts. Must be an integer or a list of two 32-bit integers. |
 | [`cloak_vault`](#event_log-cloak_vault){: #event_log-cloak_vault } | `atom` |  | The vault module to use for encrypting and decrypting both the event data and metadata. |
 | [`record_id_type`](#event_log-record_id_type){: #event_log-record_id_type } | `any` | `:uuid` | The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid. |
+| [`record_as_of?`](#event_log-record_as_of?){: #event_log-record_as_of? } | `boolean` | `false` | Adds the `as_of` and `as_of_range` attributes, which record the application time of writes to temporal resources (see Ash's temporal resources guide). Required on any event log that a temporal resource is tracked into. Adding it to an existing event log needs a migration. |
 | [`public_fields`](#event_log-public_fields){: #event_log-public_fields } | `list(atom) \| :all` | `[]` | A list of field names to make public, or the atom :all to make all fields public. |
 
 

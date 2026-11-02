@@ -56,3 +56,15 @@ defmodule AshEvents.EventLogs.ClearRecordsStateMachine do
     :ok
   end
 end
+
+defmodule AshEvents.EventLogs.ClearRecordsTemporal do
+  @moduledoc false
+  use AshEvents.ClearRecordsForReplay
+  alias AshEvents.TestRepo
+
+  def clear_records!(_opts) do
+    {_, nil} = TestRepo.delete_all("tracked_subscriptions")
+    {_, nil} = TestRepo.delete_all("tracked_subscriptions_no_recorded_at")
+    :ok
+  end
+end

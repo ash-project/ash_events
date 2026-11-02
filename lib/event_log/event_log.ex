@@ -129,6 +129,12 @@ defmodule AshEvents.EventLog do
           "The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid.",
         default: :uuid
       ],
+      record_as_of?: [
+        type: :boolean,
+        default: false,
+        doc:
+          "Adds the `as_of` and `as_of_range` attributes, which record the application time of writes to temporal resources (see Ash's temporal resources guide). Required on any event log that a temporal resource is tracked into. Adding it to an existing event log needs a migration."
+      ],
       public_fields: [
         type: {:or, [{:list, :atom}, {:in, [:all]}]},
         doc: "A list of field names to make public, or the atom :all to make all fields public.",

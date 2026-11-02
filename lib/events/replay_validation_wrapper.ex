@@ -18,23 +18,20 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
   """
   use Ash.Resource.Change
 
+  # The wrapped validation runs through `module.validate/3` directly, which skips
+  # Ash's own temporal-safety check, so the wrapper answers for it.
+  @impl true
+  def temporal_safe?(opts) do
+    validation = opts[:validation]
+    Ash.Temporal.temporal_safe?(validation_module(validation), validation_opts(validation))
+  end
+
+  @impl true
   def change(changeset, opts, context) do
     validation = opts[:validation]
     custom_message = opts[:message]
-
-    validation_module =
-      case validation do
-        %Ash.Resource.Validation{validation: {module, _opts}} -> module
-        %Ash.Resource.Validation{module: module} -> module
-        _ -> nil
-      end
-
-    validation_opts =
-      case validation do
-        %Ash.Resource.Validation{validation: {_module, opts}} -> opts
-        %Ash.Resource.Validation{opts: opts} -> opts
-        _ -> []
-      end
+    validation_module = validation_module(validation)
+    validation_opts = validation_opts(validation)
 
     ash_events_replay? = changeset.context[:ash_events_replay?] || false
 
@@ -74,6 +71,14 @@ defmodule AshEvents.Events.ReplayValidationWrapper do
       )
     end
   end
+
+  defp validation_module(%Ash.Resource.Validation{validation: {module, _opts}}), do: module
+  defp validation_module(%Ash.Resource.Validation{module: module}), do: module
+  defp validation_module(_validation), do: nil
+
+  defp validation_opts(%Ash.Resource.Validation{validation: {_module, opts}}), do: opts
+  defp validation_opts(%Ash.Resource.Validation{opts: opts}), do: opts
+  defp validation_opts(_validation), do: []
 
   defp maybe_before_action(
          changeset,

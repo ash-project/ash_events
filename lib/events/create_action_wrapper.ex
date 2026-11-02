@@ -13,7 +13,15 @@ defmodule AshEvents.CreateActionWrapper do
 
     if Map.get(merged_ctx, :ash_events_replay?) do
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
-      data_layer.create(changeset.resource, changeset)
+
+      # Replay only reaches a create for an upsert when no record was found as of
+      # its instant. On a temporal resource the original upsert may then have
+      # filled a gap before a later version, which a plain create can't reproduce.
+      if upsert? and Ash.Resource.Info.temporal?(changeset.resource) do
+        data_layer.upsert(changeset.resource, changeset, upsert_keys, upsert_identity(changeset))
+      else
+        data_layer.create(changeset.resource, changeset)
+      end
     else
       opts =
         ctx
@@ -22,16 +30,17 @@ defmodule AshEvents.CreateActionWrapper do
 
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
 
+      {changeset, temporal_occurred_at} =
+        AshEvents.Events.ActionWrapperHelpers.temporal_occurred_at(changeset)
+
       result =
         if upsert? do
-          upsert_identity =
-            if changeset.action.upsert_identity do
-              Ash.Resource.Info.identity(changeset.resource, changeset.action.upsert_identity)
-            else
-              nil
-            end
-
-          data_layer.upsert(changeset.resource, changeset, upsert_keys, upsert_identity)
+          data_layer.upsert(
+            changeset.resource,
+            changeset,
+            upsert_keys,
+            upsert_identity(changeset)
+          )
         else
           data_layer.create(changeset.resource, changeset)
         end
@@ -54,7 +63,8 @@ defmodule AshEvents.CreateActionWrapper do
             | attributes: Map.put(changeset.attributes, primary_key, actual_id)
           }
 
-          occurred_at = get_occurred_at_for_create(changeset, record, upsert?)
+          occurred_at =
+            temporal_occurred_at || get_occurred_at_for_create(changeset, record, upsert?)
 
           notifications =
             AshEvents.Events.ActionWrapperHelpers.create_event!(
@@ -70,6 +80,12 @@ defmodule AshEvents.CreateActionWrapper do
         error ->
           error
       end
+    end
+  end
+
+  defp upsert_identity(changeset) do
+    if changeset.action.upsert_identity do
+      Ash.Resource.Info.identity(changeset.resource, changeset.action.upsert_identity)
     end
   end
 

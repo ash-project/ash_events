@@ -44,10 +44,7 @@ defmodule AshEvents.UpdateActionWrapper do
       |> Ash.Context.to_opts()
       |> Keyword.put(:return_notifications?, ctx.return_notifications? || false)
 
-    update_timestamp_attr = AshEvents.Events.Info.events_update_timestamp!(changeset.resource)
-
-    occurred_at =
-      AshEvents.Events.ActionWrapperHelpers.get_occurred_at(changeset, update_timestamp_attr)
+    {changeset, occurred_at} = occurred_at(changeset)
 
     notifications =
       AshEvents.Events.ActionWrapperHelpers.create_event!(
@@ -62,6 +59,23 @@ defmodule AshEvents.UpdateActionWrapper do
 
     with {:ok, record} <- data_layer.update(changeset.resource, changeset) do
       {:ok, record, %{notifications: notifications}}
+    end
+  end
+
+  # On a temporal resource occurred_at is system time, not the update timestamp
+  # (which follows as_of).
+  defp occurred_at(changeset) do
+    changeset = AshEvents.Events.ActionWrapperHelpers.apply_temporal_update_defaults(changeset)
+
+    case AshEvents.Events.ActionWrapperHelpers.temporal_occurred_at(changeset) do
+      {changeset, nil} ->
+        update_timestamp_attr = AshEvents.Events.Info.events_update_timestamp!(changeset.resource)
+
+        {changeset,
+         AshEvents.Events.ActionWrapperHelpers.get_occurred_at(changeset, update_timestamp_attr)}
+
+      temporal ->
+        temporal
     end
   end
 end

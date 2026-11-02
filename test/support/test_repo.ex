@@ -7,7 +7,7 @@ defmodule AshEvents.TestRepo do
   use AshPostgres.Repo, otp_app: :ash_events
 
   def installed_extensions do
-    ["uuid-ossp", "citext", "ash-functions"]
+    ["uuid-ossp", "citext", "ash-functions", "btree_gist"]
   end
 
   def on_transaction_begin(data) do
@@ -19,7 +19,9 @@ defmodule AshEvents.TestRepo do
   def prefer_transaction_for_atomic_updates?, do: false
 
   def min_pg_version do
-    %Version{major: 16, minor: 0, patch: 0}
+    # Temporal resources (test/support/accounts/temporal_subscription.ex) need
+    # PostgreSQL 18 for `WITHOUT OVERLAPS` primary keys.
+    %Version{major: 18, minor: 0, patch: 0}
   end
 
   def all_tenants, do: []

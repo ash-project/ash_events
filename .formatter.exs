@@ -21,6 +21,7 @@ spark_locals_without_parens = [
   primary_key_type: 1,
   public?: 1,
   public_fields: 1,
+  record_as_of?: 1,
   record_id_type: 1,
   replay_non_input_attribute_changes: 1,
   replay_override: 2,

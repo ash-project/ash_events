@@ -4,19 +4,25 @@
 
 defmodule AshEvents.Events.Changes.ApplyChangedAttributes do
   @moduledoc """
-  A change that runs LAST during replay to apply changed_attributes.
+  A change that runs after the action's own changes during replay to apply changed_attributes.
 
   This ensures that any attributes set by business logic changes (like set_attribute)
   are overwritten with the exact values from when the original event was created.
 
   The primary key is handled separately by ApplyReplayPrimaryKey which runs first.
+  Only ApplyReplayRecordedAt, which sets a temporal resource's `recorded_at`, runs after it.
   """
   use Ash.Resource.Change
 
+  @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
   def atomic(changeset, _opts, _context) do
     {:ok, changeset}
   end
 
+  @impl true
   def change(cs, opts, _ctx) do
     ash_events_replay? = cs.context[:ash_events_replay?] || false
 

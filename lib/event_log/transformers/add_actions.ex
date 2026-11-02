@@ -44,6 +44,12 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
         ]
       end
 
+    # Plain attributes even on a cloaked event log: replay reads them.
+    as_of_accepts =
+      if AshEvents.EventLog.Info.event_log_record_as_of?(dsl),
+        do: [:as_of, :as_of_range],
+        else: []
+
     create_arguments =
       if cloak_vault do
         [
@@ -86,7 +92,7 @@ defmodule AshEvents.EventLog.Transformers.AddActions do
 
     dsl
     |> Ash.Resource.Builder.add_action(:create, :create,
-      accept: Enum.uniq(create_accepts ++ persist_actor_primary_keys),
+      accept: Enum.uniq(create_accepts ++ as_of_accepts ++ persist_actor_primary_keys),
       arguments: create_arguments,
       changes: create_changes
     )

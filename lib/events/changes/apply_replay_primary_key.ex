@@ -9,14 +9,20 @@ defmodule AshEvents.Events.Changes.ApplyReplayPrimaryKey do
   This ensures the correct ID is available for any changes that need to reference it
   (like managed relationships that create related records).
 
-  Other changed attributes are handled by ApplyChangedAttributes which runs last.
+  Other changed attributes are handled by ApplyChangedAttributes, which runs after the
+  action's own changes.
   """
   use Ash.Resource.Change
 
+  @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
   def atomic(changeset, _opts, _context) do
     {:ok, changeset}
   end
 
+  @impl true
   def change(cs, _opts, _ctx) do
     ash_events_replay? = cs.context[:ash_events_replay?] || false
 

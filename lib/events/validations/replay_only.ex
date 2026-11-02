@@ -18,6 +18,9 @@ defmodule AshEvents.Events.Validations.ReplayOnly do
   use Ash.Resource.Validation
 
   @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
   def validate(changeset, _opts, _context) do
     if Map.get(changeset.context, :ash_events_replay?) do
       :ok

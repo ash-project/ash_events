@@ -12,6 +12,8 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     :record_id,
     :version,
     :occurred_at,
+    :as_of,
+    :as_of_range,
     :resource,
     :action,
     :action_type,
@@ -34,6 +36,7 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
     public_fields = AshEvents.EventLog.Info.event_log_public_fields!(dsl)
 
     cloaked? = AshEvents.EventLog.Info.cloaked?(dsl)
+    record_as_of? = AshEvents.EventLog.Info.event_log_record_as_of?(dsl)
 
     case AshEvents.EventLog.Info.event_log_primary_key_type!(dsl) do
       :integer ->
@@ -137,6 +140,13 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
       default: &__MODULE__.datetime_default/0,
       public?: public_field?(public_fields, :occurred_at)
     )
+    |> then(fn dsl ->
+      if record_as_of? do
+        add_as_of_attributes(dsl, public_fields)
+      else
+        dsl
+      end
+    end)
     |> Ash.Resource.Builder.add_attribute(:resource, :atom,
       allow_nil?: false,
       public?: public_field?(public_fields, :resource)
@@ -162,6 +172,29 @@ defmodule AshEvents.EventLog.Transformers.AddAttributes do
         )
       end)
     end)
+  end
+
+  # Plain attributes, never encrypted (even on a cloaked event log), because
+  # replay reads them, like `occurred_at`.
+  defp add_as_of_attributes(dsl, public_fields) do
+    dsl
+    |> Ash.Resource.Builder.add_new_attribute(:as_of, :utc_datetime_usec,
+      allow_nil?: true,
+      public?: public_field?(public_fields, :as_of),
+      description:
+        "The instant a temporal write took effect (application time). nil for non-temporal resources."
+    )
+    |> Ash.Resource.Builder.add_new_attribute(:as_of_range, Ash.Type.Range,
+      allow_nil?: true,
+      constraints: [
+        inner_type: :utc_datetime_usec,
+        lower: [inclusive?: true],
+        upper: [inclusive?: false]
+      ],
+      public?: public_field?(public_fields, :as_of_range),
+      description:
+        "The period a temporal write applied to, when as_of was a range. nil otherwise."
+    )
   end
 
   def datetime_default do

@@ -32,9 +32,17 @@ defmodule AshEvents.DestroyActionWrapper do
 
       data_layer = Ash.Resource.Info.data_layer(changeset.resource)
 
+      # A soft destroy writes a new version of a temporal record, so its
+      # occurred_at follows that version's recorded_at, as on an update.
+      {changeset, temporal_occurred_at} =
+        changeset
+        |> AshEvents.Events.ActionWrapperHelpers.apply_temporal_update_defaults()
+        |> AshEvents.Events.ActionWrapperHelpers.temporal_occurred_at()
+
       with :ok <- reject_atomics(changeset),
            {:ok, record} <- data_layer.update(changeset.resource, changeset) do
-        notifications = create_event!(changeset, merged_ctx, module_opts, opts)
+        occurred_at = temporal_occurred_at || DateTime.utc_now()
+        notifications = create_event!(changeset, merged_ctx, occurred_at, module_opts, opts)
 
         {:ok, record, %{notifications: notifications}}
       end
@@ -98,7 +106,9 @@ defmodule AshEvents.DestroyActionWrapper do
 
       with :ok <- reject_atomics(changeset),
            {:ok, record} <- destroy_record(changeset) do
-        notifications = create_event!(changeset, merged_ctx, module_opts, opts)
+        notifications =
+          create_event!(changeset, merged_ctx, DateTime.utc_now(), module_opts, opts)
+
         # Unlike create and update, Ash's single-record destroy pipeline only
         # accepts the notifications as a bare list.
         {:ok, record, notifications}
@@ -125,7 +135,7 @@ defmodule AshEvents.DestroyActionWrapper do
   # original_params can be missing from the merged context when a nested bulk
   # operation (for example a cascading soft delete) builds the changeset, so
   # fall back to the changeset context and then to an empty map.
-  defp create_event!(changeset, merged_ctx, module_opts, opts) do
+  defp create_event!(changeset, merged_ctx, occurred_at, module_opts, opts) do
     original_params =
       Map.get(merged_ctx, :original_params) ||
         Map.get(changeset.context, :original_params, %{})
@@ -133,7 +143,7 @@ defmodule AshEvents.DestroyActionWrapper do
     AshEvents.Events.ActionWrapperHelpers.create_event!(
       changeset,
       original_params,
-      DateTime.utc_now(),
+      occurred_at,
       module_opts,
       opts
     )

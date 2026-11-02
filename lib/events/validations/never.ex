@@ -11,6 +11,9 @@ defmodule AshEvents.Events.Validations.Never do
   use Ash.Resource.Validation
 
   @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
   def validate(_changeset, _opts, _context) do
     {:error, "never runs"}
   end

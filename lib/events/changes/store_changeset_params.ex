@@ -6,6 +6,10 @@ defmodule AshEvents.Events.Changes.StoreChangesetParams do
   @moduledoc false
   use Ash.Resource.Change
 
+  @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
   def change(cs, _opts, _ctx) do
     Ash.Changeset.set_context(cs, %{original_params: cs.params})
   end

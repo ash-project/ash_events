@@ -110,5 +110,9 @@ defmodule AshEvents.Accounts do
     end
 
     resource AshEvents.Accounts.ArticleTag
+
+    resource AshEvents.Accounts.TemporalSubscription
+    resource AshEvents.Accounts.TrackedSubscription
+    resource AshEvents.Accounts.TrackedSubscriptionNoRecordedAt
   end
 end

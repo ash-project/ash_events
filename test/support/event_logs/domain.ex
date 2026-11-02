@@ -27,6 +27,10 @@ defmodule AshEvents.EventLogs do
       define :replay_events_state_machine, action: :replay
     end
 
+    resource AshEvents.EventLogs.EventLogTemporal do
+      define :replay_events_temporal, action: :replay
+    end
+
     resource AshEvents.EventLogs.SystemActor
   end
 end

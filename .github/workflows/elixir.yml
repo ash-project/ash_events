@@ -16,7 +16,7 @@ jobs:
     uses: ash-project/ash/.github/workflows/ash-ci.yml@main
     with:
       postgres: true
-      postgres-version: 16
+      postgres-version: 18
       reuse: true
     secrets:
       HEX_API_KEY: ${{ secrets.HEX_API_KEY }}

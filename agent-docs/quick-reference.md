@@ -63,6 +63,14 @@ mix test.reset && mix test    # Reset and run all tests
 2. Test `:force_change` vs `:as_arguments` strategies
 3. Check if attributes are properly marked as non-input
 
+### Temporal Resource Failures
+**Symptoms**: `Ash.Error.Framework.NotTemporalSafe` naming `AshEvents.Events.ReplayChangeWrapper` or `ReplayValidationWrapper`; replayed periods collapsing to the replay's wall clock
+**Root Causes**: a new AshEvents change or validation without `@impl true; def temporal_safe?(_opts), do: true`; the wrapped user module isn't temporal safe (the wrappers delegate via `Ash.Temporal.temporal_safe?/2`); replay not passing the event's `as_of`/`as_of_range`
+**Debug Pattern**:
+1. Every module AshEvents adds to a tracked action must declare `temporal_safe?/1` (`temporal_events_test.exs` checks the list)
+2. Temporal fixtures log into `EventLogTemporal` (`record_as_of? true`); read versions with SQL, since Ash reads one instant at a time
+3. `temporal_resource_test.exs` pins plain Ash/AshPostgres temporal behaviour on an untracked resource; compare against it first
+
 ### Type Check Failures (Dialyzer)
 **Symptoms**: Type specification errors, unknown function warnings
 **Root Cause**: Missing or incorrect type specifications after changes

@@ -6,6 +6,15 @@ defmodule AshEvents.Events.ReplayChangeWrapper do
   @moduledoc false
   use Ash.Resource.Change
 
+  # The wrapped change runs through `module.change/3` directly, which skips Ash's
+  # own temporal-safety check, so the wrapper answers for it.
+  @impl true
+  def temporal_safe?(opts) do
+    %Ash.Resource.Change{change: {module, module_opts}} = opts[:change]
+    Ash.Temporal.temporal_safe?(module, module_opts)
+  end
+
+  @impl true
   def change(cs, opts, ctx) do
     %Ash.Resource.Change{change: {change_module, change_opts}} = opts[:change]
 

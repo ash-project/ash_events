@@ -9,6 +9,7 @@ defmodule AshEvents.Events.Verifiers.VerifyTimestamps do
   Checks that:
   - create_timestamp attribute exists on the resource (if specified) and is a valid timestamp type
   - update_timestamp attribute exists on the resource (if specified) and is a valid timestamp type
+  - neither is set on a temporal resource, whose timestamps hold application time
   """
   use Spark.Dsl.Verifier
 
@@ -29,7 +30,11 @@ defmodule AshEvents.Events.Verifiers.VerifyTimestamps do
     resource = Spark.Dsl.Verifier.get_persisted(dsl_state, :module)
     all_attributes = Ash.Resource.Info.attributes(dsl_state)
 
-    with :ok <-
+    temporal? = Ash.Resource.Info.temporal?(dsl_state)
+
+    with :ok <- verify_not_temporal(temporal?, create_timestamp, :create_timestamp, resource),
+         :ok <- verify_not_temporal(temporal?, update_timestamp, :update_timestamp, resource),
+         :ok <-
            verify_timestamp_attribute(
              create_timestamp,
              :create_timestamp,
@@ -44,6 +49,22 @@ defmodule AshEvents.Events.Verifiers.VerifyTimestamps do
       )
     end
   end
+
+  defp verify_not_temporal(true, timestamp_attr, config_name, resource)
+       when not is_nil(timestamp_attr) do
+    {:error,
+     Spark.Error.DslError.exception(
+       message:
+         "#{inspect(resource)} is a temporal resource, so it can't set `#{config_name}`. " <>
+           "On a temporal resource the create and update timestamps hold application time " <>
+           "(`as_of`), and an event's `occurred_at` is system time: it comes from the " <>
+           "resource's `recorded_at` attribute, or the wall clock when there is none.",
+       path: [:events, config_name],
+       module: resource
+     )}
+  end
+
+  defp verify_not_temporal(_temporal?, _timestamp_attr, _config_name, _resource), do: :ok
 
   defp verify_timestamp_attribute(nil, _config_name, _all_attributes, _resource), do: :ok
 

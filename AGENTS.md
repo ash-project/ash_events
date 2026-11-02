@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 **AshEvents** is a Spark extension for the Ash Framework. It records create, update and destroy actions as events (with actor attribution, changed attributes and metadata) and can rebuild resource state by replaying them, with version-based replay overrides for schema evolution.
 
-- **Stack**: Elixir ~> 1.15, Ash ~> 3.33, Spark, PostgreSQL via AshPostgres (tests)
+- **Stack**: Elixir ~> 1.15, Ash ~> 3.37, Spark, PostgreSQL 18+ via AshPostgres (tests; temporal resources need it)
 - **This guide is for working on AshEvents itself.** How to *use* AshEvents in an app (setting up an event log, tracking actions, replay, version management, side effects) is documented in [usage-rules.md](usage-rules.md) and [README.md](README.md). Read those when you need user-facing behaviour, and keep them in sync when you change it.
 
 ## Rules
@@ -30,7 +30,7 @@ SPDX-License-Identifier: MIT
 | Tests | [test/ash_events/](test/ash_events/), one file per feature (e.g. `replay_test.exs`, `bulk_actions_test.exs`, `upsert_test.exs`) |
 | Test fixtures | [test/support/event_logs/](test/support/event_logs/) (event logs, `clear_records.ex`), [test/support/accounts/](test/support/accounts/) (tracked resources such as `user.ex`, `org.ex`) |
 
-When adding a tracked test resource, add its table to `test/support/event_logs/clear_records.ex`, or replay tests will see stale rows.
+When adding a tracked test resource, add its table to `test/support/event_logs/clear_records.ex`, or replay tests will see stale rows. Tracked temporal resources (`tracked_subscription*.ex`) log into `EventLogTemporal`, the only test event log with `record_as_of? true`, and their tables go in `ClearRecordsTemporal` in the same file.
 
 ## Commands
 
@@ -38,7 +38,7 @@ Use `mix test.reset`, not `mix ecto.reset`, to reset the test database.
 
 ```bash
 mix test.reset                    # drop, create and migrate the test database
-mix test                          # run the suite (about 165 tests)
+mix test                          # run the suite (about 250 tests)
 mix test.generate_migrations      # generate migrations after changing test resources
 mix test.check_migrations         # verify migrations are up to date
 mix check                         # everything CI runs: compile, format, credo, spark checks, REUSE, tests, ...

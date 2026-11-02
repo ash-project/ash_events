@@ -25,6 +25,7 @@ AshEvents is an extension for the [Ash Framework](https://ash-hq.org/) that prov
 - **Version-specific Replay Routing**: Route events to different actions based on their version
 - **Changed Attributes Tracking**: Automatically captures and replays auto-generated attributes and business logic changes
 - **Customizable Metadata**: Attach arbitrary metadata to events
+- **Temporal Resources**: Track Ash temporal resources; events record each write's `as_of`, and replay rebuilds every version
 
 ## Installation
 
@@ -170,6 +171,23 @@ MyApp.Events.Event
 |> Ash.ActionInput.for_action(:replay, %{point_in_time: ~U[2023-05-01 00:00:00Z]})
 |> Ash.run_action!()
 ```
+
+`last_event_id` is an exact cut. `point_in_time` filters on `occurred_at`, which is stamped when the action starts, before its event is written, so under concurrent writes it can include or leave out a write that committed around that time. Use `last_event_id` when you need an exact cut.
+
+## Temporal Resources
+
+Resources with an Ash `temporal` section can be tracked. This needs Ash 3.37+, AshPostgres 2.14+ (temporal support) and PostgreSQL 18+ (`WITHOUT OVERLAPS` keys). Set `record_as_of?` on the event log and generate a migration (`mix ash.codegen add_event_as_of`):
+
+```elixir
+event_log do
+  clear_records_for_replay MyApp.Events.ClearAllRecords
+  record_as_of? true
+end
+```
+
+Each event then records the write's application time in `as_of` (or `as_of_range` for a range write), while `occurred_at` stays system time: the version's `recorded_at`, or the wall clock. Replay re-applies the captured `as_of`, so every version is rebuilt with its original period and timestamps. Don't set `create_timestamp`/`update_timestamp` in `events` on a temporal resource; that's a compile error. Your own changes and validations on tracked temporal actions must declare `temporal_safe?/1`, as they would without AshEvents.
+
+See [usage-rules.md](usage-rules.md#temporal-resources) for what is captured, the replay guarantees, and the limits (range bulk writes, upserts, non-temporal records written inside a temporal write).
 
 ## Using AshEvents for Audit Logging Only
 
@@ -470,7 +488,9 @@ When events are recorded, they are stored in your event log resource with a stru
     "request_id" => "req-abc123"
   },
   version: 2,
-  occurred_at: ~U[2023-06-15 14:30:00Z]
+  occurred_at: ~U[2023-06-15 14:30:00Z],
+  as_of: nil,       # only with record_as_of? true
+  as_of_range: nil  # only with record_as_of? true
 }
 ```
 
@@ -486,6 +506,7 @@ This structure captures all the essential information about each event:
 - **metadata**: Additional contextual information about the event
 - **version**: Version number of the event
 - **occurred_at**: Timestamp when the event was recorded
+- **as_of** / **as_of_range**: Present only when the event log sets `record_as_of? true`. On events of [temporal resources](#temporal-resources), the write's application time: an instant in `as_of`, or a range in `as_of_range`. `nil` for non-temporal resources
 
 ## Notifiers on the Event Log
 
@@ -589,6 +610,7 @@ end
 - `:resource`, `:action`, `:action_type`
 - `:metadata`, `:data`, `:changed_attributes`
 - `:encrypted_metadata`, `:encrypted_data`, `:encrypted_changed_attributes` (when using encryption)
+- `:as_of`, `:as_of_range` (the attributes only exist with `record_as_of? true`; without it, listing them has no effect)
 - Actor attribution fields from `persist_actor_primary_key` (e.g., `:user_id`, `:system_actor`)
 
 **Important**: Only AshEvents-managed fields can be made public. User-added custom fields are not affected by this configuration.

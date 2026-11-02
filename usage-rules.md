@@ -18,6 +18,7 @@ AshEvents is an extension for the Ash Framework that provides event capabilities
 - **Actor Attribution**: Stores who performed each action (users, system processes, etc)
 - **Changed Attributes Tracking**: Automatically captures attributes modified by business logic that weren't in the original input
 - **Metadata Tracking**: Attaches arbitrary metadata to events for audit purposes
+- **Temporal Resources**: Tracks Ash temporal resources when the event log sets `record_as_of? true` (see [Temporal Resources](#temporal-resources))
 
 ## Project Structure & Setup
 
@@ -559,6 +560,7 @@ end
 - `:resource`, `:action`, `:action_type`
 - `:metadata`, `:data`, `:changed_attributes`
 - `:encrypted_metadata`, `:encrypted_data`, `:encrypted_changed_attributes` (when using encryption)
+- `:as_of`, `:as_of_range` (the attributes only exist with `record_as_of? true`; without it, listing them has no effect)
 - Actor attribution fields from `persist_actor_primary_key` (e.g., `:user_id`, `:system_actor`)
 
 **Important**: Only AshEvents-managed fields can be made public. User-added custom fields are not affected by this configuration.
@@ -574,6 +576,94 @@ events do
   update_timestamp :updated_at
 end
 ```
+
+⚠️ Not on temporal resources: there, these options are a compile error (see [Temporal Resources](#temporal-resources)).
+
+## Temporal Resources
+
+AshEvents can track Ash temporal resources (a resource with a `temporal` section). Each event records the write's application time, and replay re-applies it, so the replayed table has the same versions as the original.
+
+**Prerequisites:** Ash 3.37+, AshPostgres 2.14+ (temporal support) and PostgreSQL 18+ (`WITHOUT OVERLAPS` keys).
+
+### Setup
+
+**Set `record_as_of? true` on the event log**, then generate a migration:
+
+```elixir
+defmodule MyApp.Events.Event do
+  use Ash.Resource,
+    extensions: [AshEvents.EventLog]
+
+  event_log do
+    clear_records_for_replay MyApp.Events.ClearAllRecords
+    record_as_of? true
+  end
+end
+```
+
+```bash
+mix ash.codegen add_event_as_of
+```
+
+- `record_as_of?` adds the nullable `as_of` and `as_of_range` attributes. Event logs without it get no new columns.
+- ❌ Tracking a temporal resource into an event log without `record_as_of?` fails to compile with a `Spark.Error.DslError` at `events -> event_log`: "... is a temporal resource, but its event log ... does not set `record_as_of?` ...".
+- ❌ `create_timestamp` / `update_timestamp` in the `events` section of a temporal resource fail to compile with a `Spark.Error.DslError` ("... is a temporal resource, so it can't set `create_timestamp`"). Leave them out: `occurred_at` is worked out differently (below).
+- ⚠️ Setting `record_as_of? true` without running the migration makes every event insert fail on the missing column.
+
+### What an Event Captures
+
+- **`as_of`** holds the write's instant (`DateTime`); **`as_of_range`** holds it when the write was given an `Ash.Range`. Exactly one is set on a temporal event, including when no `as_of` was passed and Ash pinned "now". Both are `nil` on events of non-temporal resources. They are plain attributes, never encrypted, even on an event log with `cloak_vault`, because replay reads them (like `occurred_at`).
+- **`occurred_at` is system time**: the written version's `recorded_at` when the resource has a `recorded_at` attribute, otherwise the wall clock. It is never the backdated `as_of`.
+- **`recorded_at` is optional** on tracked temporal resources. With it, `event.occurred_at == recorded_at` of the version the write produced.
+- **`inserted_at` / `updated_at` follow `as_of`**: that's Ash's design for temporal resources, and AshEvents leaves it alone. A backdated create sets both to `as_of`, and a backdated update sets `updated_at` to `as_of`.
+
+```elixir
+sub =
+  MyApp.Subscription
+  |> Ash.Changeset.for_create(:create, %{plan: "bronze"}, as_of: ~U[2025-01-01 00:00:00Z])
+  |> Ash.create!(actor: user)
+
+# event.as_of       == ~U[2025-01-01 00:00:00Z]
+# event.occurred_at == the version's recorded_at (when the write ran)
+# sub.inserted_at   == ~U[2025-01-01 00:00:00Z]
+```
+
+### Temporal Safety of Your Changes and Validations
+
+Ash raises `Ash.Error.Framework.NotTemporalSafe` before any write when a change or validation that hasn't declared itself temporal safe runs on a temporal resource. AshEvents' own changes and validations are temporal safe, and the wrappers AshEvents puts around your changes and validations pass the check through to your module, so it passes or fails exactly as without AshEvents.
+
+✅ Declare it on your module:
+
+```elixir
+defmodule MyApp.Changes.NormalizePlan do
+  use Ash.Resource.Change
+
+  @impl true
+  def temporal_safe?(_opts), do: true
+
+  @impl true
+  def change(changeset, _opts, _context), do: changeset
+end
+```
+
+Or list a module you don't own in `config :ash, :temporal_safe_modules, [...]`.
+
+⚠️ The error names `AshEvents.Events.ReplayChangeWrapper` (or `ReplayValidationWrapper`) as the module, not yours; look at the action it names to find the unsafe change.
+
+### Replay
+
+- Replay passes each event's captured `as_of` (or `as_of_range`) back to the action, reads the record as of that point before an update, destroy or upsert, and sets `recorded_at` to the event's `occurred_at`. That holds for both `replay_non_input_attribute_changes` strategies.
+- Replay still orders events by `id` and cuts by system time, never by application time.
+- **`last_event_id` is the exact cut**: the replayed state is the state right after that event's write.
+- **`point_in_time` is approximate under concurrent writes**: `occurred_at` is stamped when the action starts, before its event is written, so two writes in flight can commit in a different order than their stamps. This applies to every resource, not only temporal ones. Use `last_event_id` when you need an exact cut.
+- An event without a captured `as_of` (for example, recorded before the resource became temporal) replays as before: Ash pins the replay's own "now", and `recorded_at` isn't set from `occurred_at`.
+
+### Limitations
+
+- **No range bulk writes.** `Ash.bulk_update` / `Ash.bulk_destroy` with a range `as_of` over records or a stream return `NotAtomicOverRange`, and tracked actions can't run atomically. A bulk update given a query with a range `as_of` fails earlier, with an option validation error (`Spark.Options.ValidationError`, wrapped in `Ash.Error.Unknown`) from the stream's read options. Instants work for bulk create, update and destroy.
+- **Upserts with `touch_update_defaults?: false`, or with `upsert_fields` that leave out `recorded_at`,** keep the old `recorded_at` on the update branch, while replay sets it to `occurred_at`, so `recorded_at` differs after replay. Keep the defaults, or include `recorded_at` in `upsert_fields`. Temporal upserts are supported with an instant `as_of` only.
+- **Non-temporal tracked records written inside a temporal write inherit its `as_of`.** Ash passes `as_of` to related writes (for example through `manage_relationship`) in the shared context, so a non-temporal child's `inserted_at`/`updated_at` follow that `as_of`, and when its `events` section sets `create_timestamp`/`update_timestamp`, its event's `occurred_at` is that application time too. Passing `as_of:` to a non-temporal write directly does the same. Replay of the child is still exact; only a `point_in_time` cut can place its event differently. Use `last_event_id` for an exact cut.
+- **Streamed bulk updates and update defaults:** Ash's manual bulk update path doesn't apply update defaults such as `updated_at`. On temporal resources AshEvents applies them itself. On non-temporal tracked resources, a streamed bulk update currently leaves `updated_at` unchanged; that's Ash behaviour, to be fixed upstream.
 
 ## Testing Best Practices
 

@@ -13,6 +13,9 @@ defmodule AshEvents.AdvisoryLockKeyGenerator do
     end
   end
 
-  @callback generate_key!(resource :: Ash.Resource.t(), default_value :: integer()) ::
+  @callback generate_key!(
+              changeset :: Ash.Changeset.t(),
+              default_value :: integer() | [integer()]
+            ) ::
               integer() | list(integer())
 end

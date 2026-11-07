@@ -6,7 +6,7 @@ defmodule AshEvents.AdvisoryLockKeyGenerator.Default do
   @moduledoc """
   Default implementation of the `AshEvents.AdvisoryLockKeyGenerator` behaviour.
   Handles the attribute-strategy for multitenancy, if the tenant value used is an
-  integer or uuid. For other scenarios, users must implemeent a custom implementation
+  integer or uuid. For other scenarios, users must implement a custom implementation
   and declare it in their event-log resource configuration.
   """
   use AshEvents.AdvisoryLockKeyGenerator

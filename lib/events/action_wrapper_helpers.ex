@@ -259,6 +259,9 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
       |> Enum.map(& &1.source_attribute)
       |> MapSet.new()
 
+    store_sensitive_changed_attributes? =
+      AshEvents.EventLog.Info.event_log_store_sensitive_changed_attributes?(event_log_resource)
+
     changed_attributes =
       Enum.reduce(changeset.attributes, %{}, fn {attr_name, value}, acc ->
         is_belongs_to_fk = MapSet.member?(belongs_to_fk_attrs, attr_name)
@@ -269,8 +272,14 @@ defmodule AshEvents.Events.ActionWrapperHelpers do
           acc
         else
           case Ash.Resource.Info.attribute(changeset.resource, attr_name) do
-            nil -> acc
-            attr -> Map.put(acc, attr_name, dump_value(value, attr))
+            nil ->
+              acc
+
+            %{sensitive?: true} when not store_sensitive_changed_attributes? ->
+              Map.put(acc, attr_name, nil)
+
+            attr ->
+              Map.put(acc, attr_name, dump_value(value, attr))
           end
         end
       end)

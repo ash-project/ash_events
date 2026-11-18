@@ -129,6 +129,12 @@ defmodule AshEvents.EventLog do
           "The type of the primary key used by the system, which will be the type of the `record_id`-field on the events. Defaults to :uuid.",
         default: :uuid
       ],
+      store_sensitive_changed_attributes?: [
+        type: :boolean,
+        default: true,
+        doc:
+          "Whether to store attributes marked `sensitive?: true` in the event's `changed_attributes`. When `false`, they are stored as `nil`, as sensitive input already is in `data` on a non-encrypted event log, so a secret set by a change (a hashed password, a generated token) never reaches the log. Replaying such an event sets those attributes to `nil`. Applies to encrypted and non-encrypted event logs."
+      ],
       record_as_of?: [
         type: :boolean,
         default: false,

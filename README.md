@@ -617,9 +617,18 @@ end
 
 ### Sensitive Data and Encryption
 
-AshEvents persists everything an action wrote. The `data` field holds the action's input, and `changed_attributes` holds every attribute the action set that was not part of that input, including values produced by changes, defaults, and hooks. Replay depends on this, so the library does not filter the payload based on `sensitive?`.
+AshEvents persists everything an action wrote. The `data` field holds the action's input, and `changed_attributes` holds every attribute the action set that was not part of that input, including values produced by changes, defaults, and hooks. Replay depends on this, so by default the library does not filter the payload based on `sensitive?`.
 
 The one exception is a convenience filter on `data`: attributes and arguments marked `sensitive?: true` are stored as `nil` in `data` on non-encrypted event logs. This exists so that plaintext password arguments from AshAuthentication never reach the log. It only covers action input. A sensitive attribute set by a change, such as a hashed password or a generated token, is written to `changed_attributes` verbatim.
+
+An event log used as an audit trail rather than for replay can keep those values out too, with `store_sensitive_changed_attributes? false`. Sensitive attributes are then stored as `nil` in `changed_attributes`, on encrypted and non-encrypted event logs alike. Replaying such an event sets them to `nil`.
+
+```elixir
+event_log do
+  clear_records_for_replay MyApp.Events.ClearAllRecords
+  store_sensitive_changed_attributes? false
+end
+```
 
 **If a resource with event tracking handles sensitive data, use an encrypted event log.** Configure a [Cloak](https://hexdocs.pm/cloak) vault on the event log resource:
 

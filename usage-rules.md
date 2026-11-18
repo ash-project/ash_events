@@ -764,9 +764,9 @@ end
 
 ### Sensitive Data
 
-AshEvents does not filter event payloads based on `sensitive?`. `changed_attributes` stores every attribute the action set, verbatim, because replay needs it. Only action input in `data` has a convenience filter: sensitive attributes and arguments are stored as `nil` on non-encrypted event logs, so that plaintext passwords from AshAuthentication never reach the log. A sensitive attribute set by a change (for example `hashed_password`) is stored in `changed_attributes` in plaintext on a non-encrypted log.
+By default, AshEvents does not filter event payloads based on `sensitive?`. `changed_attributes` stores every attribute the action set, verbatim, because replay needs it. Only action input in `data` has a convenience filter: sensitive attributes and arguments are stored as `nil` on non-encrypted event logs, so that plaintext passwords from AshAuthentication never reach the log. A sensitive attribute set by a change (for example `hashed_password`) is stored in `changed_attributes` in plaintext on a non-encrypted log, unless the event log sets `store_sensitive_changed_attributes? false`.
 
-**Rule: if a tracked resource has sensitive attributes or arguments, use an encrypted event log.**
+**Rule: if a tracked resource has sensitive attributes or arguments, use an encrypted event log.** An event log that only serves as an audit trail can set `store_sensitive_changed_attributes? false` instead, which stores sensitive attributes as `nil` in `changed_attributes` on both log types. Replaying such an event sets them to `nil`.
 
 ```elixir
 defmodule MyApp.Vault do
@@ -788,8 +788,9 @@ end
 |----------------|--------|----------------------|
 | **Non-encrypted** | Sensitive input stored as `nil` | Everything stored in plaintext |
 | **Encrypted (`cloak_vault`)** | Everything stored, encrypted | Everything stored, encrypted |
+| **Either, with `store_sensitive_changed_attributes? false`** | As above | Sensitive attributes stored as `nil` |
 
-- There is **no** `store_sensitive_attributes` DSL option. The v0.6.0 changelog entry refers to a feature that was reverted.
+- There is **no** `store_sensitive_attributes` DSL option. The v0.6.0 changelog entry refers to a feature that was reverted. `store_sensitive_changed_attributes?` is a different option and only covers `changed_attributes`.
 - The payload fields (`data`, `changed_attributes`, `metadata`) are marked `sensitive?: true` on both log types and are omitted from `inspect` output.
 - Encrypted payloads cannot be filtered or indexed by content, and the application owns key management.
 

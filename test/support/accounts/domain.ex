@@ -67,6 +67,11 @@ defmodule AshEvents.Accounts do
       define :update_org_cloaked, action: :update
     end
 
+    resource AshEvents.Accounts.Credential do
+      define :create_credential, action: :create
+      define :rotate_credential_secret, action: :rotate_secret
+    end
+
     resource AshEvents.Accounts.OrgStateMachine do
       define :create_org_state_machine, action: :create
       define :set_org_state_machine_active, action: :set_active

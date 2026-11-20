@@ -192,4 +192,60 @@ defmodule AshEvents.UpsertTest do
       assert length(events_for(email)) == 1
     end
   end
+
+  # The create action has no `upsert_identity`, so the identity comes only from the option.
+  # The identity is partial, so the `ON CONFLICT` target has to carry its `where`: without
+  # it, Postgres finds no matching unique index and refuses the insert.
+  describe "upsert_identity passed as an option" do
+    alias AshEvents.Accounts.Nickname
+
+    defp upsert_nickname(params) do
+      Nickname
+      |> Ash.Changeset.for_create(:create, params, actor: @actor)
+      |> Ash.create(actor: @actor, upsert?: true, upsert_identity: :unique_active_name)
+    end
+
+    defp nickname_events(id) do
+      EventLog
+      |> Ash.Query.filter(resource == ^Nickname and record_id == ^id)
+      |> Ash.read!()
+    end
+
+    test "is used for an upsert against a partial identity" do
+      assert {:ok, first} = upsert_nickname(%{name: "ace"})
+      assert {:ok, second} = upsert_nickname(%{name: "ace"})
+
+      assert second.id == first.id
+      assert length(nickname_events(first.id)) == 2
+    end
+
+    test "conflicts only with rows inside the identity's where" do
+      assert {:ok, archived} = upsert_nickname(%{name: "ace", archived: true})
+      assert {:ok, active} = upsert_nickname(%{name: "ace"})
+      assert {:ok, again} = upsert_nickname(%{name: "ace"})
+
+      assert active.id != archived.id
+      assert again.id == active.id
+      assert length(nickname_events(archived.id)) == 1
+      assert length(nickname_events(active.id)) == 2
+    end
+
+    test "is used by a bulk create" do
+      assert {:ok, first} = upsert_nickname(%{name: "ace"})
+
+      result =
+        Ash.bulk_create([%{name: "ace"}, %{name: "king"}], Nickname, :create,
+          actor: @actor,
+          upsert?: true,
+          upsert_identity: :unique_active_name,
+          upsert_fields: [:updated_at],
+          return_errors?: true,
+          return_records?: true
+        )
+
+      assert result.status == :success
+      assert first.id in Enum.map(result.records, & &1.id)
+      assert length(nickname_events(first.id)) == 2
+    end
+  end
 end

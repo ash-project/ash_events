@@ -21,6 +21,8 @@ defmodule AshEvents.Accounts do
 
     resource AshEvents.Accounts.Token
 
+    resource AshEvents.Accounts.Nickname
+
     resource AshEvents.Accounts.UserUuidV7 do
       define :get_user_uuidv7_by_id, action: :get_by_id, args: [:id]
       define :create_user_uuidv7, action: :create

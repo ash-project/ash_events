@@ -83,9 +83,14 @@ defmodule AshEvents.CreateActionWrapper do
     end
   end
 
+  # The identity Ash resolved for this create, so an `upsert_identity` passed as an option
+  # counts as well as the action's own. Ash stores it in the changeset's private context
+  # before the manual action runs (and computes `upsert_keys` from it). Without it, the data
+  # layer has the keys but not the identity, so a partial identity's `where` is lost.
   defp upsert_identity(changeset) do
-    if changeset.action.upsert_identity do
-      Ash.Resource.Info.identity(changeset.resource, changeset.action.upsert_identity)
+    case changeset.context[:private][:upsert_identity] || changeset.action.upsert_identity do
+      nil -> nil
+      name -> Ash.Resource.Info.identity(changeset.resource, name)
     end
   end
 
